@@ -61,7 +61,7 @@ npm run admin:create -- rahul@zyphextech.com "zekst"
 ```
 
 ```bash
-npm run admin:create -- ayush@awtmforge.com "Ayush"
+npm run admin:create -- ayushphiks@gmail.com "Ayush"
 ```
 
 Each asks for a password with echo off. Twelve characters or more. Run the
