@@ -1,7 +1,15 @@
 # Deploying awtmforge.com on Hostinger
 
 One Node.js web app on Cloud Professional, deployed from GitHub. Hostinger builds
-on every push to `main`.
+on every push to the connected branch.
+
+## Branches
+
+- `main` holds step 1 only: the marketing site. Tag `step-1-marketing`. Deploy
+  this first and confirm the Node environment works before anything else.
+- `front-half` holds steps 2 to 4: schema, client login, admin, questionnaire.
+  Merge it into `main` after the step 1 deploy is confirmed and the database
+  and environment variables below exist.
 
 ## hPanel settings, once
 
@@ -22,30 +30,72 @@ Websites, Add website, Node.js web app, Import Git repository, connect the
 Hostinger applies `output: "standalone"` itself. `next.config.ts` must keep
 exporting a plain object.
 
+The build script runs `prisma generate`, then `prisma migrate deploy` when
+`DATABASE_URL` is set (skipped when it is not, so step 1 builds without a
+database), then `next build`.
+
 ## Environment variables
 
-None are needed for step 1 (the marketing site). Later steps add these in
-hPanel, never in the repo:
+Set these in hPanel, never in the repo. None are needed for step 1.
 
 | Name | Used for |
 |---|---|
-| `DATABASE_URL` | MySQL, from hPanel Databases |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | the one-time code, sent from hello@awtmforge.com |
-| `SESSION_SECRET` | signing session cookies |
-| `UPLOAD_DIR` | an absolute path outside the deploy directory, for client uploads |
+| `DATABASE_URL` | `mysql://USER:PASSWORD@localhost:3306/DBNAME`, from hPanel Databases |
+| `SESSION_SECRET` | 32 or more random characters; signs session and code hashes |
+| `UPLOAD_DIR` | an absolute path outside the deploy directory, for example `/home/USER/awtm-uploads`. Create it with `mkdir -p` and `chmod 700`. |
+| `APP_URL` | `https://awtmforge.com` |
+| `SMTP_HOST` | `smtp.hostinger.com` |
+| `SMTP_PORT` | `465` |
+| `SMTP_USER` | `hello@awtmforge.com` |
+| `SMTP_PASS` | that mailbox's password |
+| `SMTP_FROM` | `awtm forge <hello@awtmforge.com>` |
 
-## After the first deploy
+Without `SMTP_HOST` the app refuses to send codes in production.
 
-1. Open https://awtmforge.com on a phone. The page should render in the
-   awtm forge fonts with no horizontal scroll.
-2. Open https://awtmforge.com/robots.txt. It disallows `/p/`, `/admin/`,
-   `/invoice/`, `/agreement/` and `/api/`.
-3. Later, when `UPLOAD_DIR` exists: write a marker file there, push a trivial
-   commit, and confirm the marker survived the redeploy. If it did not,
-   uploads need a different home and the build stops to say so.
+## After the front-half deploy, over SSH
+
+Hostinger Cloud plans include SSH. From the app directory:
+
+```bash
+npm run admin:create -- rahul@awtmforge.com "Rahul"
+```
+
+```bash
+npm run admin:create -- ayush@awtmforge.com "Ayush"
+```
+
+Each asks for a password with echo off. Twelve characters or more. Run the
+same command again to change a password. Two accounts is the limit.
+
+Then seed the image library with the six logo directions:
+
+```bash
+npm run db:seed
+```
+
+The seed also creates a sample project, Kavya Appliances, and prints its
+client link. Delete that project before real use, or keep it as a demo.
+
+## Checks
+
+1. Open https://awtmforge.com on a phone. The awtm forge fonts, no
+   horizontal scroll.
+2. https://awtmforge.com/robots.txt disallows `/p/`, `/admin/`, `/invoice/`,
+   `/agreement/` and `/api/`.
+3. `curl -sI https://awtmforge.com/admin` shows `x-robots-tag: noindex, nofollow`
+   and `cache-control: no-store`.
+4. Uploads survive a redeploy: put a marker file in `UPLOAD_DIR`, push a
+   trivial commit, confirm the marker is still there. If it is not, uploads
+   need a different home and the build stops to say so.
+5. Stop MySQL from hPanel and load `/`. It still renders.
 
 ## Known and accepted
 
 - The "How we work" section still describes four payment-gated stages. It
   is ported as-is. PORTAL-SPEC section 11 assigns the rewrite to Rahul.
-- The enquiry form answers "could not send" until the database step lands.
+- The client link is shown once, when created and when rotated, because
+  only its hash is stored (PORTAL-SPEC 5.9). The nudge message points at
+  the link already sent.
+- HEIC uploads are refused with a message asking for a JPG (INTAKE-SPEC 16).
+- The app process is stopped by Hostinger when idle and restarted on the next
+  request, so the first visit after a quiet spell takes a few seconds.
