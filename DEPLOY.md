@@ -42,7 +42,7 @@ Set these in hPanel, never in the repo. None are needed for step 1.
 |---|---|
 | `DATABASE_URL` | `mysql://USER:PASSWORD@localhost:3306/DBNAME`, from hPanel Databases |
 | `SESSION_SECRET` | 32 or more random characters; signs session and code hashes |
-| `UPLOAD_DIR` | an absolute path outside the deploy directory, for example `/home/USER/awtm-uploads`. Create it with `mkdir -p` and `chmod 700`. |
+| `UPLOAD_DIR` | an absolute path outside the deploy directory, `/home/zekst/awtm-uploads`. Create it with `mkdir -p` and `chmod 700`. |
 | `APP_URL` | `https://awtmforge.com` |
 | `SMTP_HOST` | `smtp.hostinger.com` |
 | `SMTP_PORT` | `465` |
