@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "title": "Before we start",
+  "intro": "Five short sections, about ten minutes. It saves as you type, so you can leave and come back. I do not know is a real answer to any of these.",
+  "sections": [
+    {
+      "key": "business",
+      "title": "Your business",
+      "questions": [
+        { "key": "biz_what", "type": "short_text", "text": "What does your business sell, in one line?" },
+        { "key": "biz_where", "type": "pick_many", "text": "Where do you sell today?",
+          "options": [
+            { "id": "own_site", "label": "Own website" },
+            { "id": "amazon", "label": "Amazon" },
+            { "id": "flipkart", "label": "Flipkart" },
+            { "id": "social", "label": "Instagram or WhatsApp" },
+            { "id": "stores", "label": "Physical stores" },
+            { "id": "other", "label": "Somewhere else" }
+          ] },
+        { "key": "biz_volume", "type": "pick_one", "text": "Roughly how many orders a month?",
+          "options": [
+            { "id": "u100", "label": "Under 100" },
+            { "id": "100_500", "label": "100 to 500" },
+            { "id": "500_2k", "label": "500 to 2,000" },
+            { "id": "2k_10k", "label": "2,000 to 10,000" },
+            { "id": "more", "label": "More than that" },
+            { "id": "call", "label": "I would rather say on a call" }
+          ] },
+        { "key": "biz_traffic", "type": "long_text", "text": "Where does most of your traffic or footfall come from?", "help": "Ads, search, word of mouth, marketplaces, a physical shop. Rough is fine." },
+        { "key": "biz_customer", "type": "long_text", "text": "Who is your customer, in a sentence?", "help": "Who they are, not who you wish they were." }
+      ]
+    },
+    {
+      "key": "store",
+      "title": "What is going wrong, and what you are running on",
+      "questions": [
+        { "key": "st_why", "type": "long_text", "text": "What made you get in touch? In your words.", "help": "Do not tidy it up for us. The messy version is the useful one." },
+        { "key": "st_tried", "type": "long_text", "text": "What have you already tried, and who has touched it before?" },
+        { "key": "st_tuesday", "type": "long_text", "text": "If this were fixed, what is different on a normal Tuesday?", "help": "Fewer support messages, fewer refunds, one less thing you check at night." },
+        { "key": "st_platform", "type": "pick_one", "text": "Your store runs on",
+          "options": [
+            { "id": "shopify", "label": "Shopify" },
+            { "id": "woo", "label": "WooCommerce" },
+            { "id": "magento", "label": "Magento" },
+            { "id": "custom", "label": "Something custom" },
+            { "id": "dont_know", "label": "I do not know" }
+          ] },
+        { "key": "st_gateway", "type": "pick_many", "text": "Payments go through",
+          "options": [
+            { "id": "razorpay", "label": "Razorpay" },
+            { "id": "payu", "label": "PayU" },
+            { "id": "cashfree", "label": "Cashfree" },
+            { "id": "phonepe", "label": "PhonePe" },
+            { "id": "paytm", "label": "Paytm" },
+            { "id": "other", "label": "Something else" },
+            { "id": "dont_know", "label": "I do not know" }
+          ] },
+        { "key": "st_courier", "type": "pick_many", "text": "Shipping goes through",
+          "options": [
+            { "id": "shiprocket", "label": "Shiprocket" },
+            { "id": "delhivery", "label": "Delhivery" },
+            { "id": "bluedart", "label": "Blue Dart" },
+            { "id": "own", "label": "Our own arrangement" },
+            { "id": "other", "label": "Something else" }
+          ] },
+        { "key": "st_ads", "type": "pick_many", "text": "Do you run ads today?",
+          "options": [
+            { "id": "meta", "label": "Meta" },
+            { "id": "google", "label": "Google" },
+            { "id": "neither", "label": "Neither" },
+            { "id": "other", "label": "Somewhere else" }
+          ] },
+        { "key": "st_abroad", "type": "yes_no", "text": "Do you ship outside India?", "help": "Say more if yes. Where to, and how it goes." },
+        { "key": "st_url", "type": "link", "text": "Your store's address" },
+        { "key": "st_annoy", "type": "upload", "text": "Screenshots of anything that annoys you about it", "help": "On your phone, the way a customer sees it. Up to ten.", "max_files": 10 },
+        { "key": "st_admire", "type": "long_text", "text": "Two or three stores you think get it right, and one line on why" }
+      ]
+    },
+    {
+      "key": "look",
+      "title": "What it should look like",
+      "questions": [
+        { "key": "br_feel", "type": "short_text", "text": "Five words the store should feel like" },
+        { "key": "br_never", "type": "short_text", "text": "Three words it must never feel like" },
+        { "key": "br_direction", "type": "image_choice", "text": "Which of these feels closest to the mark you want?", "help": "Pick one or two.", "max_choices": 2,
+          "options": [
+            { "id": "wordmark", "label": "Wordmark", "image": "logo-wordmark" },
+            { "id": "monogram", "label": "Monogram", "image": "logo-monogram" },
+            { "id": "emblem", "label": "Emblem", "image": "logo-emblem" },
+            { "id": "mascot", "label": "Mascot", "image": "logo-mascot" },
+            { "id": "abstract", "label": "Abstract mark", "image": "logo-abstract" },
+            { "id": "combination", "label": "Combination", "image": "logo-combination" }
+          ] },
+        { "key": "br_existing", "type": "upload", "text": "Is there an existing logo?", "help": "Whatever you have, in any format.", "max_files": 5 },
+        { "key": "br_colours", "type": "long_text", "text": "Colours you are drawn to, and colours that are off-limits", "help": "A reason helps, if there is one." }
+      ]
+    },
+    {
+      "key": "decide",
+      "title": "Who decides",
+      "questions": [
+        { "key": "dec_others", "type": "long_text", "text": "Who else needs to see the work before you say yes?", "help": "A partner, a brother who runs the ads, an investor. Better we know now." },
+        { "key": "dec_calendar", "type": "long_text", "text": "Anything in the next eight weeks we should build around?", "help": "A sale, a launch, a festival, stock arriving. Dates if you have them." },
+        { "key": "dec_channel", "type": "pick_one", "text": "For quick things, how do you prefer we reach you?",
+          "options": [
+            { "id": "whatsapp", "label": "WhatsApp" },
+            { "id": "call", "label": "A call" },
+            { "id": "email", "label": "Email" }
+          ] }
+      ]
+    },
+    {
+      "key": "access",
+      "title": "Access",
+      "access_items": [
+        { "key": "acc_store", "label": "Store platform staff account", "help": "Settings, Users, Add staff. Theme and order permissions." },
+        { "key": "acc_dns", "label": "Domain and DNS", "help": "Collaborator access, or say the word and we send you the records to paste in yourself." },
+        { "key": "acc_gateway", "label": "Payment gateway, dashboard view only", "help": "The keys connect through the platform. They never travel by message." },
+        { "key": "acc_courier", "label": "Courier account invite", "help": "An invite from their dashboard." },
+        { "key": "acc_ads", "label": "Analytics and ads, agency access", "help": "Account level access to our agency account, not your personal login." },
+        { "key": "acc_brand", "label": "Brand files folder", "help": "A shared folder link. Logo, fonts, product photos." }
+      ],
+      "questions": [
+        { "key": "dec_signoff_name", "type": "short_text", "required": true, "text": "Who says yes on behalf of the business?" },
+        { "key": "dec_signoff_email", "type": "short_text", "required": true, "text": "Their email" }
+      ]
+    }
+  ]
+}

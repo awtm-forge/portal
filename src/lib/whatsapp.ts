@@ -1,0 +1,25 @@
+import { phoneDigits } from "@/lib/crypto";
+
+/** PORTAL-SPEC section 7. Every message is a function of the record. */
+export function waLink(phone: string, body: string): string {
+  return `https://wa.me/${phoneDigits(phone)}?text=${encodeURIComponent(body)}`;
+}
+
+export function questionnaireReadyMessage(input: { contactName: string; link: string }): string {
+  return [
+    `Hi ${input.contactName}, your questionnaire is ready.`,
+    input.link,
+    "It takes about ten minutes and saves as you type, so you can leave it and come back.",
+    "The page will ask for a six digit code the first time. It goes to the sign-off email you gave us.",
+  ].join("\n");
+}
+
+/** Only a hash of the link is stored, so the nudge points at the link already sent. */
+export function questionnaireNudgeMessage(input: { contactName: string; openSections: string[] }): string {
+  const what = input.openSections.length ? `Still open: ${input.openSections.join(", ")}.` : "A couple of sections are still open.";
+  return [
+    `Hi ${input.contactName}, quick one on the questionnaire. ${what}`,
+    "It is the same link I sent before. Say the word if you need it again.",
+    "If it is easier, say it out loud on a call and we will type it in.",
+  ].join("\n");
+}

@@ -1,0 +1,170 @@
+// awtm forge portal, front half. PORTAL-SPEC section 4 and INTAKE-SPEC section 12,
+// limited to what the front half needs. Stage, agreement, invoice, day30 and
+// signoff_event are not designed yet and are deliberately absent.
+// Timestamps are UTC. No money columns exist in this pass.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  sessions     AdminSession[]
+  intakeUploads Intake[]      @relation("uploadedBy")
+}
+
+model AdminSession {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id])
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  lastSeenAt  DateTime  @default(now())
+
+  @@index([adminUserId])
+}
+
+model Client {
+  id                 String    @id @default(cuid())
+  businessName       String
+  contactName        String
+  contactPhone       String
+  contactEmail       String
+  signoffPersonName  String
+  signoffPersonEmail String
+  // A sign-off email the client typed in the intake that differs from the
+  // one above. Codes keep going to signoffPersonEmail until admin confirms.
+  proposedSignoffName  String?
+  proposedSignoffEmail String?
+  proposedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  projects           Project[]
+}
+
+enum TypeOfWork {
+  STORE
+  APP
+  SAAS
+  MARKETING
+  BRAND
+}
+
+model Project {
+  id              String     @id @default(cuid())
+  clientId        String
+  client          Client     @relation(fields: [clientId], references: [id])
+  name            String
+  slug            String     @unique
+  typeOfWork      TypeOfWork
+  accessTokenHash String     @unique
+  tokenCreatedAt  DateTime   @default(now())
+  tokenRotatedAt  DateTime?
+  createdAt       DateTime   @default(now())
+  intake          Intake?
+  sessions        ClientSession[]
+  loginCodes      LoginCode[]
+  files           IntakeFile[]
+
+  @@index([clientId])
+}
+
+model ClientSession {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id])
+  tokenHash  String   @unique
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  userAgent  String?  @db.VarChar(400)
+
+  @@index([projectId])
+}
+
+enum CodePurpose {
+  LOGIN
+}
+
+model LoginCode {
+  id         String      @id @default(cuid())
+  projectId  String
+  project    Project     @relation(fields: [projectId], references: [id])
+  purpose    CodePurpose @default(LOGIN)
+  codeHash   String
+  sentTo     String
+  createdAt  DateTime    @default(now())
+  expiresAt  DateTime
+  attempts   Int         @default(0)
+  consumedAt DateTime?
+
+  @@index([projectId, createdAt])
+}
+
+model RateLimit {
+  key         String   @id @db.VarChar(191)
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+}
+
+model Intake {
+  id                  String     @id @default(cuid())
+  projectId           String     @unique
+  project             Project    @relation(fields: [projectId], references: [id])
+  document            Json
+  documentUploadedAt  DateTime   @default(now())
+  documentUploadedById String
+  documentUploadedBy  AdminUser  @relation("uploadedBy", fields: [documentUploadedById], references: [id])
+  hiddenQuestionKeys  Json
+  sectionsDone        Json       @default("[]")
+  answers             Json
+  accessGranted       Json
+  submittedAt         DateTime?
+  lastSavedAt         DateTime?
+
+  @@index([documentUploadedById])
+}
+
+model IntakeFile {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  questionKey  String
+  storedPath   String
+  thumbPath    String?
+  originalName String   @db.VarChar(300)
+  mimeType     String
+  sizeBytes    Int
+  uploadedAt   DateTime @default(now())
+
+  @@index([projectId, questionKey])
+}
+
+model ImageLibrary {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  storedPath String
+  mimeType   String
+  caption    String
+  uploadedAt DateTime @default(now())
+}
+
+model Enquiry {
+  id        String   @id @default(cuid())
+  name      String
+  business  String
+  problem   String   @db.Text
+  budget    String
+  adSpend   String
+  contact   String
+  createdAt DateTime @default(now())
+}
