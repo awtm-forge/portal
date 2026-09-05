@@ -11,7 +11,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx scripts/seed.ts",
-    "admin:create": "tsx scripts/admin-create.ts"
+    "admin:create": "tsx scripts/admin-create.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
@@ -40,7 +41,8 @@
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=20"

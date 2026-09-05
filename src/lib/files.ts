@@ -37,6 +37,9 @@ export async function processUpload(input: Buffer): Promise<ProcessResult> {
     }
     if (m === "image/jpeg" || m === "image/png" || m === "image/webp") return reencode(input, m);
     if (m === "application/pdf") return { ok: true, file: { kind: "pdf", mime: "application/pdf", ext: "pdf", data: input, thumb: null } };
+    if (m === "application/xml" || m === "text/xml" || m === "image/svg+xml") {
+      return looksLikeSvg(input) ? sanitiseSvg(input) : { ok: false, reason: "type" };
+    }
     return { ok: false, reason: "type" };
   }
   if (looksLikeSvg(input)) return sanitiseSvg(input);
@@ -76,7 +79,7 @@ function safeHref(value: string): boolean {
 export function sanitiseSvg(input: Buffer): ProcessResult {
   let doc;
   try {
-    const parser = new DOMParser({ onError: () => { throw new Error("bad svg"); } });
+    const parser = new DOMParser({ onError: (level) => { if (level === "fatalError") throw new Error("bad svg"); } });
     doc = parser.parseFromString(input.toString("utf8"), "image/svg+xml");
   } catch {
     return { ok: false, reason: "bad_svg" };
@@ -84,6 +87,19 @@ export function sanitiseSvg(input: Buffer): ProcessResult {
   const root = doc.documentElement;
   if (!root || (root.localName ?? "").toLowerCase() !== "svg") return { ok: false, reason: "bad_svg" };
 
+  const cleanAttributes = (ce: XElement, name: string) => {
+    for (const attr of Array.from(ce.attributes)) {
+      const an = attr.name.toLowerCase();
+      const av = attr.value;
+      if (an.startsWith("on")) { ce.removeAttribute(attr.name); continue; }
+      if (an === "href" || an === "xlink:href" || an.endsWith(":href")) {
+        if (!safeHref(av)) { ce.removeAttribute(attr.name); continue; }
+        if (name === "use" && !av.trim().startsWith("#")) { ce.removeAttribute(attr.name); continue; }
+      }
+      if (an === "style" && /url\s*\(|expression\s*\(|javascript:/i.test(av)) { ce.removeAttribute(attr.name); continue; }
+      if (/url\s*\(\s*['"]?\s*(https?:|\/\/)/i.test(av)) { ce.removeAttribute(attr.name); continue; }
+    }
+  };
   const walk = (el: XElement) => {
     const children = Array.from(el.childNodes);
     for (const child of children) {
@@ -95,23 +111,14 @@ export function sanitiseSvg(input: Buffer): ProcessResult {
           const css = ce.textContent ?? "";
           if (/url\s*\(|@import|expression\s*\(/i.test(css)) { el.removeChild(child); continue; }
         }
-        for (const attr of Array.from(ce.attributes)) {
-          const an = attr.name.toLowerCase();
-          const av = attr.value;
-          if (an.startsWith("on")) { ce.removeAttribute(attr.name); continue; }
-          if (an === "href" || an === "xlink:href" || an.endsWith(":href")) {
-            if (!safeHref(av)) { ce.removeAttribute(attr.name); continue; }
-            if (name === "use" && !av.trim().startsWith("#")) { ce.removeAttribute(attr.name); continue; }
-          }
-          if (an === "style" && /url\s*\(|expression\s*\(|javascript:/i.test(av)) { ce.removeAttribute(attr.name); continue; }
-          if (/url\s*\(\s*['"]?\s*(https?:|\/\/)/i.test(av)) { ce.removeAttribute(attr.name); continue; }
-        }
+        cleanAttributes(ce, name);
         walk(ce);
       } else if (child.nodeType === 7 || child.nodeType === 10) {
         el.removeChild(child);
       }
     }
   };
+  cleanAttributes(root, "svg");
   walk(root);
   if (!root.getAttribute("xmlns")) root.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 

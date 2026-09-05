@@ -17,8 +17,22 @@ function connectionConfig() {
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({ adapter: new PrismaMariaDb(connectionConfig()) });
+function client(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = new PrismaClient({ adapter: new PrismaMariaDb(connectionConfig()) });
+  }
+  return globalForPrisma.prisma;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+/**
+ * Created on first use, not at import, so a build with no DATABASE_URL (the
+ * marketing-only deploy) and a unit test that never touches the database
+ * can import modules that mention it.
+ */
+export const db: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const c = client();
+    const value = Reflect.get(c, prop, receiver);
+    return typeof value === "function" ? value.bind(c) : value;
+  },
+});
