@@ -57,7 +57,7 @@ Without `SMTP_HOST` the app refuses to send codes in production.
 Hostinger Cloud plans include SSH. From the app directory:
 
 ```bash
-npm run admin:create -- rahul@awtmforge.com "Rahul"
+npm run admin:create -- rahul@zyphextech.com "zekst"
 ```
 
 ```bash
@@ -65,7 +65,9 @@ npm run admin:create -- ayush@awtmforge.com "Ayush"
 ```
 
 Each asks for a password with echo off. Twelve characters or more. Run the
-same command again to change a password. Two accounts is the limit.
+same command again to change a password or the display name. Two accounts
+is the limit. The email is what you sign in with; the name is what the admin
+pages show.
 
 Then seed the image library with the six logo directions:
 
