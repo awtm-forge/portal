@@ -163,7 +163,7 @@ export function IntakeRenderer(p: RendererProps) {
   return (
     <div>
       <div style={{ padding: "24px 20px 18px" }} className="stack">
-        <p className="k">{p.mode === "team" ? "Typing for the client" : "Before we start"}</p>
+        <p className="k">{p.mode === "team" ? "Typing for the client" : "Your questionnaire"}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>{p.doc.title}</h1>
         {p.doc.intro && <p className="c-sub" style={{ marginTop: 10 }}>{p.doc.intro}</p>}
         {p.mode === "team" && <p className="help" style={{ marginTop: 8, color: "var(--ember)" }}>Every answer typed here is marked as taken on a call, not entered by the client.</p>}

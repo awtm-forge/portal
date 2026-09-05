@@ -20,7 +20,13 @@ export async function POST(request: Request) {
   if (origin && host && new URL(origin).host !== host) {
     return NextResponse.json({ error: fallback }, { status: 403 });
   }
-  if (!(await allow(`enquiry:ip:${clientIp(request.headers)}`, 5, 60 * 60).catch(() => false))) {
+  let allowed: boolean;
+  try {
+    allowed = await allow(`enquiry:ip:${clientIp(request.headers)}`, 5, 60 * 60);
+  } catch {
+    return NextResponse.json({ error: fallback }, { status: 503 });
+  }
+  if (!allowed) {
     return NextResponse.json({ error: "Too many messages from this connection. Try again in an hour." }, { status: 429 });
   }
   let body: unknown;
