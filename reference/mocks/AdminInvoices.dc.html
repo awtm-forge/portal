@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#141110; color:#EDE7DC; font-family:"Newsreader",Georgia,serif; font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  a { color:#E08536; text-decoration:none; } a:hover { color:#B5661F; }
+  p { margin:0; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+  .kick { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:9.5px; letter-spacing:.15em; text-transform:uppercase; color:#7A7166; }
+  .gro { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; }
+  .fld { border:1px solid #2E2925; background:#141110; border-radius:2px; padding:9px 11px; font-size:14px; color:#EDE7DC; }
+
+  </style>
+</helmet>
+<div style="width:1280px;min-height:800px;background:#141110;display:flex">
+  <div style="width:212px;flex:none;border-right:1px solid #2E2925;background:#1B1715;display:flex;flex-direction:column;gap:22px;padding:18px 14px">
+    <span class="gro" style="font-weight:600;font-size:15px;padding:0 4px">awtm <span style="color:#E08536">forge</span></span>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <a href="#" style="display:block;padding:8px 12px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:#A69C8E;border-left:2px solid transparent">Projects</a>
+      <a href="#" style="display:block;padding:8px 12px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:#A69C8E;border-left:2px solid transparent">Clients</a>
+      <a href="#" style="display:block;padding:8px 12px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;background:#221D1A;color:#EDE7DC;border-left:2px solid #E08536">Invoices</a>
+      <a href="#" style="display:block;padding:8px 12px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:#A69C8E;border-left:2px solid transparent">Settings</a>
+    </div>
+    <div style="margin-top:auto;padding:0 4px;display:flex;flex-direction:column;gap:3px"><span class="kick">Signed in</span><span class="mono" style="font-size:11.5px;color:#A69C8E">Rahul</span></div>
+  </div>
+  <div style="flex:1;min-width:0;padding:26px 30px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1 class="gro" style="margin:0;font-size:25px;font-weight:600;letter-spacing:-.02em">Invoices</h1>
+      <p class="mono" style="font-size:11.5px;color:#A69C8E">Financial year 2026 to 2027 &middot; next number AWTM/26-27/010</p>
+    </div>
+    <div style="border:1px solid #2E2925;background:#1B1715;border-radius:2px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;border-color:#E08536">
+      <span class="kick">Mark AWTM/26-27/003 paid</span>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:5px"><span class="mono" style="font-size:10px;color:#7A7166">Received on</span><div class="fld mono" style="font-size:12px;width:140px">5 Sep 2026</div></div>
+        <div style="display:flex;flex-direction:column;gap:5px"><span class="mono" style="font-size:10px;color:#7A7166">How</span><div class="fld mono" style="font-size:12px;width:150px">Bank transfer</div></div>
+        <div style="display:flex;flex-direction:column;gap:5px"><span class="mono" style="font-size:10px;color:#7A7166">Reference</span><div class="fld mono" style="font-size:12px;width:200px">NEFT SBIN0034221987</div></div>
+        <a href="#" style="display:inline-block;background:#E08536;border-radius:2px;padding:9px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#141110;margin-top:18px">Mark paid</a>
+      </div>
+    </div>
+    <div style="border:1px solid #2E2925;background:#1B1715;border-radius:2px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr 0.9fr 0.9fr 1fr;gap:14px;padding-bottom:8px;border-bottom:1px solid #2E2925">
+        <span class="kick">Number</span><span class="kick">Client</span><span class="kick">Stage</span><span class="kick">Issued</span><span class="kick" style="text-align:right">Amount</span><span class="kick" style="text-align:right">Status</span>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr 0.9fr 0.9fr 1fr;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #252019">
+          <span class="mono" style="font-size:12.5px">AWTM/26-27/009</span>
+          <span style="font-size:13.5px">Meher Electricals</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">4, Launch</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">14 Oct</span>
+          <span class="mono" style="font-size:12.5px;text-align:right">Rs 36,000</span>
+          <span class="mono" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A69C8E;text-align:right">Paid</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr 0.9fr 0.9fr 1fr;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #252019">
+          <span class="mono" style="font-size:12.5px">AWTM/26-27/005</span>
+          <span style="font-size:13.5px">Kavya Appliances</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">2, Open</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">5 Sep</span>
+          <span class="mono" style="font-size:12.5px;text-align:right">Rs 1,44,000</span>
+          <span class="mono" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#E08536;text-align:right">Unpaid</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr 0.9fr 0.9fr 1fr;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #252019">
+          <span class="mono" style="font-size:12.5px">AWTM/26-27/004</span>
+          <span style="font-size:13.5px">Kavya Appliances</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">1, Shape</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">21 Aug</span>
+          <span class="mono" style="font-size:12.5px;text-align:right">Rs 1,44,000</span>
+          <span class="mono" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A69C8E;text-align:right">Paid</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr 0.9fr 0.9fr 1fr;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #252019">
+          <span class="mono" style="font-size:12.5px">AWTM/26-27/003</span>
+          <span style="font-size:13.5px">Sundara Living</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">2, Open</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">27 Aug</span>
+          <span class="mono" style="font-size:12.5px;text-align:right">Rs 1,56,000</span>
+          <span class="mono" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#E08536;text-align:right">9 days late</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr 0.9fr 0.9fr 1fr;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #252019">
+          <span class="mono" style="font-size:12.5px">AWTM/26-27/002</span>
+          <span style="font-size:13.5px">Ridhi Home</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">Fixed job</span>
+          <span class="mono" style="font-size:11.5px;color:#A69C8E">12 Aug</span>
+          <span class="mono" style="font-size:12.5px;text-align:right">Rs 45,000</span>
+          <span class="mono" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A69C8E;text-align:right">Paid</span>
+        </div>
+      </div>
+    </div>
+    <div style="border:1px solid #2E2925;background:#1B1715;border-radius:2px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+      <span class="kick">How numbering works, so nobody breaks it</span>
+      <p style="font-size:14px;color:#A69C8E">Sequential inside the financial year, which runs 1 April to 31 March. Allocated when the invoice is issued, in the same transaction. Never reused, never skipped. A cancelled invoice keeps its number and stays in the list.</p>
+      <p class="mono" style="font-size:11px;color:#7A7166">GST is off. When the GSTIN is filled in Settings, a tax line appears here and on every invoice issued after that.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,235 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Client"
+    },
+    {
+      "id": "page-2",
+      "name": "Admin"
+    },
+    {
+      "id": "page-3",
+      "name": "Invoice"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "ClientIntake.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 375,
+      "h": 1500,
+      "title": "Client: the questionnaire"
+    },
+    {
+      "file": "ClientIntakeAccess.dc.html",
+      "page": "page-1",
+      "x": 455,
+      "y": 0,
+      "w": 375,
+      "h": 1420,
+      "title": "Client: access, section 5"
+    },
+    {
+      "file": "Main.dc.html",
+      "page": "page-1",
+      "x": 910,
+      "y": 0,
+      "w": 375,
+      "h": 1620,
+      "title": "Client: stage in progress"
+    },
+    {
+      "file": "ClientReady.dc.html",
+      "page": "page-1",
+      "x": 1365,
+      "y": 0,
+      "w": 375,
+      "h": 1560,
+      "title": "Client: stage ready, agree"
+    },
+    {
+      "file": "ClientAgree.dc.html",
+      "page": "page-1",
+      "x": 1820,
+      "y": 0,
+      "w": 375,
+      "h": 700,
+      "title": "Client: the six digit code"
+    },
+    {
+      "file": "ClientAgreed.dc.html",
+      "page": "page-1",
+      "x": 2275,
+      "y": 0,
+      "w": 375,
+      "h": 1140,
+      "title": "Client: agreed, invoice raised"
+    },
+    {
+      "file": "ClientLaunched.dc.html",
+      "page": "page-1",
+      "x": 2730,
+      "y": 0,
+      "w": 375,
+      "h": 1260,
+      "title": "Client: after launch"
+    },
+    {
+      "file": "ClientDay30.dc.html",
+      "page": "page-1",
+      "x": 3185,
+      "y": 0,
+      "w": 375,
+      "h": 1260,
+      "title": "Client: day 30"
+    },
+    {
+      "file": "ClientDay30Done.dc.html",
+      "page": "page-1",
+      "x": 3640,
+      "y": 0,
+      "w": 375,
+      "h": 680,
+      "title": "Client: day 30 done"
+    },
+    {
+      "file": "AdminProjects.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 780,
+      "title": "Admin: projects and needs attention"
+    },
+    {
+      "file": "AdminProject.dc.html",
+      "page": "page-2",
+      "x": 1400,
+      "y": 0,
+      "w": 1280,
+      "h": 900,
+      "title": "Admin: one project"
+    },
+    {
+      "file": "AdminStage.dc.html",
+      "page": "page-2",
+      "x": 2800,
+      "y": 0,
+      "w": 1280,
+      "h": 900,
+      "title": "Admin: a stage, and the WhatsApp fallback"
+    },
+    {
+      "file": "AdminUpdate.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 1060,
+      "w": 1280,
+      "h": 760,
+      "title": "Admin: weekly update"
+    },
+    {
+      "file": "AdminInvoices.dc.html",
+      "page": "page-2",
+      "x": 1400,
+      "y": 1060,
+      "w": 1280,
+      "h": 850,
+      "title": "Admin: invoices"
+    },
+    {
+      "file": "AdminDay30.dc.html",
+      "page": "page-2",
+      "x": 2800,
+      "y": 1060,
+      "w": 1280,
+      "h": 780,
+      "title": "Admin: day 30"
+    },
+    {
+      "file": "AdminSettings.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 2060,
+      "w": 1280,
+      "h": 700,
+      "title": "Admin: settings"
+    },
+    {
+      "file": "InvoicePrint.dc.html",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 794,
+      "h": 1123,
+      "title": "Invoice, A4",
+      "print": "fixed"
+    },
+    {
+      "file": "AdminIntake.dc.html",
+      "page": "page-2",
+      "x": 1400,
+      "y": 2060,
+      "w": 1280,
+      "h": 900,
+      "title": "Admin: what they told us"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "n-client",
+      "page": "page-1",
+      "x": 0,
+      "y": -190,
+      "w": 900,
+      "text": "CLIENT ZONE. One link, no password, opened on a phone.\nReads left to right as a project actually runs: the questionnaire right after signing, then the normal week, the stage going ready, the code, the stamp and invoice, life after launch, day 30.\nGaps to look for: is anything here you would still end up explaining on WhatsApp?"
+    },
+    {
+      "id": "n-nochat",
+      "page": "page-1",
+      "x": 3185,
+      "y": -190,
+      "w": 830,
+      "text": "DELIBERATELY ABSENT: no chat, no comments, no file upload, no tasks. WhatsApp keeps those.\nThe referral ask is parked, so day 30 is only the number and the quote."
+    },
+    {
+      "id": "n-admin",
+      "page": "page-2",
+      "x": 0,
+      "y": -190,
+      "w": 1100,
+      "text": "TEAM ZONE. Both of you, same access, no self signup.\nThe two screens worth arguing about: 'Admin: a stage' has the WhatsApp sign-off fallback, because clients will type ok done instead of tapping.\n'Admin: invoices' is where the numbering rule lives, and it is the one thing that is painful to change later."
+    },
+    {
+      "id": "n-money",
+      "page": "page-2",
+      "x": 2800,
+      "y": 1900,
+      "w": 1100,
+      "text": "MONEY PATH, end to end: mark ready, client agrees or you record their WhatsApp reply, invoice is created with the next number, you mark it paid when the transfer lands.\nNothing invoices before a sign-off. That rule is the reason this exists."
+    },
+    {
+      "id": "n-invoice",
+      "page": "page-3",
+      "x": 840,
+      "y": 40,
+      "w": 520,
+      "text": "Printed from the browser, no PDF library.\nBank details are placeholders until you fill Settings.\nNo GST line while the GSTIN is empty. Fill it in later and this page grows a tax block, without a rebuild."
+    },
+    {
+      "id": "n-intake",
+      "page": "page-1",
+      "x": 0,
+      "y": 1560,
+      "w": 830,
+      "text": "THE QUESTIONNAIRE. Sent the moment they agree, done before the kickoff call.\nFive sections, saves as you type, and 'I do not know' is a real answer everywhere.\nSection 5 grants access by ticking, and the page refuses to accept a password, a key or an OTP anywhere in it.\nStage 1 cannot be marked ready while sections are unanswered, which is what makes it happen without chasing."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

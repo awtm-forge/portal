@@ -1,0 +1,356 @@
+<title>awtm forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground:#141110; --surface:#1B1715; --surface-2:#221D1A;
+    --ink:#EDE7DC; --muted:#A69C8E; --faint:#7A7166;
+    --rule:#2E2925; --rule-soft:#252019;
+    --ember:#E08536; --ember-deep:#B5661F; --ember-soft:#2E2115;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } }
+  body { background:var(--ground); color:var(--ink); font-family:"Newsreader",Georgia,serif; font-size:18px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .disp { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+  a { color:inherit; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--ember); outline-offset:3px; }
+  section { scroll-margin-top:76px; }
+
+  nav.top {
+    position:sticky; top:0; z-index:50;
+    background:color-mix(in srgb, var(--ground) 88%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--rule-soft);
+    display:flex; align-items:center; gap:24px;
+    padding:14px clamp(20px,4vw,48px);
+  }
+  .lockup { display:flex; align-items:baseline; gap:12px; text-decoration:none; }
+  .wordmark { font-family:"Bricolage Grotesque",sans-serif; font-weight:800; font-size:19px; letter-spacing:-.02em; }
+  .lockup span.tag { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
+  nav.top .links { margin-left:auto; display:flex; align-items:center; gap:26px; font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.06em; }
+  nav.top .links a { text-decoration:none; color:var(--muted); }
+  nav.top .links a:hover { color:var(--ink); }
+  .btn {
+    display:inline-block; text-decoration:none; text-align:center;
+    font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:15.5px;
+    padding:12px 22px; border-radius:3px; border:1px solid var(--ember);
+  }
+  .btn.solid { background:var(--ember); color:#181008; }
+  .btn.solid:hover { background:#EC934B; }
+  .btn.ghost { color:var(--ink); border-color:var(--rule); }
+  .btn.ghost:hover { border-color:var(--ember); }
+  nav.top .btn { padding:9px 16px; font-size:13.5px; }
+  nav.top .links a.btn.solid { color:#181008; }
+
+  .shell { max-width:1120px; margin:0 auto; padding:0 clamp(20px,4vw,48px); }
+
+  /* hero */
+  .hero { padding:clamp(60px,9vw,104px) 0 clamp(52px,7vw,84px); display:grid; grid-template-columns:1.15fr .85fr; gap:clamp(32px,5vw,60px); align-items:start; }
+  .hero .left { display:flex; flex-direction:column; gap:24px; }
+  .offercard { border:1px solid var(--ember-deep); background:var(--surface); display:flex; flex-direction:column; }
+  .offercard .oc-top { background:var(--ember-soft); border-bottom:1px solid var(--ember-deep); padding:18px 24px; display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .offercard .oc-name { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:20px; letter-spacing:-.01em; }
+  .offercard .oc-price { font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:20px; color:var(--ember); }
+  .offercard ul { margin:0; padding:22px 24px; list-style:none; display:flex; flex-direction:column; gap:12px; }
+  .offercard li { position:relative; padding-left:22px; font-size:16px; line-height:1.45; color:var(--muted); }
+  .offercard li::before { content:""; position:absolute; left:2px; top:.62em; width:9px; height:1.5px; background:var(--ember); }
+  .offercard li.key { color:var(--ink); font-weight:500; }
+  .offercard .oc-foot { border-top:1px solid var(--rule); padding:16px 24px 20px; display:flex; flex-direction:column; gap:12px; }
+  .offercard .oc-foot .fine { font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.05em; color:var(--faint); line-height:1.5; }
+  .hero h1 {
+    font-family:"Bricolage Grotesque",sans-serif; font-variation-settings:"opsz" 96;
+    font-weight:800; font-size:clamp(52px,8.4vw,108px); line-height:.92; letter-spacing:-.03em;
+    margin:0; text-transform:uppercase; text-wrap:balance;
+  }
+  .hero h1 .rot { color:var(--ember); display:inline-block; min-width:5.2ch; }
+  .hero h1 .rot span { display:inline-block; animation:fadein .5s ease both; }
+  @keyframes fadein { from { opacity:0; transform:translateY(.12em); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) { .hero h1 .rot span { animation:none; } }
+  .hero .sub { font-size:clamp(19px,2.3vw,23px); line-height:1.5; color:var(--muted); max-width:52ch; margin:0; }
+  .hero .ctas { display:flex; flex-wrap:wrap; gap:14px; }
+  .factline { font-family:"IBM Plex Mono",monospace; font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+  .factline b { color:var(--muted); font-weight:500; }
+
+  .sec { padding:clamp(56px,8vw,96px) 0; border-top:1px solid var(--rule-soft); display:flex; flex-direction:column; gap:clamp(26px,4vw,40px); }
+  .kick { font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ember); margin:0; }
+  h2.sec-t { font-family:"Bricolage Grotesque",sans-serif; font-variation-settings:"opsz" 48; font-weight:600; font-size:clamp(30px,4.6vw,46px); line-height:1.04; letter-spacing:-.022em; margin:0; max-width:22ch; text-wrap:balance; }
+  .lead { font-size:19px; color:var(--muted); max-width:56ch; margin:0; }
+
+
+  .doors { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; }
+  .door { background:var(--surface); border:1px solid var(--rule); padding:28px 26px; display:flex; flex-direction:column; gap:13px; }
+  .door .d-k { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); }
+  .door h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:24px; margin:0; letter-spacing:-.015em; }
+  .door p { margin:0; font-size:16.5px; line-height:1.5; color:var(--muted); }
+  .door p.adj { color:var(--ink); border-top:1px solid var(--rule); padding-top:13px; }
+
+  .proof { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; }
+  .fact { border-top:2px solid var(--ember); padding-top:16px; display:flex; flex-direction:column; gap:8px; }
+  .fact h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:19px; margin:0; }
+  .fact p { margin:0; font-size:15.5px; color:var(--muted); line-height:1.5; }
+  .guarantee { background:var(--ember-soft); border-left:3px solid var(--ember); padding:20px 24px; font-size:18px; max-width:66ch; }
+
+  .rungs { display:flex; flex-direction:column; border:1px solid var(--rule); background:var(--surface); }
+  .rung { display:grid; grid-template-columns:1fr auto; gap:8px 24px; padding:22px 26px; border-bottom:1px solid var(--rule); align-items:baseline; }
+  .rung:last-child { border-bottom:none; }
+  .rung h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:20px; margin:0; }
+  .rung p { margin:4px 0 0; font-size:15.5px; color:var(--muted); max-width:52ch; }
+  .rung .price { font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:16.5px; color:var(--ember); white-space:nowrap; }
+
+  .work { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+  .case { border:1px solid var(--rule); background:var(--surface); padding:26px; display:flex; flex-direction:column; gap:10px; min-height:210px; }
+  .case.pending { border-style:dashed; background:transparent; color:var(--faint); }
+  .case .c-k { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ember); }
+  .case.pending .c-k { color:var(--faint); }
+  .case h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:21px; margin:0; }
+  .case p { margin:0; font-size:15.5px; line-height:1.5; color:var(--muted); }
+
+  .people { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; max-width:820px; }
+  .person { border:1px solid var(--rule); background:var(--surface); padding:26px; display:flex; flex-direction:column; gap:9px; }
+  .person h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:20px; margin:0; }
+  .person .role { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ember); }
+  .person p { margin:0; font-size:15.5px; color:var(--muted); line-height:1.5; }
+
+  .faq { display:flex; flex-direction:column; border-top:1px solid var(--rule); max-width:820px; }
+  .faq details { border-bottom:1px solid var(--rule); }
+  .faq summary { cursor:pointer; padding:18px 4px; font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:18px; list-style:none; display:flex; justify-content:space-between; gap:16px; }
+  .faq summary::after { content:"+"; color:var(--ember); font-weight:400; }
+  .faq details[open] summary::after { content:"–"; }
+  .faq details p { margin:0; padding:0 4px 20px; font-size:16.5px; color:var(--muted); max-width:64ch; line-height:1.55; }
+
+  .startgrid { display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,56px); align-items:start; }
+  .ways { display:flex; flex-direction:column; gap:18px; }
+  .way { border-left:2px solid var(--ember); padding-left:18px; }
+  .way h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:18px; margin:0 0 4px; }
+  .way p { margin:0; font-size:15.5px; color:var(--muted); }
+  form.dummy { display:flex; flex-direction:column; gap:14px; background:var(--surface); border:1px solid var(--rule); padding:26px; }
+  form.dummy label { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); display:flex; flex-direction:column; gap:7px; }
+  form.dummy input, form.dummy textarea, form.dummy select {
+    background:var(--ground); border:1px solid var(--rule); color:var(--ink);
+    font-family:"Newsreader",serif; font-size:16.5px; padding:11px 13px; border-radius:2px; width:100%;
+  }
+  form.dummy textarea { min-height:88px; resize:vertical; }
+  form.dummy button { border:none; cursor:pointer; }
+
+  .flow { display:flex; flex-direction:column; border:1px solid var(--rule); background:var(--surface); }
+  .flow > div { display:grid; grid-template-columns:64px 1fr; border-bottom:1px solid var(--rule); }
+  .flow > div:last-child { border-bottom:none; }
+  .flow .n { font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--ember); padding:22px 0 22px 24px; }
+  .flow .t { padding:22px 26px 22px 0; display:flex; flex-direction:column; gap:5px; }
+  .flow .t h3 { font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:19px; margin:0; }
+  .flow .t p { margin:0; font-size:15.5px; color:var(--muted); line-height:1.5; max-width:62ch; }
+
+  footer.site { border-top:1px solid var(--rule); padding:36px 0 60px; display:flex; flex-wrap:wrap; gap:10px 32px; font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+
+  .dummy-note { background:var(--ember-soft); border:1px dashed var(--ember-deep); color:var(--muted); font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.05em; padding:10px 14px; }
+
+  @media (max-width:900px) {
+    .hero { grid-template-columns:1fr; }
+  }
+  @media (max-width:760px) {
+    nav.top .links a.hidem { display:none; }
+    .lockup span.tag { display:none; }
+    .startgrid { grid-template-columns:1fr; }
+    .rung { grid-template-columns:1fr; }
+  }
+</style>
+
+<nav class="top">
+  <a class="lockup" href="#top"><span class="wordmark">awtm forge</span><span class="tag">Built in one piece</span></a>
+  <div class="links">
+    <a class="hidem" href="#doors">What we do</a>
+    <a class="hidem" href="#work">Work</a>
+    <a class="hidem" href="#about">About</a>
+    <a class="btn solid" href="#start">Start here</a>
+  </div>
+</nav>
+
+<div class="shell" id="top">
+
+  <header class="hero">
+    <div class="left">
+      <p class="kick">We answer</p>
+      <h1>We <span class="rot" id="rot"><span>build</span></span></h1>
+      <p class="sub">Storefronts, apps and the systems behind them. From the first build to the month after launch, we are the one team accountable for everything between your product and your customer.</p>
+      <div class="ctas">
+        <a class="btn solid" href="#start">Start the two weeks</a>
+      </div>
+      <p class="factline"><b>A fixed price before we start</b> · <b>Paid only when you sign off</b> · <b>A founder runs it start to finish</b></p>
+    </div>
+    <aside class="offercard">
+      <div class="oc-top">
+        <span class="oc-name">Start with two weeks</span>
+        <span class="oc-price">Fixed fee</span>
+      </div>
+      <ul>
+        <li>We find what is actually costing you sales, and put a number on it you can check.</li>
+        <li>We build a working version of the fix. On a real link, yours to keep.</li>
+        <li>A fixed price and a fixed start date for the build, held for thirty days.</li>
+        <li class="key">Every rupee of it comes off your build price if you go ahead.</li>
+      </ul>
+      <div class="oc-foot">
+        <a class="btn solid" href="#start">Start the two weeks</a>
+        <span class="fine">If the fix turns out to be small, we say so, and we do it for what it is worth.</span>
+      </div>
+    </aside>
+  </header>
+
+  <section class="sec" id="doors">
+    <p class="kick">What we do</p>
+    <h2 class="sec-t">Four doors into the same room.</h2>
+    <p class="lead">Most of it starts the same way: growth arriving faster than the setup can take it. Come in for a store, an app, a campaign or a brand. Either way you get the same team, and the pieces arrive already fitting each other.</p>
+    <div class="doors">
+      <div class="door">
+        <span class="d-k">Web development</span>
+        <h3>The store</h3>
+        <p>Where growth shows up first, and where it breaks first. Storefronts that stay fast when the catalogue grows, checkouts that stop leaking orders, and the connections to payments, couriers and inventory that keep the promise the ad made.</p>
+        <p class="adj">Because we also run the marketing, a slow page is never "the other team's problem." It is one fault, not two invoices.</p>
+      </div>
+      <div class="door">
+        <span class="d-k">App development</span>
+        <h3>The app</h3>
+        <p>Repeat purchase lives here, and so does your operation. Customer apps people keep on their phone, internal tools your team actually uses, and the backend both stand on.</p>
+        <p class="adj">Built by the same people who built your store, so your app and your site never disagree about stock, price, or who your customer is.</p>
+      </div>
+      <div class="door">
+        <span class="d-k">Marketing</span>
+        <h3>The demand</h3>
+        <p>Ads, search, email, retention. The team spending your ad money is the team that built the page it lands on. When the numbers dip, nobody blames the website, because we are the website.</p>
+        <p class="adj">Reported in your numbers, orders and margin, never in impressions.</p>
+      </div>
+      <div class="door">
+        <span class="d-k">Design</span>
+        <h3>The face</h3>
+        <p>Brand identity, store and app design, the creative your ads run on. For a brand selling direct, design is why a stranger trusts you enough to type their card number.</p>
+        <p class="adj">Designed by the people building the thing, so what you approve is what ships, pixel for pixel.</p>
+      </div>
+    </div>
+    <p class="lead">Custom software and SaaS builds run the same way, as serious projects with the same team and the same contract. If your problem does not fit a box above, that is normal. Most real ones do not.</p>
+  </section>
+
+  <section class="sec" id="how">
+    <p class="kick">How we work</p>
+    <h2 class="sec-t">The same loop, every stage.</h2>
+    <p class="lead">Before a stage starts, we write down together what finished looks like. While it runs, you can open it on a real link whenever you want. At the end you check it against what we wrote. If it passes, you sign it off and we invoice for that stage. If it does not, we keep working, and we do not invoice.</p>
+    <p class="lead">That is the whole method. What follows is that loop, four times.</p>
+    <div class="flow">
+      <div><span class="n">01</span><div class="t"><h3>Agree the shape</h3><p>One call, then one page: what we are building, what it costs, when it lands, and what done means at each stage. You read those criteria before you sign anything, because they are what you will be holding us to.</p></div></div>
+      <div><span class="n">02</span><div class="t"><h3>Something you can open</h3><p>By day ten there is a real link, not a screenshot. It will be rough, and that is the point. You correct us while correcting is still cheap.</p></div></div>
+      <div><span class="n">03</span><div class="t"><h3>The build</h3><p>A working session every week in your timezone, and a short written update whether or not anything went wrong. You always know what moved, what is next, and what we need from you and by when.</p></div></div>
+      <div><span class="n">04</span><div class="t"><h3>Launch, and the month after</h3><p>We do not disappear at go-live. Either we run it monthly, or we hand over with everything documented and every access transferred. Both are fine. Quietly vanishing is not one of the options.</p></div></div>
+    </div>
+    <div class="proof">
+      <div class="fact"><h3>A price, not a rate</h3><p>One number for the whole thing, agreed before anyone starts. No meter running, no surprise at the end.</p></div>
+      <div class="fact"><h3>Paid on your sign-off</h3><p>30 percent to begin, 30 at the midpoint, 30 on delivery, 10 after launch. Each one released only when you have signed that stage off.</p></div>
+      <div class="fact"><h3>A founder throughout</h3><p>The person on your first call runs your project to the last invoice. You are never handed to someone you have not met.</p></div>
+      <div class="fact"><h3>We do not discount</h3><p>If the budget does not fit, we cut scope and tell you exactly what you are losing. New work gets a new number, agreed before it begins.</p></div>
+    </div>
+    <p class="guarantee">One team builds it, runs it, and answers for it. The people who built your store are the people who pick up the phone in month six.</p>
+  </section>
+
+  <section class="sec" id="work">
+    <p class="kick">The work</p>
+    <h2 class="sec-t">What we have actually built.</h2>
+    <div class="work">
+      <div class="case">
+        <span class="c-k">In build · launching 31 Oct 2026</span>
+        <h3>VRG EV</h3>
+        <p>An EV charging and fleet platform: customer and driver apps, charging session billing, and the operations system behind them. The full case study, with what we found and what changed, ships the week it goes live.</p>
+      </div>
+      <div class="case pending">
+        <span class="c-k">Case study slot</span>
+        <h3>Awaiting the facts</h3>
+        <p>Who they are. What was wrong, in their words. What we found. What we built. What changed, with a number the client agreed to.</p>
+      </div>
+      <div class="case pending">
+        <span class="c-k">Case study slot</span>
+        <h3>Awaiting the facts</h3>
+        <p>Three real projects beat thirty logos. This page stays short on purpose.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="about">
+    <p class="kick">About</p>
+    <h2 class="sec-t">Two of us, and the team behind us.</h2>
+    <div class="people">
+      <div class="person">
+        <span class="role">Co-founder</span>
+        <h3>Rahul</h3>
+        <p>Runs product, design and the client's side of the table. On your project from the first call to the last invoice.</p>
+      </div>
+      <div class="person">
+        <span class="role">Co-founder</span>
+        <h3>Ayush</h3>
+        <p>Runs the build and the delivery team: a designer, two developers, a marketing specialist, and the specialists each project needs.</p>
+      </div>
+    </div>
+    <p class="lead">Whoever does the work, awtm forge answers for it. One contract, one number, one person answering. You never hear that it was the other guy.</p>
+  </section>
+
+  <section class="sec" id="faq">
+    <p class="kick">Questions</p>
+    <h2 class="sec-t">Asked by almost everyone.</h2>
+    <div class="faq">
+      <details><summary>I don't know what I need. Can you still help?</summary><p>That is the normal case, and it is what the two-week engagement is for. You describe what the business should be doing, we work out what is stopping it. You do not need to arrive with a specification.</p></details>
+      <details><summary>What if you tell me I don't need what I came for?</summary><p>Then that is what we tell you. It costs us the bigger project and it is still the right answer. We would rather you spend forty thousand on the thing that works than four lakh on the thing you asked for.</p></details>
+      <details><summary>How do I know it will get finished?</summary><p>Before we start, we write down what has to be true for each stage to be signed off. We do not invoice a stage until it is. That is in the contract, not just on this page.</p></details>
+      <details><summary>You are in India and I am not. How does this work?</summary><p>A weekly working session in your timezone, overlap hours agreed before we start, and everything in writing so nothing depends on catching anyone awake. Gulf clients overlap our full working day; US clients get mornings and our evenings.</p></details>
+      <details><summary>What if the problem is in a part a specialist built?</summary><p>Still ours. We chose them, we manage them, and your contract is with us. Fixing it is our job, not a negotiation between vendors you have never met.</p></details>
+      <details><summary>Do you work with businesses my size?</summary><p>The smallest thing we sell takes a week. The largest runs for months. Tell us your budget on the first call and we will tell you honestly whether it reaches the thing you need, instead of finding out after three weeks of proposals.</p></details>
+      <details><summary>What happens after launch?</summary><p>Either we run it monthly, or we hand it over with everything documented and access transferred. Both are fine. Quietly disappearing is not one of the options.</p></details>
+    </div>
+  </section>
+
+  <section class="sec" id="start">
+    <p class="kick">Start here</p>
+    <h2 class="sec-t">Three ways in, depending on how much you already know.</h2>
+    <div class="startgrid">
+      <div class="ways">
+        <div class="way"><h3>You know what is broken</h3><p>Buy the fixed one. One week, one price agreed up front, starts when you say go.</p></div>
+        <div class="way"><h3>You know something is broken</h3><p>Take the two weeks. We tell you what it is and what fixing it costs.</p></div>
+        <div class="way"><h3>You are not sure yet</h3><p>Tell us what is not working, in your own words. We reply within one working day, and we tell you honestly if this is not for us.</p></div>
+        <p class="factline"><b>Current availability</b> · One build slot in November, one in December</p>
+      </div>
+      <form class="dummy" onsubmit="return false">
+        <label>Name<input type="text" placeholder="Your name"></label>
+        <label>Business and website<input type="text" placeholder="Brand name or URL"></label>
+        <label>What is not working<textarea placeholder="Traffic is fine, orders are not."></textarea></label>
+        <label>Budget you have in mind
+          <select><option>Not sure yet</option><option>Under ₹1 lakh</option><option>₹1 to 3 lakh</option><option>₹3 to 8 lakh</option><option>Above ₹8 lakh</option><option>International, quote in USD or AED</option></select>
+        </label>
+        <label>Monthly ad spend, optional
+          <select><option>Prefer not to say</option><option>Under ₹50k</option><option>₹50k to ₹1L</option><option>₹1L to ₹3L</option><option>₹3L to ₹8L</option><option>Above ₹8L</option><option>We don't run ads</option></select>
+        </label>
+        <button class="btn solid" type="submit">Send it</button>
+        <span class="dummy-note">Dummy form. Wire to real storage before launch, never mailto.</span>
+      </form>
+    </div>
+  </section>
+
+  <footer class="site">
+    <span>awtm forge · Built in one piece</span>
+    <span>Bengaluru, Karnataka</span>
+    <span>hello@awtmforge.com</span>
+    <span>LinkedIn</span>
+    <span>Two projects a month</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var words = ["build", "run", "answer"], i = 0;
+  var host = document.getElementById("rot");
+  if (!host) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  setInterval(function(){
+    i = (i + 1) % words.length;
+    host.innerHTML = "<span>" + words[i] + "</span>";
+  }, 2200);
+})();
+</script>

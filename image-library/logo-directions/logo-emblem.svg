@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480">
+<rect width="480" height="480" fill="#141110"/>
+
+<circle cx="240" cy="240" r="150" fill="none" stroke="#EDE7DC" stroke-width="5"/>
+<circle cx="240" cy="240" r="120" fill="none" stroke="#EDE7DC" stroke-width="2"/>
+<text x="240" y="232" text-anchor="middle" font-family="Bricolage Grotesque, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="44" letter-spacing="6" fill="#EDE7DC">ASTER</text>
+<text x="240" y="268" text-anchor="middle" font-family="Bricolage Grotesque, Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="15" letter-spacing="5" fill="#A69C8E">EST. 2026</text>
+<polygon points="240,300 248,316 232,316" fill="#E08536"/>
+</svg>

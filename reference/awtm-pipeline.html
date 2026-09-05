@@ -1,0 +1,359 @@
+<title>awtm forge Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:#EDEFF0; --surface:#FAFBFB; --surface-alt:#E3E6E8;
+    --ink:#1A1D1F; --muted:#5B6369; --faint:#7F878C;
+    --rule:#CDD2D5; --rule-strong:#ABB2B6;
+    --accent:#B5541C; --accent-soft:#F1E0D4;
+    --flag:#9C3527; --copy-bg:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#121516; --surface:#191D1F; --surface-alt:#1F2426;
+      --ink:#E6E8E8; --muted:#98A1A5; --faint:#767F84;
+      --rule:#2A3033; --rule-strong:#3C4448;
+      --accent:#E08536; --accent-soft:#2E2115;
+      --flag:#E08977; --copy-bg:#1B2022;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#121516; --surface:#191D1F; --surface-alt:#1F2426;
+    --ink:#E6E8E8; --muted:#98A1A5; --faint:#767F84;
+    --rule:#2A3033; --rule-strong:#3C4448;
+    --accent:#E08536; --accent-soft:#2E2115;
+    --flag:#E08977; --copy-bg:#1B2022;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--ground); color:var(--ink); font-family:"Newsreader",Georgia,serif; font-size:18px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:920px; margin:0 auto; padding:clamp(32px,6vw,76px) clamp(20px,5vw,52px) 120px; display:flex; flex-direction:column; gap:clamp(38px,5.5vw,58px); }
+  p { margin:0; }
+  strong { font-weight:500; color:var(--ink); }
+  .prose { max-width:64ch; display:flex; flex-direction:column; gap:15px; }
+  .eyebrow { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0; }
+  header.masthead { display:flex; flex-direction:column; gap:18px; padding-bottom:clamp(24px,4vw,34px); border-bottom:2px solid var(--ink); }
+  h1 { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 84; font-weight:800; font-size:clamp(40px,8vw,72px); line-height:.95; letter-spacing:-.025em; margin:0; text-wrap:balance; }
+  .standfirst { font-size:clamp(18px,2.3vw,21px); line-height:1.45; color:var(--muted); max-width:48ch; }
+  .meta-row { display:flex; flex-wrap:wrap; gap:8px 26px; font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+  nav.toc { display:flex; flex-wrap:wrap; gap:6px 22px; padding:14px 0; border-bottom:1px solid var(--rule); font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11.5px; letter-spacing:.06em; }
+  nav.toc a { color:var(--muted); text-decoration:none; border-bottom:1px solid transparent; }
+  nav.toc a:hover, nav.toc a:focus-visible { color:var(--accent); border-bottom-color:var(--accent); outline:none; }
+  section { display:flex; flex-direction:column; gap:clamp(16px,2.6vw,24px); scroll-margin-top:20px; }
+  .sec-head { display:flex; align-items:baseline; gap:15px; border-top:2px solid var(--ink); padding-top:14px; }
+  .sec-num { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:13px; font-weight:600; letter-spacing:.1em; color:var(--accent); flex:none; }
+  h2 { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 36; font-weight:600; font-size:clamp(23px,3.3vw,31px); line-height:1.12; letter-spacing:-.018em; margin:0; text-wrap:balance; }
+  h3 { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 18; font-weight:600; font-size:19px; line-height:1.25; margin:0; }
+  .sub-head { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .sub-head .eyebrow { color:var(--accent); }
+
+  .note { border-left:3px solid var(--rule-strong); padding:2px 0 2px 18px; display:flex; flex-direction:column; gap:7px; max-width:66ch; }
+  .note p { font-size:16px; line-height:1.5; color:var(--muted); }
+  .note .eyebrow { color:var(--faint); }
+  .note.warn { border-left-color:var(--flag); }
+  .note.warn .eyebrow { color:var(--flag); }
+
+  .tablewrap { overflow-x:auto; border:1px solid var(--rule); background:var(--copy-bg); }
+  table { border-collapse:collapse; width:100%; min-width:600px; }
+  th, td { text-align:left; padding:12px 16px; border-bottom:1px solid var(--rule); font-size:16px; vertical-align:top; }
+  th { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; font-weight:600; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); background:var(--surface-alt); white-space:nowrap; }
+  td.k { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-weight:600; font-size:16px; white-space:nowrap; }
+  td.m { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:13.5px; color:var(--muted); }
+  tr:last-child td { border-bottom:none; }
+
+  .qs { display:flex; flex-direction:column; border-top:1px solid var(--rule); }
+  .qs > div { padding:14px 0; border-bottom:1px solid var(--rule); display:grid; grid-template-columns:150px 1fr; gap:16px; align-items:baseline; }
+  .qs .tag { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); line-height:1.5; }
+  .qs .tag.open { color:var(--flag); }
+  .qs .tag.go { color:var(--accent); }
+  .qs p { font-size:16px; line-height:1.5; }
+  .qs p b { font-weight:500; }
+
+  /* architecture map */
+  .map { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .map .box { background:var(--copy-bg); border:1px solid var(--rule-strong); padding:18px 20px; display:flex; flex-direction:column; gap:8px; }
+  .map .box.lead { border-left:4px solid var(--accent); }
+  .map .box .t { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-weight:600; font-size:18px; line-height:1.2; }
+  .map .box .t span { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); margin-left:10px; }
+  .map .box p { font-size:15.5px; line-height:1.45; color:var(--muted); }
+  .map .box ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px; }
+  .map .box ul li { position:relative; padding-left:18px; font-size:15px; line-height:1.4; }
+  .map .box ul li::before { content:""; position:absolute; left:0; top:.62em; width:8px; height:1.5px; background:var(--accent); }
+  .map .wide { grid-column:1 / -1; }
+  .handoff { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:12.5px; letter-spacing:.04em; color:var(--faint); text-align:center; padding:2px 0; grid-column:1 / -1; }
+
+  footer { border-top:2px solid var(--ink); padding-top:16px; font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); display:flex; flex-wrap:wrap; gap:8px 26px; }
+  @media (max-width:700px) {
+    body { font-size:17px; }
+    .qs > div { grid-template-columns:1fr; gap:6px; }
+    .map { grid-template-columns:1fr; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">awtm forge / operations / the funnel as a system</p>
+    <h1>awtm forge Pipeline</h1>
+    <p class="standfirst">The funnel turned into software: where every record lives, what moves it forward without anyone remembering, what the client sees, and how one developer week gets spent. A proposal to decide on, not a build order.</p>
+    <div class="meta-row">
+      <span>v1, 3 Sep 2026</span>
+      <span>Built for one dev week</span>
+      <span>Pairs with the Funnel</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#s0">00 The rule</a>
+    <a href="#s1">01 The map</a>
+    <a href="#s2">02 What lives where</a>
+    <a href="#s3">03 What moves on its own</a>
+    <a href="#s4">04 What the client sees</a>
+    <a href="#s5">05 Day 30</a>
+    <a href="#s6">06 Invoicing</a>
+    <a href="#s7">07 What it costs</a>
+    <a href="#s8">08 The week</a>
+    <a href="#s9">09 What comes later</a>
+    <a href="#s10">10 Decisions</a>
+  </nav>
+
+  <!-- 00 -->
+  <section id="s0">
+    <div class="sec-head"><span class="sec-num">00</span><h2>The rule</h2></div>
+    <div class="prose">
+      <p>One record per thing, one place it lives, and every hand-off is a button or an automation. Never a memory. Where the Funnel says "send the sign-off message", the Pipeline has a stage marked Ready, a client who taps Agree, and an invoice that raises itself. The document described the process. This is the process running.</p>
+      <p>The one design fact underneath it: <strong>there are two users, and the moment of "agreed" is the hand-off between them.</strong> Before it, a deal belongs to you and lives on your board. After it, a project belongs to the client as much as to you, and it lives where the client can see it. Building the pipeline around that seam is what keeps both halves simple.</p>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="s1">
+    <div class="sec-head"><span class="sec-num">01</span><h2>The map</h2></div>
+    <div class="map">
+      <div class="box lead">
+        <p class="t">Notion <span>the board, before "agreed"</span></p>
+        <p>Deals, clients, referrers, outbound. Every enquiry becomes a card on one board, with the next action on its face. You already work here.</p>
+      </div>
+      <div class="box lead">
+        <p class="t">Client portal <span>the record, after "agreed"</span></p>
+        <p>One link per client. The one page, the stages, the criteria, the staging link, the Agree button. The tap is the sign-off and it raises the invoice. This is the developer week.</p>
+      </div>
+      <p class="handoff">agreed: the deal in Notion becomes a project in the portal, and the card keeps following it</p>
+      <div class="box">
+        <p class="t">Make <span>the glue</span></p>
+        <p>Watches Notion, the calendar, the portal and Razorpay, and moves things between them. Configuration, not code.</p>
+      </div>
+      <div class="box">
+        <p class="t">Razorpay Invoices <span>replaces Figma</span></p>
+        <p>GST-ready invoice, a pay link that takes UPI and cards, reminders, and a webhook when it's paid. Created by the portal the moment a stage is agreed.</p>
+      </div>
+      <div class="box">
+        <p class="t">Calendar booking <span>replaces "which slot works"</span></p>
+        <p>A booking link in the first reply. The booking moves the card and fills the date.</p>
+      </div>
+      <div class="box">
+        <p class="t">WhatsApp <span>stays, gets faster</span></p>
+        <p>Every message the Funnel scripts is generated from the record and opens in WhatsApp with one tap, prefilled. Nothing retyped. The API comes later, on its own terms.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s2">
+    <div class="sec-head"><span class="sec-num">02</span><h2>What lives where</h2></div>
+    <div class="prose">
+      <p>Eight records. The first four are Notion databases. The last four belong to the portal, because they are what the client looks at, what money hangs on, and what the case study comes from.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Record</th><th>Lives in</th><th>What it holds</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Deal</td><td class="m">Notion</td><td>Stage (Enquiry, Replied, Call booked, Call done, One page sent, Agreed, then the four project stages, Launched, Day 30 done, Closed or Retainer). Door: serious, small fixed, not us. Route: Two-Week Answer, build, no. Value, take, every timestamp. Next action, computed from stage and dates. The card on the board.</td></tr>
+          <tr><td class="k">Client</td><td class="m">Notion</td><td>Business, contact, phone, what they sell and where, monthly orders, platform, gateway, courier, who signs off, portal link.</td></tr>
+          <tr><td class="k">Referrer</td><td class="m">Notion</td><td>Name, type (past client or one of the named few), last touch, next touch, referrals sent, the thank-you and whether it's been given.</td></tr>
+          <tr><td class="k">Outbound</td><td class="m">Notion</td><td>Brand, person, the one true observation, sent on, replied, outcome. Nothing goes out without the observation filled.</td></tr>
+          <tr><td class="k">Project</td><td class="m">Portal</td><td>The one page: scope in the client's words, price, not included, dates, the payment split, how we work, what we need. Linked to its Deal.</td></tr>
+          <tr><td class="k">Stage</td><td class="m">Portal</td><td>Number, name, criteria as a checklist, status (not started, in progress, ready, agreed), staging link, ready at, agreed at and by whom, the invoice and its state.</td></tr>
+          <tr><td class="k">Update</td><td class="m">Portal</td><td>Week n: moved, next, need from you by when, risks, link. Written once, shown in the portal and sent to WhatsApp from the same record.</td></tr>
+          <tr><td class="k">Day 30</td><td class="m">Portal</td><td>The metric and its value from the one page, the day-30 value, the drafted quote and the approved one with its permissions.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <p class="eyebrow">Why the split, and not one place</p>
+      <p>Notion is the right board and the wrong thing to put in front of a client: slow to load, odd on a phone, and a client who can see one Notion page can usually see too much. The portal is the right thing for a client and the wrong place to run a pipeline. Keeping each to its job means the deal card in Notion always shows the project's stage, synced from the portal, so you never open two tools to answer "where is this".</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s3">
+    <div class="sec-head"><span class="sec-num">03</span><h2>What moves on its own</h2></div>
+    <div class="prose">
+      <p>Every place the Funnel relies on someone remembering, listed with what does the remembering instead. This is the whole point of the build.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">Enquiry arrives</span><p>A card is created on the board. If it's from a referrer, the referrer is linked and their count goes up. Four working hours later, if "replied at" is still empty, you get a nudge on your phone. <b>Done by:</b> Notion form or a one-tap button, Make for the nudge.</p></div>
+      <div><span class="tag">First reply</span><p>The Funnel's three-question message is generated from the card with the name and referrer filled in, and opens in WhatsApp with one tap. The booking link is in it. <b>Done by:</b> a Notion button with a prefilled WhatsApp link.</p></div>
+      <div><span class="tag">Call booked</span><p>The booking moves the card to Call booked and fills the date. A reminder the morning of, with the card's notes. <b>Done by:</b> calendar booking webhook into Make.</p></div>
+      <div><span class="tag">Call done</span><p>You pick the door and the route on the card. If the route is a build or the Two-Week Answer, a Project is created in the portal with the Deal linked, ready for you to fill the one page. <b>Done by:</b> Make, on stage change.</p></div>
+      <div><span class="tag">One page sent</span><p>You fill the one page in the portal's admin side, mark it sent, and the client's link opens in WhatsApp with a short prefilled message. The card moves. <b>Done by:</b> the portal.</p></div>
+      <div><span class="tag go">Agreed</span><p>The client taps Agree on the one page. Stamped with who and when. The first invoice, 30 percent, is created in Razorpay and its pay link appears in the portal and in a prefilled WhatsApp message. The card moves to Stage 1 and the weekly session is created as a recurring event. <b>Done by:</b> the portal, Razorpay, Make.</p></div>
+      <div><span class="tag">Every week</span><p>You write the update in the portal, five fields. It appears for the client and opens in WhatsApp prefilled. <b>Done by:</b> the portal.</p></div>
+      <div><span class="tag go">Stage ready</span><p>You tick the criteria and mark the stage Ready. The client sees "ready for your review" with the staging link and each criterion with how to check it. Agree raises that stage's invoice. If they reply with a problem instead, the stage goes back to In progress and nothing is invoiced. <b>Done by:</b> the portal, Razorpay.</p></div>
+      <div><span class="tag">Invoice paid</span><p>Razorpay tells the portal, the portal tells Notion, the card shows paid. Unpaid after seven days, Razorpay sends its own reminder. <b>Done by:</b> Razorpay webhook, Make.</p></div>
+      <div><span class="tag">Launched</span><p>Stage 4 agreed creates the Day 30 task with a date and a calendar hold, and either switches the retainer on or opens the handover checklist. <b>Done by:</b> Make.</p></div>
+      <div><span class="tag go">Day 30</span><p>Thirty days after Stage 4 is agreed, the client's day-30 page unlocks and a prefilled WhatsApp opens for you to send. They give one number and approve a quote, in under a minute. Both land on the card. The referral step is parked until the approach is settled; section 09. Section 05 has the page. <b>Done by:</b> the portal, Make.</p></div>
+      <div><span class="tag">Monday</span><p>One digest: cards with no movement in seven days, referrers due a touch this week, outbound with the observation written but not sent. <b>Done by:</b> Make.</p></div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s4">
+    <div class="sec-head"><span class="sec-num">04</span><h2>What the client sees</h2></div>
+    <div class="prose">
+      <p>One link, sent once, no password. It opens on a phone because that is where it will be opened. Scoped ruthlessly: this is the offer made visible, not a project management tool.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">The one page</span><p>Exactly the Funnel's template, rendered. Scope in their words, what done means per stage, price, dates, payment, if we miss, how we work, what we need, after launch. A single Agree button at the bottom until it's agreed, then the stamp: agreed by [name] on [date].</p></div>
+      <div><span class="tag">The stages</span><p>Four rows. Each shows its criteria, its status, and when it applies, the staging link. The current one is the only one that's loud. A ready stage shows "review and agree"; an agreed one shows the stamp and the invoice's state.</p></div>
+      <div><span class="tag">Invoices</span><p>Each stage's invoice as a pay link the moment it exists. Paid or not, plainly. No chasing on WhatsApp, because it's already there.</p></div>
+      <div><span class="tag">Updates</span><p>The weekly updates in order, newest first. Same five fields every week, so what's missing is visible.</p></div>
+      <div><span class="tag">After launch</span><p>The handover document, or the retainer's named person and response time. Whichever was chosen, it is on the page and not in someone's memory.</p></div>
+    </div>
+    <div class="note">
+      <p class="eyebrow">What it deliberately does not do</p>
+      <p>No comments, no tasks, no file uploads, no chat. Conversation stays on WhatsApp where it already works. The portal is for the things WhatsApp is bad at: showing what was agreed, and recording a yes.</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s5">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Day 30: the number and the quote</h2></div>
+    <div class="prose">
+      <p>The Funnel puts these in a call, which means they happen when you remember and land as promises. Here they are a page. The client gets one link on day 30 and spends under a minute on it. You get two things, stamped and permissioned, without asking twice. The referral mechanism is parked for now, see section 09.</p>
+      <p><strong>The design rule: never ask the client to produce something. Ask them to confirm, correct, or tap.</strong> Every field on the page is pre-filled with something they already said, so the work is recognising, not writing.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">The number</span><p>The trick is capturing it before, not after. At agreement the one page carries one extra line: <b>"What we'll measure: [metric] is [value] today."</b> On day 30 the page shows that line and one field, "and now?" A founder answers that in ten seconds because it is their own number. <b>You get:</b> a before and an after, in their words, which is the case study figure nothing else produces.</p></div>
+      <div><span class="tag">The quote</span><p>Not a blank box. You draft three lines from the day-30 call, or from the weekly updates if there wasn't one, in their phrases. The page shows "Here's what we'd like to say about working with you. Change anything." A pre-filled text box, two switches (use my name and company; use our logo), one Approve button. Stamped like Agree. <b>You get:</b> an approved testimonial with the permission stored next to it, so it can go on the site and LinkedIn without a second conversation.</p></div>
+    </div>
+    <div class="prose">
+      <p><strong>What triggers it.</strong> Thirty days after Stage 4 is agreed, the page unlocks and a prefilled WhatsApp opens for you: "It's been a month. One minute on your page, one number and one approve: [link]." The call still happens if you want the conversation; the page is what makes the call's asks land as taps instead of promises. If the page isn't opened within a week, one nudge, then stop.</p>
+    </div>
+    <div class="note">
+      <p class="eyebrow">Why it comes first, not last</p>
+      <p>The page doesn't need a portal project behind it. It works from a client code alone, so the last three clients you launched get it before any project has run through the portal. That is the retroactive day-30 round from the Funnel's second week, and it is the fastest way to get a real number and a real quote onto the site.</p>
+    </div>
+    <div class="note warn">
+      <p class="eyebrow">The line we hold on the quote</p>
+      <p>The permissions travel with the quote. A switched-off name means it is used anonymously or not at all, and it never goes anywhere the client hasn't seen the final wording.</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s6">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Invoicing</h2></div>
+    <div class="prose">
+      <p>Today an invoice is designed in Figma, sent as an image on WhatsApp, and paid however the client pays. Every one of those is a place it can go wrong: the number typed, the GST worked out by hand, the record living in a chat, the payment reconciled by looking at the bank.</p>
+      <p><strong>Razorpay Invoices</strong> replaces all of it. The portal creates the invoice with the stage amount when Agree is tapped. Razorpay renders it, applies GST if you're registered, gives it a number, and returns a pay link that takes UPI, cards and netbanking. The client pays from the link. Razorpay tells the portal it's paid. If it isn't paid in a week, Razorpay reminds them, not you.</p>
+      <p>What you keep from Figma is the look: the invoice template in Razorpay takes your logo and colours. What you lose is the twenty minutes per invoice and the chance of getting the arithmetic wrong on a ₹3 lakh stage.</p>
+    </div>
+    <div class="note warn">
+      <p class="eyebrow">Needs deciding before the week starts</p>
+      <p>Whether awtm forge has its own Razorpay account, and whether it's GST registered. The VRG EV account belongs to the client and can't be used. Opening one takes a few days of KYC, so it's the first thing to start.</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s7">
+    <div class="sec-head"><span class="sec-num">07</span><h2>What it costs</h2></div>
+    <div class="prose">
+      <p>With Hostinger Cloud Professional already paid for, the software cost of this is zero. Cloud Professional runs Node.js apps with deployment straight from GitHub and includes the database, so the portal lives there and the Vercel and Supabase lines disappear entirely. <strong>The only real money in this system is Razorpay's two percent, and most of it is avoidable.</strong></p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Item</th><th>Cost</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Hosting</td><td class="m">₹0</td><td>Hostinger Cloud Professional, already paid. Runs Node.js with GitHub deploy, so the portal and its database both live here.</td></tr>
+          <tr><td class="k">Domain and SSL</td><td class="m">₹0</td><td>awtmforge.com is owned and SSL is included. app.awtmforge.com is a subdomain, not a purchase.</td></tr>
+          <tr><td class="k">Notion</td><td class="m">₹0</td><td>The free plan carries two people and these databases without trouble.</td></tr>
+          <tr><td class="k">Make</td><td class="m">₹0</td><td>Your volume is roughly 200 to 400 operations a month against a 1,000 free limit. Core is about $9 a month if you outgrow it.</td></tr>
+          <tr><td class="k">Booking</td><td class="m">₹0</td><td>Google Calendar's appointment schedule if hello@ is on Workspace, otherwise Calendly's free tier.</td></tr>
+          <tr><td class="k">Razorpay</td><td class="m">2% + GST</td><td>No setup fee, no annual charge. Two percent on every payment, plus GST on that fee, so about 2.36 percent all in.</td></tr>
+          <tr><td class="k">The code</td><td class="m">₹0 cash</td><td>Drafted here. The cost is Ayush's week of review and deployment, not money.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <p class="eyebrow">The two percent is a new cost, not a saving</p>
+      <p>Today a Figma invoice on WhatsApp gets paid by direct transfer and costs you nothing. The same money through Razorpay costs about 2.36 percent. On ₹5 lakh a month that is roughly ₹11,800, close to ₹1.4 lakh a year. On a single ₹4 lakh stage payment it is about ₹9,400. Razorpay charges its two percent even on UPI, where the underlying MDR is zero, as a platform fee.</p>
+    </div>
+    <div class="sub-head"><p class="eyebrow">The recommendation</p><h3>Generate the invoice, collect by transfer</h3></div>
+    <div class="prose">
+      <p>The portal can produce the invoice itself the moment Agree is tapped: numbered, dated, in your design, with the stage amount and your bank details, as a PDF. You mark it paid when the transfer lands. That costs nothing and keeps everything that matters, the record, the numbering, and the link between a sign-off and the money it releases.</p>
+      <p>What you give up is the automatic paid webhook, so someone ticks a box instead of it ticking itself. At eight to twelve invoices a month that is a minute of work a week, against ₹1.4 lakh a year.</p>
+      <p><strong>Where Razorpay still earns its fee:</strong> the ₹45,000 and ₹65,000 entry offers, where two percent is ₹1,000 to ₹1,500 and a pay link closes faster than bank details do, and any client who asks to pay by card. Add it for those, keep large stage payments on transfer. It is a switch per invoice, not a decision for the whole system.</p>
+    </div>
+    <div class="note">
+      <p class="eyebrow">When GST arrives</p>
+      <p>The invoice template needs a GST line and your GSTIN once you register. That is a template change rather than a rebuild, and the field is worth building now and leaving empty.</p>
+    </div>
+    <div class="prose">
+      <p><strong>The honest total: ₹0 a month to run, plus whatever you choose to route through Razorpay.</strong> The real price is Ayush's week, roughly a quarter of a month's delivery capacity at two serious slots, weighed against what verbal agreements and hand-made invoices cost you today.</p>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s8">
+    <div class="sec-head"><span class="sec-num">08</span><h2>The week</h2></div>
+    <div class="prose">
+      <p>The portal on your own stack: Next.js on Vercel, Supabase for the data and the magic links, Razorpay's API, a Make webhook to Notion. I draft the code and the schema. Ayush's week is review, deployment, the integrations that need your accounts, and the calls only he can make.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">Before</span><p>Notion databases and templates built, by me, no dev time. Razorpay account KYC started. Booking link created. Subdomain chosen.</p></div>
+      <div><span class="tag">Day 1</span><p>Schema, magic-link access for clients and for the two of you, Vercel project on the subdomain. Review my draft against the stack.</p></div>
+      <div><span class="tag">Day 2</span><p>Admin side: create a project from a deal, fill the one page, define stages and criteria, mark ready.</p></div>
+      <div><span class="tag">Day 3</span><p>Client side: the one page, the stages, Agree, the stamp. On a phone first.</p></div>
+      <div><span class="tag">Day 4</span><p>Razorpay: create invoice on Agree, store the link, receive the paid webhook. Make: portal stage changes into the Notion card.</p></div>
+      <div><span class="tag">Day 5</span><p>Weekly updates, the prefilled WhatsApp links, print styling so the one page is also a clean PDF. Run the next real win through it end to end.</p></div>
+      <div><span class="tag">Right after</span><p>The day-30 page. About half a day. It doesn't need a project behind it, so it goes to the last three launched clients the day it's live, before anything else has run through the portal.</p></div>
+    </div>
+    <div class="note">
+      <p class="eyebrow">What a week does not include, on purpose</p>
+      <p>The WhatsApp API, the numbers dashboard, and anything for the team. Those are section 09. If day 5 arrives and Razorpay's KYC hasn't cleared, the portal still works with the invoice link left blank, and you fill it by hand for that one client.</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s9">
+    <div class="sec-head"><span class="sec-num">09</span><h2>What comes later</h2></div>
+    <div class="qs">
+      <div><span class="tag">Phase 2</span><p><b>WhatsApp Business API.</b> Every message that today opens prefilled instead sends itself, and Agree becomes a button in the chat as well as in the portal. Needs a dedicated awtm forge number that leaves the normal app, Meta business verification, and every template approved. Start it when the portal has run two projects, so the templates are written from real messages.</p></div>
+      <div><span class="tag">Parked</span><p><b>The referral mechanism.</b> A send-to-someone link with a tracked code, a name-and-number line, and the thank-you printed on the page. The pieces are designed; the approach needs more clarity on your side before it's built. Until then the referral ask stays in the day-30 call, as the Funnel has it.</p></div>
+      <div><span class="tag">Phase 2</span><p><b>The numbers.</b> Serious slots filled, retainers active, take this month, days from enquiry to agreed. A Notion view first. A page in the portal's admin side if the view isn't enough.</p></div>
+      <div><span class="tag">Phase 3</span><p><b>The team.</b> Assignments and hours per project for the designer and developers, so the take is calculated rather than estimated. Only once two projects have run through the portal and the shape is proven.</p></div>
+      <div><span class="tag">Someday</span><p><b>The portal as a product.</b> If clients like it, it's the same thing the site sells: everything checkable. Not a plan, a possibility worth noting.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <div class="sec-head"><span class="sec-num">10</span><h2>Decisions</h2></div>
+    <div class="qs">
+      <div><span class="tag open">Approve</span><p><b>The shape.</b> Notion before agreed, the portal after, Make between, Razorpay for money. If a different split is wanted, that changes everything below and should be said first.</p></div>
+      <div><span class="tag open">Answer</span><p><b>Razorpay.</b> Does awtm forge have an account? Is it GST registered? Gates day 4 and takes days to fix, so it goes first.</p></div>
+      <div><span class="tag open">Answer</span><p><b>Which Notion workspace.</b> Your existing one, or a new awtm forge workspace shared with Ayush. Gates what I can build today.</p></div>
+      <div><span class="tag open">Answer</span><p><b>Booking.</b> Google Calendar's appointment schedule if hello@awtmforge.com is on Workspace, otherwise Calendly's free tier. Both feed Make.</p></div>
+      <div><span class="tag open">Pick</span><p><b>The subdomain.</b> Recommended: app.awtmforge.com. It also means the domain stops being entirely dead.</p></div>
+      <div><span class="tag open">Confirm</span><p><b>The "what we'll measure" line</b> goes on the one page. It is what makes the day-30 number a ten-second answer, and it changes the Funnel's template, which I haven't touched.</p></div>
+      <div><span class="tag open">Confirm</span><p><b>Ayush's week.</b> Which week, and that he's read section 08.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>awtm forge</span>
+    <span>Pipeline v1</span>
+    <span>Pairs with the Funnel</span>
+    <span>AI assisted, human directed</span>
+  </footer>
+</div>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#141110; color:#EDE7DC; font-family:"Newsreader",Georgia,serif; font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  a { color:#E08536; text-decoration:none; } a:hover { color:#B5661F; }
+  p { margin:0; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+  .kick { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:9.5px; letter-spacing:.15em; text-transform:uppercase; color:#7A7166; }
+  .gro { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; }
+  .fld { border:1px solid #2E2925; background:#141110; border-radius:2px; padding:9px 11px; font-size:14px; color:#EDE7DC; }
+
+  body { background:#FFFFFF; color:#1A1613; font-family:"Newsreader",Georgia,serif; }
+  .pk { font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:#8A8078; }
+  .pm { font-family:"IBM Plex Mono",ui-monospace,monospace; }
+
+  </style>
+</helmet>
+<div style="width:794px;min-height:1123px;background:#FFFFFF;color:#1A1613;padding:64px 62px;display:flex;flex-direction:column;gap:34px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1A1613;padding-bottom:22px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span class="gro" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em">awtm <span style="color:#B5661F">forge</span></span>
+      <p class="pm" style="font-size:11px;color:#5A524B;line-height:1.7">Bengaluru, Karnataka<br>hello@awtmforge.com</p>
+    </div>
+    <div style="text-align:right;display:flex;flex-direction:column;gap:6px">
+      <span class="pk">Invoice</span>
+      <p class="pm" style="font-size:17px">AWTM/26-27/005</p>
+      <p class="pm" style="font-size:11px;color:#5A524B;line-height:1.7">Issued 5 September 2026<br>Due 12 September 2026</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:60px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="pk">Billed to</span>
+      <p style="font-size:15px;font-weight:500">Kavya Appliances</p>
+      <p class="pm" style="font-size:11px;color:#5A524B;line-height:1.7">Kavya Menon<br>kavya@kavyaappliances.in</p></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:7px"><span class="pk">For</span>
+      <p style="font-size:15px;font-weight:500">Store rebuild and checkout</p>
+      <p class="pm" style="font-size:11px;color:#5A524B;line-height:1.7">Stage 2 of 4<br>Agreed by you on 5 September 2026</p></div>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;padding-bottom:9px;border-bottom:1px solid #1A1613"><span class="pk">Description</span><span class="pk" style="text-align:right">Amount</span></div>
+    <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;padding:18px 0;border-bottom:1px solid #DED6CC">
+      <div style="display:flex;flex-direction:column;gap:5px"><p style="font-size:15px">Stage 2, Something you can open</p>
+      <p style="font-size:12.5px;color:#5A524B;line-height:1.6">A working cart and checkout on a real link. Courier estimate visible on the payment page. Works on a phone without pinching.</p></div>
+      <span class="pm" style="font-size:14px;text-align:right">1,44,000.00</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 150px;gap:20px;padding:16px 0;border-bottom:2px solid #1A1613">
+      <span class="pm" style="font-size:12px;text-align:right;color:#5A524B">Total</span><span class="pm" style="font-size:19px;text-align:right">Rs 1,44,000.00</span>
+    </div>
+    <p class="pm" style="font-size:11px;color:#5A524B;padding-top:11px">One lakh forty four thousand rupees only</p>
+    <p class="pm" style="font-size:10px;color:#8A8078;padding-top:16px;line-height:1.7">No GST is charged on this invoice. awtm forge is not registered under GST at the date of issue.</p>
+  </div>
+  <div style="border:1px solid #DED6CC;background:#F7F4F0;border-radius:2px;padding:20px 22px;display:flex;flex-direction:column;gap:11px">
+    <span class="pk">How to pay</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px 30px">
+      <div><p class="pm" style="font-size:9.5px;color:#8A8078;letter-spacing:.1em;text-transform:uppercase">Account name</p><p class="pm" style="font-size:13px">awtm forge</p></div>
+      <div><p class="pm" style="font-size:9.5px;color:#8A8078;letter-spacing:.1em;text-transform:uppercase">Bank</p><p class="pm" style="font-size:13px">[BANK NAME]</p></div>
+      <div><p class="pm" style="font-size:9.5px;color:#8A8078;letter-spacing:.1em;text-transform:uppercase">Account number</p><p class="pm" style="font-size:13px">[ACCOUNT NUMBER]</p></div>
+      <div><p class="pm" style="font-size:9.5px;color:#8A8078;letter-spacing:.1em;text-transform:uppercase">IFSC</p><p class="pm" style="font-size:13px">[IFSC]</p></div>
+      <div><p class="pm" style="font-size:9.5px;color:#8A8078;letter-spacing:.1em;text-transform:uppercase">UPI</p><p class="pm" style="font-size:13px">[UPI ID]</p></div>
+      <div><p class="pm" style="font-size:9.5px;color:#8A8078;letter-spacing:.1em;text-transform:uppercase">Reference</p><p class="pm" style="font-size:13px">AWTM/26-27/005</p></div>
+    </div>
+  </div>
+  <div style="margin-top:auto;border-top:1px solid #DED6CC;padding-top:16px;display:flex;justify-content:space-between">
+    <p class="pm" style="font-size:10px;color:#8A8078">This stage was signed off before it was invoiced.</p>
+    <p class="pm" style="font-size:10px;color:#8A8078">awtmforge.com</p>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

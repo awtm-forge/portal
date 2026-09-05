@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480">
+<rect width="480" height="480" fill="#141110"/>
+
+<path d="M96 292 L146 208 L196 292 Z" fill="#E08536"/>
+<path d="M120 292 L146 248 L172 292 Z" fill="#141110"/>
+<text x="216" y="286" font-family="Bricolage Grotesque, Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="72" letter-spacing="-3" fill="#EDE7DC">aster</text>
+<text x="218" y="318" font-family="Bricolage Grotesque, Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="16" letter-spacing="4" fill="#A69C8E">APPLIANCES</text>
+</svg>

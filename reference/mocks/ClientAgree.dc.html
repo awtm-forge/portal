@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#141110; color:#EDE7DC; font-family:"Newsreader",Georgia,serif; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  a { color:#E08536; text-decoration:none; } a:hover { color:#B5661F; }
+  p { margin:0; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+  .kick { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#7A7166; }
+  .gro { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; }
+
+  </style>
+</helmet>
+<div style="width:375px;background:#141110;min-height:660px">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #2E2925;background:#1B1715">
+    <span class="gro" style="font-weight:600;font-size:14px;letter-spacing:-.01em">awtm <span style="color:#E08536">forge</span></span>
+    <span class="kick">Kavya Appliances</span>
+  </div>
+  <div style="padding:38px 20px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span class="kick">Confirming it is you</span>
+      <h1 class="gro" style="margin:0;font-size:24px;font-weight:600;line-height:1.15;letter-spacing:-.02em">We sent a six digit code</h1>
+      <p style="font-size:14.5px;color:#A69C8E">It went to the person named on the agreement. It is good for ten minutes.</p>
+    </div>
+    <div style="display:flex;gap:8px"><div style="flex:1;height:56px;border:1px solid #E08536;background:#221D1A;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:22px;color:#EDE7DC">4</div><div style="flex:1;height:56px;border:1px solid #E08536;background:#221D1A;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:22px;color:#EDE7DC">1</div><div style="flex:1;height:56px;border:1px solid #E08536;background:#221D1A;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:22px;color:#EDE7DC">7</div><div style="flex:1;height:56px;border:1px solid #2E2925;background:#1B1715;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:22px;color:#7A7166">&middot;</div><div style="flex:1;height:56px;border:1px solid #2E2925;background:#1B1715;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:22px;color:#7A7166">&middot;</div><div style="flex:1;height:56px;border:1px solid #2E2925;background:#1B1715;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:22px;color:#7A7166">&middot;</div></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <a href="#" style="display:block;text-align:center;background:#E08536;border-radius:2px;padding:15px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#141110">Confirm and agree</a>
+      <a href="#" style="display:block;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:#A69C8E">Send it again</a>
+    </div>
+    <div style="border-top:1px solid #2E2925;padding-top:16px;display:flex;flex-direction:column;gap:8px">
+      <span class="kick">Other states this screen has</span>
+      <p class="mono" style="font-size:11px;color:#A69C8E;line-height:1.7">Wrong code, four tries left<br>Expired, ask for a new one<br>Locked after five tries, message us<br>Already agreed, nothing left to do</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

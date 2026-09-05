@@ -1,0 +1,429 @@
+<title>awtm forge Funnel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:#EDEFF0; --surface:#FAFBFB; --surface-alt:#E3E6E8;
+    --ink:#1A1D1F; --muted:#5B6369; --faint:#7F878C;
+    --rule:#CDD2D5; --rule-strong:#ABB2B6;
+    --accent:#B5541C; --accent-soft:#F1E0D4;
+    --flag:#9C3527; --copy-bg:#FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#121516; --surface:#191D1F; --surface-alt:#1F2426;
+      --ink:#E6E8E8; --muted:#98A1A5; --faint:#767F84;
+      --rule:#2A3033; --rule-strong:#3C4448;
+      --accent:#E08536; --accent-soft:#2E2115;
+      --flag:#E08977; --copy-bg:#1B2022;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#121516; --surface:#191D1F; --surface-alt:#1F2426;
+    --ink:#E6E8E8; --muted:#98A1A5; --faint:#767F84;
+    --rule:#2A3033; --rule-strong:#3C4448;
+    --accent:#E08536; --accent-soft:#2E2115;
+    --flag:#E08977; --copy-bg:#1B2022;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--ground); color:var(--ink); font-family:"Newsreader",Georgia,serif; font-size:18px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:920px; margin:0 auto; padding:clamp(32px,6vw,76px) clamp(20px,5vw,52px) 120px; display:flex; flex-direction:column; gap:clamp(38px,5.5vw,58px); }
+  p { margin:0; }
+  strong { font-weight:500; color:var(--ink); }
+  .prose { max-width:64ch; display:flex; flex-direction:column; gap:15px; }
+  .eyebrow { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0; }
+  header.masthead { display:flex; flex-direction:column; gap:18px; padding-bottom:clamp(24px,4vw,34px); border-bottom:2px solid var(--ink); }
+  h1 { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 84; font-weight:800; font-size:clamp(40px,8vw,72px); line-height:.95; letter-spacing:-.025em; margin:0; text-wrap:balance; }
+  .standfirst { font-size:clamp(18px,2.3vw,21px); line-height:1.45; color:var(--muted); max-width:48ch; }
+  .meta-row { display:flex; flex-wrap:wrap; gap:8px 26px; font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+  nav.toc { display:flex; flex-wrap:wrap; gap:6px 22px; padding:14px 0; border-bottom:1px solid var(--rule); font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11.5px; letter-spacing:.06em; }
+  nav.toc a { color:var(--muted); text-decoration:none; border-bottom:1px solid transparent; }
+  nav.toc a:hover, nav.toc a:focus-visible { color:var(--accent); border-bottom-color:var(--accent); outline:none; }
+  section { display:flex; flex-direction:column; gap:clamp(16px,2.6vw,24px); scroll-margin-top:20px; }
+  .sec-head { display:flex; align-items:baseline; gap:15px; border-top:2px solid var(--ink); padding-top:14px; }
+  .sec-num { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:13px; font-weight:600; letter-spacing:.1em; color:var(--accent); flex:none; }
+  h2 { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 36; font-weight:600; font-size:clamp(23px,3.3vw,31px); line-height:1.12; letter-spacing:-.018em; margin:0; text-wrap:balance; }
+  h3 { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 18; font-weight:600; font-size:19px; line-height:1.25; margin:0; }
+  .sub-head { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .sub-head .eyebrow { color:var(--accent); }
+
+  /* paste-ready blocks */
+  .copy { background:var(--copy-bg); border:1px solid var(--rule-strong); border-left:4px solid var(--accent); padding:24px clamp(18px,3.2vw,30px); display:flex; flex-direction:column; gap:14px; }
+  .copy .label { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:-4px; }
+  .copy .h { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-variation-settings:"opsz" 32; font-weight:600; font-size:clamp(21px,3vw,27px); line-height:1.16; letter-spacing:-.015em; margin:0; text-wrap:balance; }
+  .copy .sub { font-size:17px; line-height:1.45; color:var(--muted); max-width:54ch; }
+  .copy .msg { white-space:pre-line; font-size:17px; line-height:1.5; max-width:60ch; }
+  .copy .msg b { font-weight:500; color:var(--ink); }
+  .copy ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
+  .copy ul li { position:relative; padding-left:22px; font-size:17px; line-height:1.45; }
+  .copy ul li::before { content:""; position:absolute; left:2px; top:.66em; width:9px; height:1.5px; background:var(--accent); }
+  .copy .micro { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:12.5px; letter-spacing:.04em; color:var(--faint); line-height:1.5; }
+  .copy hr { border:none; border-top:1px solid var(--rule); margin:2px 0; }
+  .copy .block { display:flex; flex-direction:column; gap:5px; }
+  .copy .block .k { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); }
+  .copy .block p { font-size:16.5px; line-height:1.45; }
+
+  .note { border-left:3px solid var(--rule-strong); padding:2px 0 2px 18px; display:flex; flex-direction:column; gap:7px; max-width:66ch; }
+  .note p { font-size:16px; line-height:1.5; color:var(--muted); }
+  .note .eyebrow { color:var(--faint); }
+  .note.warn { border-left-color:var(--flag); }
+  .note.warn .eyebrow { color:var(--flag); }
+
+  .tablewrap { overflow-x:auto; border:1px solid var(--rule); background:var(--copy-bg); }
+  table { border-collapse:collapse; width:100%; min-width:560px; }
+  th, td { text-align:left; padding:12px 16px; border-bottom:1px solid var(--rule); font-size:16px; vertical-align:top; }
+  th { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; font-weight:600; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); background:var(--surface-alt); }
+  td.k { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-weight:600; font-size:16px; white-space:nowrap; }
+  tr:last-child td { border-bottom:none; }
+
+  /* labelled rows: timings, doors, day-30 parts */
+  .qs { display:flex; flex-direction:column; border-top:1px solid var(--rule); }
+  .qs > div { padding:14px 0; border-bottom:1px solid var(--rule); display:grid; grid-template-columns:150px 1fr; gap:16px; align-items:baseline; }
+  .qs .tag { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); line-height:1.5; }
+  .qs .tag.open { color:var(--flag); }
+  .qs .tag.go { color:var(--accent); }
+  .qs p { font-size:16px; line-height:1.5; }
+  .qs p b { font-weight:500; }
+
+  /* the loop rail */
+  .rail { position:relative; display:flex; flex-direction:column; gap:0; padding-left:34px; }
+  .rail::before { content:""; position:absolute; left:9px; top:14px; bottom:14px; width:2px; background:var(--rule-strong); }
+  .rail > div { position:relative; padding:12px 0 14px; display:flex; flex-direction:column; gap:3px; }
+  .rail > div::before { content:""; position:absolute; left:-30px; top:19px; width:10px; height:10px; border-radius:50%; background:var(--ground); border:2px solid var(--accent); }
+  .rail > div.loop::before { background:var(--accent); }
+  .rail .st { font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif; font-weight:600; font-size:17.5px; line-height:1.3; }
+  .rail .st span { font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:10.5px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); margin-left:10px; }
+  .rail p { font-size:15.5px; line-height:1.45; color:var(--muted); max-width:60ch; }
+  .rail > div.loop { margin-top:6px; padding-top:16px; border-top:1px dashed var(--rule-strong); }
+  .rail > div.loop .st { color:var(--accent); }
+
+  footer { border-top:2px solid var(--ink); padding-top:16px; font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); display:flex; flex-wrap:wrap; gap:8px 26px; }
+  @media (max-width:700px) {
+    body { font-size:17px; }
+    .qs > div { grid-template-columns:1fr; gap:6px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">awtm forge / operations / enquiry to referral</p>
+    <h1>awtm forge Funnel</h1>
+    <p class="standfirst">How a client arrives, how they are signed, how the work is run, and how the end of one project starts the next. Bordered blocks are paste-ready templates. Everything else is how to run it.</p>
+    <div class="meta-row">
+      <span>v1, 3 Sep 2026</span>
+      <span>Built from your numbers</span>
+      <span>Pairs with the Playbook</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#s0">00 What the numbers say</a>
+    <a href="#s1">01 The loop</a>
+    <a href="#s2">02 Outreach</a>
+    <a href="#s3">03 Onboarding</a>
+    <a href="#s4">04 Review</a>
+    <a href="#s5">05 Rhythm and numbers</a>
+    <a href="#s6">06 First thirty days</a>
+    <a href="#s7">07 Open decisions</a>
+  </nav>
+
+  <!-- 00 -->
+  <section id="s0">
+    <div class="sec-head"><span class="sec-num">00</span><h2>What the numbers say</h2></div>
+    <div class="prose">
+      <p>Five or six enquiries a month, all by word of mouth. Two or three become paid work, which is a 40 to 50 percent close: the trust arrives before you do. About half of those wins are above ₹4 lakh, so roughly one to one and a half serious projects a month against two serious slots. Agreements are verbal. Calls happen on Meet, everything else on WhatsApp. You ask for a testimonial at the end, and nothing else.</p>
+      <p>So the gap is narrow and specific. <strong>One more serious project a month, and the monthly retainers you have never sold.</strong> That is what this funnel is built for. It is not a cold-outreach machine, because you do not need one yet, and building one now would cost the hours the existing flow needs.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Move</th><th>What it does</th><th>Where it lives</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Sort at the door</td><td>Keeps the two serious slots for serious work. Routes small jobs to team-run fixed offers without touching your calendar.</td><td>The first reply</td></tr>
+          <tr><td class="k">Convert up</td><td>Turns a "build me a website" enquiry into the Two-Week Answer, where the real problem gets found and priced.</td><td>The discovery call</td></tr>
+          <tr><td class="k">Never end at launch</td><td>Attaches the monthly before launch, and turns the day-30 call into the referral that starts the next project.</td><td>Review</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>The arithmetic: two serious slots filled at a ₹3 to 5 lakh take each is ₹6 to 10 lakh a month. Five clients on Watch at ₹40,000 is ₹2 lakh that arrives whether or not you closed anything. That is the doubling, and none of it needs a stranger to find you.</p>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section id="s1">
+    <div class="sec-head"><span class="sec-num">01</span><h2>The loop</h2></div>
+    <div class="prose">
+      <p>Eight moments. The first three sort and sign, the next three run the work, the last two are where most agencies stop and this one does not. The last moment feeds the first, which is why it is drawn as a loop and not a funnel.</p>
+    </div>
+    <div class="rail">
+      <div><p class="st">Enquiry arrives <span>WhatsApp, usually with a referrer's name</span></p><p>Five or six a month today. All of them get the same first reply, within four working hours.</p></div>
+      <div><p class="st">First reply sorts it <span>three questions</span></p><p>What they sell and where, monthly orders, and the thing that made them reach out now. Three doors: serious, small fixed, or not us.</p></div>
+      <div><p class="st">Discovery call <span>Meet, 45 minutes</span></p><p>Their business, their problem in their words, what fixed looks like, what they are working with. Ends in one of three: the Two-Week Answer, straight to build, or a warm no.</p></div>
+      <div><p class="st">The one page <span>PDF on WhatsApp, within 24 hours</span></p><p>What we are building, what done means per stage, price, dates, payment, what happens if we miss. They reply "agreed" to the message. That reply is the record.</p></div>
+      <div><p class="st">Kickoff <span>Meet, 30 minutes</span></p><p>Access with the safety rule stated, one sign-off person, the weekly slot in both calendars, one group with the one page pinned.</p></div>
+      <div><p class="st">The stage loop, four times <span>weekly session, written update, sign-off, invoice</span></p><p>Criteria already written. A real link from day ten. Every week a session and a same-day update. At the end of each stage one message, one "agreed", then the invoice for that stage. Not before.</p></div>
+      <div><p class="st">Launch <span>the monthly starts, or the handover does</span></p><p>The monthly was on the one page from the start, so this is not a sale. It is a switch that was already decided.</p></div>
+      <div><p class="st">Day 30 <span>one call, five parts</span></p><p>One number they would stand behind. Anything they'd want different. The testimonial. The referral, asked specifically. The monthly, once more, if it was not taken.</p></div>
+      <div class="loop"><p class="st">The referral is the next enquiry</p><p>A named person, an intro message, and the sentence you gave them to say. It lands at the top of this page as the next enquiry, with a referrer's name on it.</p></div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s2">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Outreach</h2></div>
+    <div class="prose">
+      <p>Three sources, in the order they cost you. The first two are where the second slot comes from. The third is what a referred buyer checks before they reply, and it is covered on the LinkedIn list, not here.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Source 1</p><h3>The referral system</h3></div>
+    <div class="prose">
+      <p>Today it is one mechanism: people who like you mention you. Make it two.</p>
+      <p><strong>The named few.</strong> Write down who they are. Not a programme, a list. Once a month each of them gets one message from you that is useful to them and asks for nothing: something you built, a thing you noticed in their world, an introduction they would value. When they send someone, they hear what happened, and they get a thank-you that was stated once at the start so it never feels like a transaction.</p>
+      <p><strong>Past clients.</strong> The ask happens at day 30, when the thing works and they are pleased. It is written into the review stage below so it happens every time rather than when you remember.</p>
+      <p><strong>The sentence a referrer can repeat.</strong> This is the whole point of having one. It has to survive being said by someone who does not work for you, after hearing it once.</p>
+    </div>
+    <div class="copy">
+      <p class="label">The referral sentence</p>
+      <p class="h">One team that builds and runs everything behind an online store. Fixed price, and you don't pay for a stage until you've signed it off.</p>
+      <p class="sub">Two sentences, one category, one fact the listener can check. Give it to every referrer in writing at day 30, so what they say is what you would say.</p>
+    </div>
+    <div class="note">
+      <p class="eyebrow">The thank-you, decided once</p>
+      <p>For past clients, a month of Watch at no charge, or a fixed credit against their next work, reads as gratitude. Cash reads as commission and changes the relationship. For the named few who are not clients, a fee is fine and normal. Say it once when you first ask, and never again.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Source 2</p><h3>Direct, named, small</h3></div>
+    <div class="prose">
+      <p>For the second slot. Twenty direct-to-consumer brands you can name, electronics and appliances first, at the size where the setup has stopped fitting the volume. The founder, or whoever owns the store. Five messages a week, each with one specific observation about their store that you actually made. Not a campaign, and no service list anywhere in it.</p>
+    </div>
+    <div class="copy">
+      <p class="label">Message to a named brand, WhatsApp or LinkedIn</p>
+      <p class="msg">Hi [name]. I went through [brand]'s store this week and noticed [one specific thing: the cart drops the courier estimate on mobile, the product page loads the whole catalogue script, whatever is true]. Usually that shows up as [what it costs them: abandoned carts, support messages, ad spend landing on a slow page].
+
+We build and run the whole setup for online brands. Store, app, marketing, one team. Not selling anything today. If you'd walk me through how it runs now, I'll tell you where I'd expect it to be losing you orders and whether it's worth fixing. 45 minutes, no charge, and I'll send you the notes either way.</p>
+      <p class="micro">One observation, one offer of judgement. The observation has to be real. A generic one gets ignored and a wrong one gets you blocked.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Source 3</p><h3>The adjacent people</h3></div>
+    <div class="prose">
+      <p>Performance marketers who do not build, courier and payment-gateway account managers, product photographers and content studios. They are in front of your buyer every week and they see the broken checkout before you do. The offer is simple: send us the ones who ask you for something you don't do, we don't compete with you, and we'll return the favour. Five conversations this quarter, not fifty.</p>
+    </div>
+    <div class="copy">
+      <p class="label">Message to an adjacent vendor</p>
+      <p class="msg">We build and run the store, app and systems for online brands, the whole thing under one team. You're in front of the same founders every week, and I'm guessing some of them ask you for things that aren't [what they do]. We don't do [what they do], so there's nothing to compete over. If it's useful, send those ones our way and we'll look after them, and we're glad to do the same back. Worth a fifteen-minute call?</p>
+      <p class="micro">The line that gets replies is "there's nothing to compete over", because it is the first thing they are wondering.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Sorting at the door</p><h3>The first reply</h3></div>
+    <div class="prose">
+      <p>The funnel's first real job. Five or six enquiries and two serious slots means the first reply has to sort, warmly, before you spend an hour on a call.</p>
+    </div>
+    <div class="copy">
+      <p class="label">First reply, WhatsApp, within four working hours</p>
+      <p class="msg">Hi [name], [referrer] mentioned you might be in touch. Glad you did.
+
+Before we get on a call, three quick things so I come prepared:
+1. What do you sell, and where: your own store, marketplaces, or both?
+2. Roughly how many orders a month right now?
+3. What's the thing that made you reach out now, the one that's actually costing you?
+
+I can do a 45-minute call [two slots]. Pick whichever works.</p>
+      <p class="micro">Order volume is a size question that does not feel like one. The third question is what you build the call around.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag go">Serious</span><p>Sells direct, real volume, a problem they can name, and the answer to the third question is something a ₹4 lakh project fixes. <b>Discovery call.</b></p></div>
+      <div><span class="tag">Small fixed</span><p>A specific, bounded ask, or volume too small to fund a build. <b>After the Buy Button, or a fill quote.</b> Team-run. It does not touch a serious slot and it does not get a discovery call. It gets a price.</p></div>
+      <div><span class="tag open">Not us</span><p>Cannot describe the current setup, wants it to look impressive, wants to pay in equity or revenue share, or the timeline is fantasy. <b>A warm no, with a name to try instead.</b> Turning people down well is a referral source. They remember who was honest with them.</p></div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s3">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Onboarding</h2></div>
+    <div class="prose">
+      <p>This stage has one job: replace the verbal yes with a page. Everything the site promises, a fixed price, sign-off before invoice, written criteria per stage, has nowhere to live until it does.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Meet, 45 minutes</p><h3>The discovery call</h3></div>
+    <div class="prose">
+      <p>In this order, because it is the order their trust builds.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">0 to 10 min</span><p><b>Their business.</b> What they sell, where, order volume, team, who touches the store and the ads today. You are learning the shape. They are getting comfortable.</p></div>
+      <div><span class="tag">10 to 25 min</span><p><b>The problem, in their words.</b> What made them reach out. What it costs them, in orders or hours or sleep. What they have tried and who has touched it before. Do not diagnose yet. Write down their phrases; they go on the one page.</p></div>
+      <div><span class="tag">25 to 35 min</span><p><b>What fixed looks like.</b> "If this were sorted, what's different on a normal Tuesday?" This is the acceptance criterion in embryo.</p></div>
+      <div><span class="tag">35 to 40 min</span><p><b>What they are working with.</b> Platform, payment gateway, courier, ad accounts, who holds the access. Ask what the setup can do, not only what you need from it.</p></div>
+      <div><span class="tag">40 to 45 min</span><p><b>The route.</b> One of the three doors below, said plainly, and "I'll send you one page by tomorrow."</p></div>
+    </div>
+    <div class="qs">
+      <div><span class="tag go">Two-Week Answer</span><p><b>What it is:</b> ₹65,000, two weeks, credited fully against the build. <b>Why it matters:</b> it is how a ₹2 lakh ask becomes a ₹5 lakh project honestly, because the real problem gets found and priced. <b>If chosen:</b> a working prototype on a real link and a fixed build price held for thirty days. Use it when the problem is real and the fix is not obvious.</p></div>
+      <div><span class="tag go">Straight to build</span><p><b>What it is:</b> the one page carries the build scope directly. <b>Why it matters:</b> skipping the diagnostic when it is not needed is what makes it credible when it is. <b>If chosen:</b> criteria written together on the next call, then the one page. Use it when they know exactly what they want and you agree it is the right thing.</p></div>
+      <div><span class="tag open">No</span><p><b>What it is:</b> a warm message with a name to try. <b>Why it matters:</b> a serious slot spent on the wrong project costs you the right one. <b>If chosen:</b> nothing is lost, and someone remembers you were straight with them.</p></div>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">PDF on WhatsApp, within 24 hours</p><h3>The one page</h3></div>
+    <div class="prose">
+      <p>This is the contract, written so a founder will read it. It goes into the chat as a PDF. The sign-off is a reply to that message, and the reply is the record.</p>
+    </div>
+    <div class="copy">
+      <p class="label">The one page</p>
+      <p class="h">[Client] and awtm forge</p>
+      <p class="sub">[Date]. One page. Reply "agreed" to this message and we start on [date].</p>
+      <hr>
+      <div class="block"><p class="k">What we're building</p><p>[Three to five lines, in the client's own words from the call. What it is and what it fixes.]</p></div>
+      <div class="block"><p class="k">What done means, stage by stage</p><p>Stage 1, Agree the shape: [criteria]<br>Stage 2, Something you can open: [criteria]<br>Stage 3, The build: [criteria]<br>Stage 4, Launch and the month after: [criteria]<br>We wrote these together. They are what you hold us to.</p></div>
+      <div class="block"><p class="k">What it costs</p><p>₹[X], fixed. Not included: [list]. New work gets a new number, agreed before it starts.</p></div>
+      <div class="block"><p class="k">When</p><p>Start [date]. Stage 2 on a real link by [date]. Launch [date].</p></div>
+      <div class="block"><p class="k">How you pay</p><p>30 percent to begin, 30 at stage 2, 30 at stage 3, 10 after launch. Each one invoiced only after you have replied "agreed" to that stage.</p></div>
+      <div class="block"><p class="k">If we miss</p><p>We keep working at no extra cost until the criteria are met. If a delay is on your side, the clock pauses and we say so in writing.</p></div>
+      <div class="block"><p class="k">How we work</p><p>A working session every [day] at [time]. A written update the same day. A real link you can open from day ten. [Rahul] runs it from this page to the last invoice.</p></div>
+      <div class="block"><p class="k">What we need from you</p><p>[Access list, each with a date.] One person who signs off: [name].</p></div>
+      <div class="block"><p class="k">After launch</p><p>Watch, ₹40,000 a month: [one line]. Build On, ₹85,000 a month: [one line]. Decide before launch. It starts the day we go live.</p></div>
+      <hr>
+      <p class="micro">Four checks before this leaves: nothing on it asks for a live credential. It matches our own decisions and open questions. Every lead time has a date. It asks what their systems can do, not only what we need.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Meet, 30 minutes</p><h3>Kickoff</h3></div>
+    <div class="prose">
+      <p>After "agreed", before any work. Four things and nothing else.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">Access</span><p>The checklist below, walked through live, with the rule stated out loud: add us as a user, never share a password. Anything not received on the call gets a date.</p></div>
+      <div><span class="tag">Sign-off person</span><p>One name. If two people need to agree, they agree with each other before replying to you.</p></div>
+      <div><span class="tag">Cadence</span><p>Day and time of the weekly session, in their timezone, put in both calendars while on the call.</p></div>
+      <div><span class="tag">The group</span><p>One WhatsApp group, named [Client] and awtm forge, with the one page pinned. Everything about the project happens there, not in direct messages.</p></div>
+    </div>
+    <div class="copy">
+      <p class="label">Access checklist, sent before kickoff</p>
+      <p class="h">What we need, and how to give it safely</p>
+      <p class="sub">Never paste a password, API key or OTP into this chat or any chat. Add us as a user with the least access that works. If you are unsure how, say so and we'll walk through it together on the call.</p>
+      <ul>
+        <li>Store platform (Shopify, WooCommerce, other): a staff account for [email], with [permissions].</li>
+        <li>Domain and DNS: collaborator access, or we send you the records to add yourself.</li>
+        <li>Payment gateway: dashboard view only. Keys connect through the platform's own integration, never by message.</li>
+        <li>Courier: API access from their dashboard, or an invite to the account.</li>
+        <li>Analytics and ads: account-level access granted to our agency account, not your login.</li>
+        <li>Existing code, if any: a repository invite.</li>
+        <li>Brand assets: logo files, fonts, product images, in a shared folder.</li>
+        <li>By [date]. Anything after that date pauses the clock, and we'll say so in writing.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s4">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Review</h2></div>
+    <div class="prose">
+      <p>The stage loop, run four times, and then the two moments after launch that most agencies skip: the one that keeps the revenue and the one that starts the next project.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Every week</p><h3>The session and the update</h3></div>
+    <div class="prose">
+      <p>The working session on Meet, 30 to 45 minutes: what moved, what is next, what you need and by when, decisions brought as options rather than open questions. Then the written update, the same day, the same shape every time, sent whether or not anything went wrong.</p>
+    </div>
+    <div class="copy">
+      <p class="label">Weekly update, WhatsApp, same day as the session</p>
+      <p class="msg"><b>Week [n] of [total], [Client]</b>
+Moved: [two or three lines]
+Next: [two or three lines]
+Need from you: [thing] by [date]
+Risks: [one line, or "none this week"]
+Link: [staging]</p>
+      <p class="micro">Same shape every week means the client reads it in ten seconds and notices when something is missing. That is the point.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Every stage</p><h3>The sign-off</h3></div>
+    <div class="prose">
+      <p>Before it starts, the criteria are already on the one page. When it is done, one message, and nothing is invoiced until the reply.</p>
+    </div>
+    <div class="copy">
+      <p class="label">Stage sign-off, WhatsApp</p>
+      <p class="msg">Stage [n], [name], is ready against what we wrote:
+
+[Criterion]: done. [How to check it yourself]
+[Criterion]: done. [How to check it yourself]
+[Criterion]: done. [How to check it yourself]
+
+Have a look at [link]. If it holds, reply "agreed" and we'll send the invoice for this stage. If anything is off, tell us and we keep going. No invoice until it's right.</p>
+      <p class="micro">If they find something, fix it and send the message again. The second "agreed" is worth more than the first would have been.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Launch</p><h3>The switch, not the sale</h3></div>
+    <div class="prose">
+      <p>The monthly is not a launch conversation. It was on the one page from the first day, so at launch it simply starts, or the handover does. Both are fine. What is not fine is silence.</p>
+      <p><strong>If Watch or Build On:</strong> the named person and the stated response time go into the group on launch day. <strong>If handover:</strong> everything documented, every access transferred to them, and a short written note of what to watch, sent as a PDF and pinned.</p>
+    </div>
+
+    <div class="sub-head"><p class="eyebrow">Day 30 after launch</p><h3>One call, five parts</h3></div>
+    <div class="prose">
+      <p>In this order. This is where the number, the testimonial and the referral all come from, and the reason to do it as a call rather than a message is that people give you things on a call they would never type.</p>
+    </div>
+    <div class="qs">
+      <div><span class="tag">The number</span><p>"What's changed that you'd put a number on?" Orders, tickets, hours, conversion. One figure they would stand behind is the case study number nothing else produces.</p></div>
+      <div><span class="tag">The friction</span><p>"Anything you'd want different?" Listen. Fix the small things at no charge. This is what the referral is built on.</p></div>
+      <div><span class="tag">The testimonial</span><p>Ask a specific question, not for praise: "What were you worried about before we started, and did it happen?" The answer is the quote.</p></div>
+      <div><span class="tag go">The referral</span><p>Specific, not general. "Is there anyone you know running a store that's hit the point where the setup is holding them back? One intro message is all it needs." Then send them the sentence, in writing, so they have it.</p></div>
+      <div><span class="tag">The monthly</span><p>If it was not taken: "Now that it's running, who's watching it?" Offer Watch once, plainly, and leave it.</p></div>
+    </div>
+    <div class="copy">
+      <p class="label">After the day-30 call, WhatsApp</p>
+      <p class="msg">Thanks for today, [name]. Two things from it.
+
+The figure you mentioned, [their number], is exactly what we'd want to say publicly, with your OK. I'll send you the draft before anything goes anywhere.
+
+And if [the person they mentioned] would find it useful, this is all you'd need to send them:
+"One team that builds and runs everything behind an online store. Fixed price, and you don't pay for a stage until you've signed it off. Rahul: [number]."
+
+No pressure either way, and thank you for thinking of it.</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s5">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Rhythm and numbers</h2></div>
+    <div class="qs">
+      <div><span class="tag">Daily</span><p>Enquiries answered within four working hours. That is the whole daily rule.</p></div>
+      <div><span class="tag">Weekly</span><p>Client sessions and updates. Five outbound messages to named brands. One LinkedIn post from either founder.</p></div>
+      <div><span class="tag">Monthly</span><p>One message to each of the named few. The numbers below, looked at once. Day-30 calls for anything launched last month.</p></div>
+      <div><span class="tag">Per project</span><p>One page, kickoff, four sign-offs, launch, day 30. No exceptions for friends. Friends are where the verbal deals came from.</p></div>
+    </div>
+    <div class="prose">
+      <p><strong>Ownership.</strong> Rahul owns the funnel end to end: replies, calls, the one page, the sessions, day 30. Ayush is on the kickoff and the weekly session, owns the technical half of the criteria and the access list, and is the second name every client knows. If Rahul is in a build week the four-hour reply rule still holds, because the pipeline you stop filling in October is the revenue you do not have in December.</p>
+      <p><strong>The numbers.</strong> One sheet, one row per enquiry: date, who referred them, what they sell, monthly orders, the door it went through, the outcome, the value, and awtm forge's take. Once a month, five figures: enquiries, serious versus small, wins, serious slots filled, retainers active. The one that matters is serious slots filled. If it reads two for three months running, the funnel is working and the next question is Dubai.</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s6">
+    <div class="sec-head"><span class="sec-num">06</span><h2>First thirty days</h2></div>
+    <div class="qs">
+      <div><span class="tag">Week 1</span><p>The one page goes on the next win, whoever it is. The named-few list is written, with a message date against each. The enquiry sheet is started with this month's five or six.</p></div>
+      <div><span class="tag">Week 2</span><p>Day-30 calls, retroactively, with the last three clients you launched. They get the referral ask and the Watch offer. This is the fastest revenue in the plan.</p></div>
+      <div><span class="tag">Week 3</span><p>First five outbound messages to named brands. Adjacent vendor list written, first two conversations booked.</p></div>
+      <div><span class="tag">Week 4</span><p>Every current client at or near launch gets the monthly conversation. LinkedIn is posting. Numbers reviewed once.</p></div>
+    </div>
+    <div class="prose">
+      <p>What success looks like at day thirty: the one page used at least once, three day-30 calls done, one Watch signed, ten outbound messages sent. Not ₹5 lakh, not yet. The machine assembled and turning.</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s7">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Open decisions</h2></div>
+    <div class="qs">
+      <div><span class="tag open">Decide</span><p><b>The referral thank-you.</b> A month of Watch, a fixed credit, or nothing formal. Recommended: a month of Watch for clients, a fee for the named few. Say it once.</p></div>
+      <div><span class="tag open">Write</span><p><b>The named few.</b> Who they are, one line each on what would actually be useful to them.</p></div>
+      <div><span class="tag open">Write</span><p><b>The twenty brands.</b> Name, the person, and the one true observation each. Nothing goes out without the observation.</p></div>
+      <div><span class="tag open">Pick</span><p><b>The value line,</b> still. Every message above inherits it.</p></div>
+      <div><span class="tag open">Confirm</span><p><b>Ayush's role</b> in the kickoff and the weekly session, as written in section 05.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>awtm forge</span>
+    <span>Funnel v1</span>
+    <span>Pairs with the Playbook</span>
+    <span>AI assisted, human directed</span>
+  </footer>
+</div>
