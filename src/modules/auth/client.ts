@@ -16,9 +16,14 @@ export function sessionCookieName(projectId: string): string {
 function cookieOptions(maxAgeSeconds: number) {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // Keyed to the configured origin, not NODE_ENV: a production build served
+    // over plain HTTP would otherwise set a Secure cookie the browser drops,
+    // and no test could ever see it.
+    secure: (process.env.APP_URL ?? "").startsWith("https://"),
     sameSite: "lax" as const,
-    path: "/p",
+    // "/" rather than "/p", because the printable agreement lives at
+    // /agreement/[token]/print and a client must be able to open it.
+    path: "/",
     maxAge: maxAgeSeconds,
   };
 }

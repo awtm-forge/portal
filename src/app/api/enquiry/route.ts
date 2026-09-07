@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { emit } from "@/modules/events";
+import "@/modules/notifications/register";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -44,5 +46,8 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: fallback }, { status: 503 });
   }
+  // CLAUDE.md section 5: stored, and emailed to the team. The static page
+  // itself still fetches nothing.
+  await emit({ type: "enquiry.received", projectId: null, actor: "visitor", payload: { ...parsed.data } });
   return NextResponse.json({ ok: true });
 }

@@ -12,7 +12,9 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx scripts/seed.ts",
     "admin:create": "tsx scripts/admin-create.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
@@ -29,6 +31,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",

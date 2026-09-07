@@ -4,9 +4,9 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { IntakeRenderer } from "@/components/intake/IntakeRenderer";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
-import { readAnswers, readBoolMap, readStringList } from "@/lib/intake/answers";
-import { parseDocumentLoose } from "@/lib/intake/document";
-import { fileInfoMap } from "@/lib/intake/load";
+import { readAnswers, readBoolMap, readStringList } from "@/modules/intake/answers";
+import { parseDocumentLoose } from "@/modules/intake/document";
+import { fileInfoMap } from "@/modules/intake/load";
 
 export default async function FillPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();

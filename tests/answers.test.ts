@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cleanValue } from "@/lib/intake/answers";
-import type { Question } from "@/lib/intake/document";
+import { cleanValue } from "@/modules/intake/answers";
+import type { Question } from "@/modules/intake/document";
 
 describe("answer values by type, INTAKE-SPEC section 3", () => {
   it("validates the sign-off email by key", () => {

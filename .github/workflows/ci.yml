@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Deployment requires green: docs/ARCHITECTURE.md, quality gates.
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: devroot
+          MYSQL_DATABASE: awtm
+          MYSQL_USER: awtm
+          MYSQL_PASSWORD: awtmdev
+        ports: ["3307:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uawtm -pawtmdev"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      # MySQL everywhere, never a substitute: ADR 0002.
+      DATABASE_URL: mysql://awtm:awtmdev@127.0.0.1:3307/awtm
+      SESSION_SECRET: ci-only-secret-not-used-anywhere-else
+      UPLOAD_DIR: /tmp/awtm-uploads
+      APP_URL: http://127.0.0.1:3210
+      MAIL_TRANSPORT: log
+      TEAM_NOTIFY_EMAIL: ci@example.invalid
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p "$UPLOAD_DIR"
+      - name: Give the dev user shadow database rights
+        run: mysql -h 127.0.0.1 -P 3307 -uroot -pdevroot -e "GRANT ALL PRIVILEGES ON *.* TO 'awtm'@'%'; FLUSH PRIVILEGES;"
+      - run: npx prisma migrate deploy
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Seed for the end to end tests
+        run: |
+          printf 'CiOnlyPassword-2026\n' | npm run admin:create -- ci@example.invalid "CI"
+          npm run db:seed
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

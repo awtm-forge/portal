@@ -1,5 +1,5 @@
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
-import { serveProjectFile } from "@/lib/intake/handlers";
+import { serveProjectFile } from "@/modules/intake/handlers";
 
 export async function GET(request: Request, { params }: { params: Promise<{ token: string; fileId: string }> }) {
   const { token, fileId } = await params;

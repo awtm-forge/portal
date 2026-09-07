@@ -1,5 +1,5 @@
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
-import { handleIntakeAction } from "@/lib/intake/handlers";
+import { handleIntakeAction } from "@/modules/intake/handlers";
 
 export async function POST(request: Request, { params }: { params: Promise<{ token: string; action: string }> }) {
   const { token, action } = await params;

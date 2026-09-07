@@ -3,9 +3,9 @@ import { IntakeRenderer } from "@/components/intake/IntakeRenderer";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { db } from "@/lib/db";
-import { readAnswers, readBoolMap, readStringList } from "@/lib/intake/answers";
-import { parseDocumentLoose } from "@/lib/intake/document";
-import { fileInfoMap } from "@/lib/intake/load";
+import { readAnswers, readBoolMap, readStringList } from "@/modules/intake/answers";
+import { parseDocumentLoose } from "@/modules/intake/document";
+import { fileInfoMap } from "@/modules/intake/load";
 
 export default async function IntakePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

@@ -1,4 +1,4 @@
-import { parseDocumentLoose, type IntakeDocument } from "@/lib/intake/document";
+import { parseDocumentLoose, type IntakeDocument } from "@/modules/intake/document";
 
 export type Progress = { total: number; done: number; sections: { key: string; title: string; done: boolean }[] };
 

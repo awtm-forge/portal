@@ -3,9 +3,9 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
-import { readAnswers } from "@/lib/intake/answers";
-import { validateDocument, type ImportFailure } from "@/lib/intake/import";
-import { upsertDocument } from "@/lib/intake/replace";
+import { readAnswers } from "@/modules/intake/answers";
+import { validateDocument, type ImportFailure } from "@/modules/intake/import";
+import { upsertDocument } from "@/modules/intake/replace";
 
 export type ImportState = { failures?: ImportFailure[]; message?: string; json?: string };
 

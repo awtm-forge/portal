@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    exclude: ["tests/e2e/**"],
     // The numbering test issues twenty invoices at once against one row lock.
     testTimeout: 30000,
     hookTimeout: 30000,

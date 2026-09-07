@@ -3,7 +3,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { dayMonth } from "@/lib/format";
-import { intakeProgress } from "@/lib/intake/progress";
+import { intakeProgress } from "@/modules/intake/progress";
 
 export default async function ProjectsPage() {
   const admin = await requireAdmin();

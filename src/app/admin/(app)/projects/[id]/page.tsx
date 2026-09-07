@@ -5,10 +5,12 @@ import { requireAdmin } from "@/modules/auth/admin";
 import { projectLink } from "@/modules/auth/client";
 import { db } from "@/lib/db";
 import { dayMonth, dayMonthTime } from "@/lib/format";
-import { intakeProgress } from "@/lib/intake/progress";
-import { parseDocumentLoose } from "@/lib/intake/document";
+import { intakeProgress } from "@/modules/intake/progress";
+import { parseDocumentLoose } from "@/modules/intake/document";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
-import { rotateLinkAction, signoffDecisionAction, takeFlashLink, updateContactAction } from "../../actions";
+import { PHASE_LABEL } from "@/modules/projects/phase";
+import { agreementToAdminView, invoiceToClientView } from "@/modules/serializers";
+import { rotateLinkAction, resendLinkAction, signoffDecisionAction, takeFlashLink, updateContactAction } from "../../actions";
 import { CopyLink } from "./CopyLink";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
@@ -18,9 +20,15 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const project = await db.project.findUnique({
     where: { id },
-    include: { client: true, intake: { include: { documentUploadedBy: { select: { name: true } } } } },
+    include: { client: true, intake: { include: { documentUploadedBy: { select: { name: true } } } }, agreement: true },
   });
   if (!project) notFound();
+  const [invoices, signoffs, noteCount] = await Promise.all([
+    db.invoice.findMany({ where: { projectId: id }, orderBy: { issuedAt: "asc" } }),
+    db.signoffEvent.findMany({ where: { projectId: id }, orderBy: { occurredAt: "asc" } }),
+    db.agreementNote.count({ where: { projectId: id } }),
+  ]);
+  const agreement = project.agreement ? agreementToAdminView(project.agreement) : null;
   const c = project.client;
   const freshToken = await takeFlashLink(project.id);
   const link = freshToken ? projectLink(freshToken) : null;
@@ -35,10 +43,69 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
     <AdminShell active="projects" adminName={admin.name}>
       <div className="stack" style={{ gap: 6 }}>
         <h1 className="a-title">{project.name}</h1>
-        <p className="a-sub">{c.businessName} · {TYPE_LABEL[project.typeOfWork]} · created {dayMonth(project.createdAt)}</p>
+        <p className="a-sub">{c.businessName} · {TYPE_LABEL[project.typeOfWork]} · {PHASE_LABEL[project.phase]} · created {dayMonth(project.createdAt)}</p>
       </div>
       <div className="a-cols">
         <div className="main">
+          <div className={`a-card${project.phase === "AGREEMENT_DRAFT" ? " ember" : ""}`}>
+            <div className="between">
+              <span className={`k${project.phase === "AGREEMENT_DRAFT" ? " ember" : ""}`}>The agreement</span>
+              {agreement && <span className="mono-sm">{agreement.isAgreed ? `Agreed by ${agreement.agreedByName} on ${agreement.agreedAt}` : agreement.sentAt ? `Sent, version ${agreement.version}` : "Draft"}</span>}
+            </div>
+            {!agreement && <p className="c-sub" style={{ fontSize: 14 }}>Not written yet. It is the one page the client agrees to, once.</p>}
+            {agreement && (
+              <div className="stack">
+                <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>{agreement.deliverables.length} deliverables, each with how the client checks it</span><span className="mono-sm">{agreement.total}</span></div>
+                <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>Advance {agreement.advancePct} percent</span><span className="mono-sm">{agreement.advance} then {agreement.balance}</span></div>
+                <div className="between" style={{ padding: "9px 0" }}><span>Internal cost, never shown to the client</span><span className="mono-sm" style={{ color: "var(--ember)" }}>{agreement.internalCost}</span></div>
+              </div>
+            )}
+            {noteCount > 0 && <p className="help" style={{ color: "var(--ember)" }}>{noteCount} {noteCount === 1 ? "note" : "notes"} from the client on what was off.</p>}
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Link className="a-btn" href={`/admin/projects/${project.id}/agreement`}>{agreement ? (agreement.isAgreed ? "Read the agreement" : "Edit and send") : "Write the agreement"}</Link>
+              {agreement?.sentAt && <a className="a-btn ghost" href={`/agreement/${project.id}/print`} target="_blank" rel="noopener">Print view</a>}
+            </div>
+          </div>
+
+          {invoices.length > 0 && (
+            <div className="a-card">
+              <span className="k">Invoices</span>
+              <div className="stack">
+                {invoices.map((raw) => {
+                  const i = invoiceToClientView(raw);
+                  return (
+                    <div className="between" key={i.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
+                      <span className="stack" style={{ gap: 2 }}>
+                        <span className="mono-sm" style={{ color: "var(--ink)" }}>{i.number}</span>
+                        <span className="help">{i.kindLabel} · {i.issuedAt}</span>
+                      </span>
+                      <span className="stack" style={{ gap: 2, alignItems: "flex-end" }}>
+                        <span className="mono-sm" style={{ color: "var(--ink)" }}>{i.total}</span>
+                        <span className="tag">{i.statusLabel}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="help">Raised by a sign-off and by nothing else. Marking one paid arrives in step 9.</p>
+            </div>
+          )}
+
+          {signoffs.length > 0 && (
+            <div className="a-card">
+              <span className="k">Sign-offs</span>
+              <div className="stack">
+                {signoffs.map((s) => (
+                  <div className="between" key={s.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
+                    <span>{s.kind === "AGREEMENT" ? "Agreement" : "Delivery"} by {s.actorName}</span>
+                    <span className="mono-sm">{dayMonthTime(s.occurredAt)} · {s.method === "WHATSAPP" ? "WhatsApp" : "portal"}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="help">Append only. There is no path in the system that edits or deletes one.</p>
+            </div>
+          )}
+
           <div className={`a-card${intake && !intake.submittedAt ? " ember" : ""}`}>
             <div className="between">
               <span className={`k${intake && !intake.submittedAt ? " ember" : ""}`}>The questionnaire</span>
@@ -105,6 +172,18 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
                 <div className="a-fld mono" style={{ color: "var(--muted)" }}>awtmforge.com/p/…</div>
                 <p className="help" style={{ lineHeight: 1.6 }}>Only a hash of the link is stored. It was shown once when created{project.tokenRotatedAt ? ` and again when rotated on ${dayMonth(project.tokenRotatedAt)}` : ""}. To send it again, rotate it.</p>
               </>
+            )}
+            {project.linkEmailError ? (
+              <form action={resendLinkAction} className="stack" style={{ gap: 8, borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <span className="k ember">Email not sent</span>
+                <p className="help">The link email to {c.signoffPersonEmail} did not go out. The project was still created.</p>
+                <button className="a-btn ghost" type="submit">Try sending it again</button>
+              </form>
+            ) : (
+              <p className="help" style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
+                {project.linkEmailedAt ? `Link emailed to ${c.signoffPersonEmail} on ${dayMonth(project.linkEmailedAt)}.` : "The link has not been emailed yet."}
+              </p>
             )}
             <form action={rotateLinkAction} style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
               <input type="hidden" name="projectId" value={project.id} />

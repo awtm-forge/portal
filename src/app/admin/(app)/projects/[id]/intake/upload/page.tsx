@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
-import { readAnswers } from "@/lib/intake/answers";
+import { readAnswers } from "@/modules/intake/answers";
 import { UploadForm } from "./UploadForm";
 
 export default async function UploadQuestionnairePage({ params }: { params: Promise<{ id: string }> }) {

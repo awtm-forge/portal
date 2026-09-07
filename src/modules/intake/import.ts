@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { documentSchema, FIELD_TYPES, type IntakeDocument } from "@/lib/intake/document";
+import { documentSchema, FIELD_TYPES, type IntakeDocument } from "@/modules/intake/document";
 
 /**
  * INTAKE-SPEC section 5, "Rules the importer enforces". Every rule is checked

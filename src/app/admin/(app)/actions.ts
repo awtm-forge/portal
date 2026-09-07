@@ -4,10 +4,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
-import { rotateProjectToken } from "@/modules/auth/client";
+import { projectLink, rotateProjectToken } from "@/modules/auth/client";
 import { hashToken, randomToken } from "@/lib/crypto";
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { slugify } from "@/lib/format";
+import { emit } from "@/modules/events";
+import { sendLinkEmail } from "@/modules/notifications";
+import "@/modules/notifications/register";
 
 export async function logoutAction(): Promise<void> {
   await adminLogout();
@@ -18,7 +22,7 @@ export async function logoutAction(): Promise<void> {
 const FLASH = "awtm_flash_link";
 export async function setFlashLink(projectId: string, token: string): Promise<void> {
   (await cookies()).set(FLASH, `${projectId}:${token}`, {
-    httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/admin", maxAge: 300,
+    httpOnly: true, secure: (process.env.APP_URL ?? "").startsWith("https://"), sameSite: "lax", path: "/admin", maxAge: 300,
   });
 }
 export async function takeFlashLink(projectId: string): Promise<string | null> {
@@ -80,7 +84,56 @@ export async function createProjectAction(_prev: NewProjectState, formData: Form
     },
   });
   await setFlashLink(project.id, token);
+  await emit({
+    type: "project.created",
+    projectId: project.id,
+    actor: d.projectName,
+    payload: { projectName: d.projectName, businessName: d.businessName },
+  });
+  // CLAUDE.md 5.1: one link email on creation. A failure does not block
+  // creation; the project page shows it and offers a retry.
+  await deliverLink(project.id, token);
   redirect(`/admin/projects/${project.id}`);
+}
+
+/** Sends the project link to the sign-off person and records the outcome. */
+async function deliverLink(projectId: string, token: string): Promise<void> {
+  const project = await db.project.findUnique({ where: { id: projectId }, include: { client: true } });
+  if (!project) return;
+  try {
+    await sendLinkEmail({
+      to: project.client.signoffPersonEmail,
+      contactName: project.client.contactName,
+      businessName: project.client.businessName,
+      link: projectLink(token),
+    });
+    await db.project.update({ where: { id: projectId }, data: { linkEmailedAt: new Date(), linkEmailError: null } });
+    await emit({ type: "project.link_emailed", projectId, actor: "system", payload: {} });
+  } catch (error) {
+    logger.error("link email failed", { projectId, error: String(error) });
+    await db.project.update({
+      where: { id: projectId },
+      data: { linkEmailError: String(error).slice(0, 300) },
+    });
+  }
+}
+
+/**
+ * Retry after a failed link email. Only a token this session just made can be
+ * sent, because only its hash is stored: rotating is how you get a new one.
+ */
+export async function resendLinkAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const projectId = String(formData.get("projectId") ?? "");
+  const token = await takeFlashLink(projectId);
+  if (token) {
+    await deliverLink(projectId, token);
+  } else {
+    const fresh = await rotateProjectToken(projectId);
+    await setFlashLink(projectId, fresh);
+    await deliverLink(projectId, fresh);
+  }
+  redirect(`/admin/projects/${projectId}`);
 }
 
 export async function rotateLinkAction(formData: FormData): Promise<void> {
@@ -90,6 +143,7 @@ export async function rotateLinkAction(formData: FormData): Promise<void> {
   if (!project) redirect("/admin");
   const token = await rotateProjectToken(projectId);
   await setFlashLink(projectId, token);
+  await deliverLink(projectId, token);
   redirect(`/admin/projects/${projectId}`);
 }
 

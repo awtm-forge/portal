@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { validateDocument } from "@/lib/intake/import";
+import { validateDocument } from "@/modules/intake/import";
 
 const library = new Set(["logo-wordmark", "logo-monogram", "logo-emblem", "logo-mascot", "logo-abstract", "logo-combination"]);
 const good = () => JSON.parse(readFileSync("prisma/seed/intake-kavya-2026-08-18.json", "utf8"));

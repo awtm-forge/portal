@@ -1,5 +1,5 @@
 import { currentAdmin } from "@/modules/auth/admin";
-import { serveProjectFile } from "@/lib/intake/handlers";
+import { serveProjectFile } from "@/modules/intake/handlers";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string; fileId: string }> }) {
   if (!(await currentAdmin())) return new Response("Not found", { status: 404 });

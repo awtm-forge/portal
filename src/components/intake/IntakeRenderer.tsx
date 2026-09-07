@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { IntakeDocument, Question, Section } from "@/lib/intake/document";
-import type { Answers } from "@/lib/intake/answers";
+import type { IntakeDocument, Question, Section } from "@/modules/intake/document";
+import type { Answers } from "@/modules/intake/answers";
 
 /**
  * INTAKE-SPEC section 11. One column, one open section, one button. The

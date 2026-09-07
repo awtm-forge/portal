@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { processUpload, REASON_TEXT } from "@/lib/files";
-import { parseDocumentLoose } from "@/lib/intake/document";
+import { parseDocumentLoose } from "@/modules/intake/document";
 import { removeStored, writeLibraryFile } from "@/lib/storage";
 
 export type LibraryState = { message?: string };

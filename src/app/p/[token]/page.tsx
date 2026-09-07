@@ -1,10 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
+import { Phase } from "@/generated/prisma/enums";
+import { db } from "@/lib/db";
+import { dayMonthYear } from "@/lib/dates";
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
-import { intakeProgress } from "@/lib/intake/progress";
+import { intakeProgress } from "@/modules/intake/progress";
+import { invoiceToClientView } from "@/modules/serializers";
 import { CodeScreen } from "./CodeScreen";
 
+/**
+ * PORTAL-SPEC 6.1 and the one-thing-to-do rule: what this page shows depends
+ * on the phase, and only the current phase is loud. Everything else is below
+ * it or collapsed.
+ */
 export default async function ProjectPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const project = await projectByToken(token);
@@ -19,54 +28,133 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
     );
   }
 
+  const [agreement, invoices] = await Promise.all([
+    db.agreement.findUnique({ where: { projectId: project.id } }),
+    db.invoice.findMany({ where: { projectId: project.id }, orderBy: { issuedAt: "asc" } }),
+  ]);
   const intake = project.intake;
+  const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
+  const phase = project.phase;
+
   return (
     <ClientShell businessName={project.client.businessName}>
       <div style={{ padding: "22px 20px 18px" }} className="stack">
         <p className="k">Your project</p>
         <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{project.name}</h1>
       </div>
-      <div style={{ padding: "0 20px", marginTop: 8 }}>
-        {!intake && (
-          <div className="card" style={{ padding: "18px 16px" }}>
-            <div className="stack" style={{ gap: 10 }}>
-              <span className="sec-name" style={{ fontSize: 17 }}>Nothing to do yet</span>
-              <p className="c-sub">Rahul is writing your questionnaire from the call. It appears here when it is ready, and we will message you on WhatsApp.</p>
-            </div>
-          </div>
+
+      <div style={{ padding: "0 20px" }} className="stack">
+        {phase === Phase.CANCELLED && (
+          <Card>
+            <span className="sec-name" style={{ fontSize: 17 }}>This project was closed on {dayMonthYear(project.cancelledAt)}.</span>
+            <p className="c-sub">Message Rahul on WhatsApp if that is a surprise.</p>
+          </Card>
         )}
-        {intake && intake.submittedAt && (
-          <div className="card" style={{ padding: "18px 16px" }}>
-            <div className="stack" style={{ gap: 12 }}>
-              <span className="sec-name" style={{ fontSize: 17 }}>Sent on {formatDate(intake.submittedAt)}. Thank you.</span>
-              <p className="c-sub">We are writing the agreement from your answers. It appears here when it is ready, and we will message you.</p>
-              <Link className="btn-full ghost" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>Look at your answers</Link>
-            </div>
-          </div>
+
+        {phase === Phase.INTAKE && !intake && (
+          <Card>
+            <span className="sec-name" style={{ fontSize: 17 }}>Nothing to do yet</span>
+            <p className="c-sub">Rahul is writing your questionnaire from the call. It appears here when it is ready, and we will message you on WhatsApp.</p>
+          </Card>
         )}
-        {intake && !intake.submittedAt && (() => {
-          const p = intakeProgress(intake.document, intake.answers, intake.sectionsDone);
-          return (
-            <div className="card now" style={{ padding: "18px 16px" }}>
-              <div className="stack" style={{ gap: 12 }}>
-                <p className="k ember">Now</p>
-                <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Before we start, about ten minutes</span>
-                <p className="c-sub">
-                  {p.total} short sections. It saves as you type, so you can leave and come back.
-                  {p.done > 0 ? ` You are ${p.done} of ${p.total} sections in.` : ""}
-                </p>
-                <Link className="btn-full" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>
-                  {p.done > 0 ? "Carry on with the questionnaire" : "Open the questionnaire"}
-                </Link>
-              </div>
+
+        {phase === Phase.INTAKE && intake && progress && (
+          <Card loud>
+            <p className="k ember">Now</p>
+            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Before we start, about ten minutes</span>
+            <p className="c-sub">
+              {progress.total} short sections. It saves as you type, so you can leave and come back.
+              {progress.done > 0 ? ` You are ${progress.done} of ${progress.total} sections in.` : ""}
+            </p>
+            <Link className="btn-full" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>
+              {progress.done > 0 ? "Carry on with the questionnaire" : "Open the questionnaire"}
+            </Link>
+          </Card>
+        )}
+
+        {phase === Phase.AGREEMENT_DRAFT && (
+          <Card>
+            <span className="sec-name" style={{ fontSize: 17 }}>
+              {intake?.submittedAt ? `Sent on ${dayMonthYear(intake.submittedAt)}. Thank you.` : "Thank you."}
+            </span>
+            <p className="c-sub">We are writing your agreement from your answers. It appears here when it is ready, and we will message you.</p>
+          </Card>
+        )}
+
+        {phase === Phase.AGREEMENT_SENT && (
+          <Card loud>
+            <p className="k ember">Now</p>
+            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Your agreement is ready to read</span>
+            <p className="c-sub">One page: what we are building, what it costs, when it lands, and how you will check it.</p>
+            <Link className="btn-full" href={`/p/${token}/agreement`} style={{ marginTop: 4 }}>Read the agreement</Link>
+          </Card>
+        )}
+
+        {(phase === Phase.AGREED || phase === Phase.BUILDING) && (
+          <Card>
+            <span className="sec-name" style={{ fontSize: 17 }}>
+              {phase === Phase.AGREED ? "Agreed. We start shortly." : "We are building."}
+            </span>
+            <p className="c-sub">
+              {phase === Phase.AGREED
+                ? "Rahul will confirm the kickoff. The weekly updates start then."
+                : "A written update lands here every week."}
+            </p>
+          </Card>
+        )}
+
+        {/* Below the fold, collapsed: the record so far. */}
+        {intake?.submittedAt && phase !== Phase.INTAKE && (
+          <Collapsed summary="Your answers">
+            <Link className="btn-full ghost" href={`/p/${token}/intake`}>Look at them, and change any of them</Link>
+          </Collapsed>
+        )}
+
+        {agreement?.sentAt && phase !== Phase.AGREEMENT_SENT && (
+          <Collapsed summary={agreement.agreedAt ? `Your agreement, agreed ${dayMonthYear(agreement.agreedAt)}` : "Your agreement"}>
+            <Link className="btn-full ghost" href={`/p/${token}/agreement`}>Read it again</Link>
+          </Collapsed>
+        )}
+
+        {invoices.length > 0 && (
+          <Collapsed summary={invoices.length === 1 ? "Your invoice" : "Your invoices"}>
+            <div className="stack" style={{ gap: 8 }}>
+              {invoices.map((raw) => {
+                const i = invoiceToClientView(raw);
+                return (
+                  <div key={i.id} className="between" style={{ padding: "12px 14px", border: "1px solid var(--rule)", borderRadius: 2 }}>
+                    <span className="stack" style={{ gap: 2 }}>
+                      <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 12 }}>{i.number}</span>
+                      <span className="help">{i.kindLabel} · {i.issuedAt}</span>
+                    </span>
+                    <span className="stack" style={{ gap: 2, alignItems: "flex-end" }}>
+                      <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 13 }}>{i.total}</span>
+                      <span className="tag">{i.statusLabel}</span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })()}
+          </Collapsed>
+        )}
       </div>
     </ClientShell>
   );
 }
 
-function formatDate(d: Date): string {
-  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(d);
+function Card({ children, loud }: { children: React.ReactNode; loud?: boolean }) {
+  return (
+    <div className={`card${loud ? " now" : ""}`} style={{ padding: "18px 16px" }}>
+      <div className="stack" style={{ gap: 12 }}>{children}</div>
+    </div>
+  );
+}
+
+function Collapsed({ summary, children }: { summary: string; children: React.ReactNode }) {
+  return (
+    <details className="pushback" style={{ borderTop: "1px solid var(--rule-soft)", marginTop: 4 }}>
+      <summary>{summary}</summary>
+      <div style={{ paddingTop: 12 }}>{children}</div>
+    </details>
+  );
 }

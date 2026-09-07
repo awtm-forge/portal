@@ -1,6 +1,9 @@
+import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
-import { parseDocumentLoose, type Question } from "@/lib/intake/document";
-import { SIGNOFF_EMAIL_KEY, SIGNOFF_NAME_KEY } from "@/lib/intake/import";
+import { emit } from "@/modules/events";
+import { can, next } from "@/modules/projects/phase";
+import { parseDocumentLoose, type Question } from "@/modules/intake/document";
+import { SIGNOFF_EMAIL_KEY, SIGNOFF_NAME_KEY } from "@/modules/intake/import";
 
 /** INTAKE-SPEC section 6. One entry per question key. */
 export type AnswerEntry = {
@@ -152,19 +155,42 @@ export function missingRequired(documentJson: unknown, answersJson: unknown): st
 }
 
 export async function submitIntake(intakeId: string): Promise<SaveResult> {
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
-    const row = await tx.intake.findUnique({ where: { id: intakeId } });
-    if (!row) return { ok: false, message: "no questionnaire" };
+    const row = await tx.intake.findUnique({ where: { id: intakeId }, include: { project: { include: { client: true } } } });
+    if (!row) return { ok: false as const, message: "no questionnaire" };
     const missing = missingRequired(row.document, row.answers);
-    if (missing.length) return { ok: false, message: "Who says yes, and their email, are the two answers we need before sending." };
+    if (missing.length) return { ok: false as const, message: "Who says yes, and their email, are the two answers we need before sending." };
     const doc = parseDocumentLoose(row.document);
+    const firstSubmission = row.submittedAt === null;
     await tx.intake.update({
       where: { id: intakeId },
       data: { submittedAt: row.submittedAt ?? new Date(), lastSavedAt: new Date(), sectionsDone: doc?.sections.map((s) => s.key) ?? [] },
     });
-    return { ok: true, at: new Date().toISOString() };
+    // PORTAL-SPEC 5.2: submitting is what moves the project out of intake.
+    // Changing an answer later does not move it again.
+    if (firstSubmission && row.project.phase === Phase.INTAKE && can(row.project.phase, "intake_submitted")) {
+      await tx.project.update({ where: { id: row.projectId }, data: { phase: next(row.project.phase, "intake_submitted").to } });
+    }
+    return {
+      ok: true as const,
+      at: new Date().toISOString(),
+      notify: firstSubmission,
+      projectId: row.projectId,
+      projectName: row.project.name,
+      businessName: row.project.client.businessName,
+    };
   });
+
+  if (result.ok && result.notify) {
+    await emit({
+      type: "intake.submitted",
+      projectId: result.projectId,
+      actor: "client",
+      payload: { projectName: result.projectName, businessName: result.businessName },
+    });
+  }
+  return result.ok ? { ok: true, at: result.at } : result;
 }
 
 /** Attach or detach a stored file on an upload question, under the row lock. */

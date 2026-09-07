@@ -1,5 +1,5 @@
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
-import { serveLibraryImage } from "@/lib/intake/handlers";
+import { serveLibraryImage } from "@/modules/intake/handlers";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ token: string; key: string }> }) {
   const { token, key } = await params;

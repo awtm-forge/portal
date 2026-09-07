@@ -1,6 +1,6 @@
 import { currentAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
-import { answersDocument } from "@/lib/intake/answers";
+import { answersDocument } from "@/modules/intake/answers";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await currentAdmin())) return new Response("Not found", { status: 404 });

@@ -4,10 +4,10 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { dayMonth, dayMonthTime } from "@/lib/format";
-import { readAnswers, readBoolMap, readStringList, type Answers } from "@/lib/intake/answers";
-import { parseDocumentLoose, type Question } from "@/lib/intake/document";
-import { intakeProgress } from "@/lib/intake/progress";
-import { fileInfoMap } from "@/lib/intake/load";
+import { readAnswers, readBoolMap, readStringList, type Answers } from "@/modules/intake/answers";
+import { parseDocumentLoose, type Question } from "@/modules/intake/document";
+import { intakeProgress } from "@/modules/intake/progress";
+import { fileInfoMap } from "@/modules/intake/load";
 import { questionnaireNudgeMessage, waLink } from "@/lib/whatsapp";
 
 export default async function IntakeAdminPage({ params }: { params: Promise<{ id: string }> }) {

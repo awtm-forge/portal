@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { MAX_FILE_BYTES, processUpload, REASON_TEXT, svgThumb } from "@/lib/files";
 import { fail, json, sameOrigin } from "@/lib/http";
-import { markSectionDone, readAnswers, saveAccess, saveAnswer, setFileList, submitIntake } from "@/lib/intake/answers";
-import { parseDocumentLoose } from "@/lib/intake/document";
+import { markSectionDone, readAnswers, saveAccess, saveAnswer, setFileList, submitIntake } from "@/modules/intake/answers";
+import { parseDocumentLoose } from "@/modules/intake/document";
 import { readStored, removeStored, writeProjectFile } from "@/lib/storage";
 
 export type IntakeActor = { projectId: string; enteredBy: "client" | "team"; canSubmit: boolean };

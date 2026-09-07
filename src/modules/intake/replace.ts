@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { allQuestions, type IntakeDocument } from "@/lib/intake/document";
-import { readAnswers, readStringList } from "@/lib/intake/answers";
+import { allQuestions, type IntakeDocument } from "@/modules/intake/document";
+import { readAnswers, readStringList } from "@/modules/intake/answers";
 
 /**
  * INTAKE-SPEC 13.8 and section 10. Upload or replace the document. Every
