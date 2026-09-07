@@ -31,10 +31,11 @@ export async function adminLogin(email: string, password: string, headers: Heade
   const ip = clientIp(headers);
   if (!(await allow(`admin-login:ip:${ip}`, 10, 15 * 60))) return { ok: false, reason: "rate_limited" };
   const user = await db.adminUser.findUnique({ where: { email: email.trim().toLowerCase() } });
-  // Always run a compare so timing does not reveal whether the email exists.
+  // Always run a compare so timing does not reveal whether the email exists,
+  // nor whether an account is still waiting on its setup link.
   const hash = user?.passwordHash ?? "$2a$12$CwTycUXWue0Thq9StjUM0uJ8Z0a2N2mA1Qm0F0kY7m3s6Y2mJ0Q0e";
   const good = await bcrypt.compare(password, hash);
-  if (!user || !good) return { ok: false, reason: "bad_credentials" };
+  if (!user || !user.passwordHash || !good) return { ok: false, reason: "bad_credentials" };
 
   const token = randomToken();
   const maxAge = SESSION_DAYS * 24 * 60 * 60;

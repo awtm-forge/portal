@@ -1,35 +1,14 @@
-// Creates or updates one of the two admin accounts. The password is read from
-// the terminal with echo off, or from stdin when piped. It is never taken from
-// an argument, a file, or an environment variable.
+// Creates or refreshes one of the two admin accounts and prints a one-time
+// setup link. It never generates, prints, or asks for a password: the person
+// sets their own by opening the link (CLAUDE.md section 4).
 //
-//   npm run admin:create -- rahul@awtmforge.com "Rahul"
+//   npm run admin:create -- rahul@zyphextech.com "zekst"
 import "dotenv/config";
-import { createInterface } from "node:readline";
-import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "node:crypto";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
 
-function askHidden(prompt: string): Promise<string> {
-  return new Promise((resolve) => {
-    if (!process.stdin.isTTY) {
-      let data = "";
-      process.stdin.setEncoding("utf8");
-      process.stdin.on("data", (c) => (data += c));
-      process.stdin.on("end", () => resolve(data.replace(/\r?\n$/, "")));
-      return;
-    }
-    const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
-    const r = rl as unknown as { _writeToOutput: (s: string) => void };
-    const original = r._writeToOutput;
-    r._writeToOutput = (s: string) => { if (s.includes(prompt)) original.call(rl, s); };
-    rl.question(prompt, (answer) => {
-      r._writeToOutput = original;
-      rl.close();
-      process.stdout.write("\n");
-      resolve(answer);
-    });
-  });
-}
+const SETUP_HOURS = 48;
 
 async function main() {
   const [email, name] = process.argv.slice(2);
@@ -37,31 +16,48 @@ async function main() {
     console.error('usage: npm run admin:create -- <email> "<name>"');
     process.exit(2);
   }
-  const password = await askHidden("Password (not shown): ");
-  if (password.length < 12) {
-    console.error("Password must be at least 12 characters.");
-    process.exit(2);
-  }
+
   const u = new URL(process.env.DATABASE_URL ?? "");
   const db = new PrismaClient({
     adapter: new PrismaMariaDb({
-      host: u.hostname, port: Number(u.port || 3306), user: decodeURIComponent(u.username),
-      password: decodeURIComponent(u.password), database: u.pathname.slice(1), connectionLimit: 2,
+      host: u.hostname,
+      port: Number(u.port || 3306),
+      user: decodeURIComponent(u.username),
+      password: decodeURIComponent(u.password),
+      database: u.pathname.slice(1),
+      connectionLimit: 2,
     }),
   });
-  const count = await db.adminUser.count({ where: { NOT: { email: email.toLowerCase() } } });
-  if (count >= 2) {
+
+  const lower = email.toLowerCase();
+  const others = await db.adminUser.count({ where: { NOT: { email: lower } } });
+  if (others >= 2) {
     console.error("Two admin accounts already exist. PORTAL-SPEC 6.6 allows two.");
     process.exit(2);
   }
-  const passwordHash = await bcrypt.hash(password, 12);
+
+  const token = randomBytes(32).toString("base64url");
+  const setupTokenHash = createHash("sha256").update(token).digest("hex");
+  const setupExpiresAt = new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000);
+
   await db.adminUser.upsert({
-    where: { email: email.toLowerCase() },
-    create: { email: email.toLowerCase(), name, passwordHash },
-    update: { name, passwordHash },
+    where: { email: lower },
+    create: { email: lower, name, setupTokenHash, setupExpiresAt },
+    update: { name, setupTokenHash, setupExpiresAt, setupLinkUsedAt: null },
   });
   await db.$disconnect();
-  console.log(`Admin ${email} is ready.`);
+
+  const base = (process.env.APP_URL ?? "http://localhost:3200").replace(/\/$/, "");
+  console.log("");
+  console.log(`Admin ${lower} is ready. Open this link within ${SETUP_HOURS} hours and choose a password:`);
+  console.log("");
+  console.log(`  ${base}/admin/setup/${token}`);
+  console.log("");
+  console.log("The link works once. Running this command again replaces it, which is also how");
+  console.log("a forgotten password is reset. Nobody else should ever see this link.");
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

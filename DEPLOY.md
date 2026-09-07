@@ -49,6 +49,8 @@ Set these in hPanel, never in the repo. None are needed for step 1.
 | `SMTP_USER` | `hello@awtmforge.com` |
 | `SMTP_PASS` | that mailbox's password |
 | `SMTP_FROM` | `awtm forge <hello@awtmforge.com>` |
+| `TEAM_NOTIFY_EMAIL` | where team notifications go: intake submitted, agreed, delivered, and every enquiry |
+| `TZ` | `Asia/Kolkata` |
 
 Without `SMTP_HOST` the app refuses to send codes in production.
 
@@ -64,10 +66,12 @@ npm run admin:create -- rahul@zyphextech.com "zekst"
 npm run admin:create -- ayushphiks@gmail.com "Ayush"
 ```
 
-Each asks for a password with echo off. Twelve characters or more. Run the
-same command again to change a password or the display name. Two accounts
-is the limit. The email is what you sign in with; the name is what the admin
-pages show.
+Each prints a one-time setup link. Open it within 48 hours and choose your own
+password, at least twelve characters. The command never generates or prints a
+password, and no password is ever typed into a terminal or a message. Running
+it again replaces the link, which is also how a forgotten password is reset.
+Two accounts is the limit. The email is what you sign in with; the name is what
+the admin pages show.
 
 Then seed the image library with the six logo directions:
 

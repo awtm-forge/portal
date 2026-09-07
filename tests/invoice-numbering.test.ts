@@ -34,15 +34,23 @@ async function freshProject(): Promise<string> {
   return project.id;
 }
 
+/**
+ * Cleanup goes through raw SQL on purpose: the client refuses to delete an
+ * invoice (PORTAL-SPEC 5.12), and this test needs to undo its own rows. The
+ * application has no such escape and tests/append-only.test.ts proves it.
+ */
+async function clearTestInvoices() {
+  await db.$executeRaw`DELETE FROM Invoice WHERE number LIKE ${`${PREFIX}/%`}`;
+  await db.$executeRaw`DELETE FROM InvoiceSequence WHERE prefix = ${PREFIX}`;
+}
+
 beforeEach(async () => {
-  await db.invoice.deleteMany({ where: { number: { startsWith: `${PREFIX}/` } } });
-  await db.invoiceSequence.deleteMany({ where: { prefix: PREFIX } });
+  await clearTestInvoices();
   projectId = await freshProject();
 });
 
 afterAll(async () => {
-  await db.invoice.deleteMany({ where: { number: { startsWith: `${PREFIX}/` } } });
-  await db.invoiceSequence.deleteMany({ where: { prefix: PREFIX } });
+  await clearTestInvoices();
   await db.$disconnect();
 });
 

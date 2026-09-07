@@ -1,7 +1,11 @@
-// awtm forge portal, front half. PORTAL-SPEC section 4 and INTAKE-SPEC section 12,
-// limited to what the front half needs. Stage, agreement, invoice, day30 and
-// signoff_event are not designed yet and are deliberately absent.
-// Timestamps are UTC. No money columns exist in this pass.
+// awtm forge portal. PORTAL-SPEC section 4, INTAKE-SPEC section 12 and the
+// tables added by CLAUDE.md section 5. Kept in step with docs/DATA-MODEL.md,
+// which is updated in the same commit as any migration.
+//
+// Timestamps are stored UTC and rendered in Asia/Kolkata. Every _paise column
+// is BigInt: money is an integer in paise, never a float (ADR 0004).
+// Still to come, in the steps that own them: update, review_round, day30,
+// testimonial, referral.
 
 generator client {
   provider = "prisma-client"
@@ -13,13 +17,18 @@ datasource db {
 }
 
 model AdminUser {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String
-  passwordHash  String
-  createdAt     DateTime       @default(now())
-  sessions      AdminSession[]
-  intakeUploads Intake[]       @relation("uploadedBy")
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String
+  /// Null until the person opens their setup link and chooses one. The script
+  /// that creates an account never generates or prints a password.
+  passwordHash    String?
+  setupTokenHash  String?        @unique
+  setupExpiresAt  DateTime?
+  setupLinkUsedAt DateTime?
+  createdAt       DateTime       @default(now())
+  sessions        AdminSession[]
+  intakeUploads   Intake[]       @relation("uploadedBy")
 }
 
 model AdminSession {

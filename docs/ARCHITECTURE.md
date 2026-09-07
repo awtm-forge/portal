@@ -1,6 +1,6 @@
 # Architecture
 
-Drafted 7 Sep 2026, before the code. The build session keeps this file true: a structural change without a matching edit here, and an ADR in `docs/adr/`, is not done. Read with `DFD.md` (what flows), `DATA-MODEL.md` (what is stored), `SEQUENCES.md` (what order things happen in).
+Drafted 7 Sep 2026, before the code; last checked against it on 7 Sep 2026 after step 5. The build session keeps this file true: a structural change without a matching edit here, and an ADR in `docs/adr/`, is not done. Read with `DFD.md` (what flows), `DATA-MODEL.md` (what is stored), `SEQUENCES.md` (what order things happen in).
 
 ## The shape in one paragraph
 
@@ -97,6 +97,7 @@ Each is a named place. Adding the feature means adding at that seam, not opening
 
 - **A new step in the client journey.** Add a phase to the enum, a row to the transition table in `modules/projects/phase.ts`, a screen under `app/p/[token]/`, and a case in the project page's phase switch. The journey is data in one file, not a chain of `if` statements across screens.
 - **A new side effect of an existing step** (a Slack message, a calendar hold, a CRM row). Subscribe to the activity event in `modules/notifications/subscribers.ts`. Nothing in the module that raised the event changes.
+- **A new mail transport.** `lib/mail` chooses between SMTP and a log writer from `MAIL_TRANSPORT` and `SMTP_HOST`. A production process with neither refuses to send rather than dropping mail silently; the end to end suite sets `MAIL_TRANSPORT=log` so a production build can run without a mailbox.
 - **A new notification channel.** A new sender in `modules/notifications/channels/` that takes the same rendered template. Email exists; WhatsApp is prefilled links today and becomes a sender here if an API is ever used.
 - **A new invoice kind, or a payment gateway.** `modules/invoices` owns numbering and issue; a gateway would add a `payment` table and a subscriber on `invoice.issued` that creates a payment link, and a webhook route that calls `invoices.markPaid`. Numbering does not change.
 - **A new questionnaire field type or document version.** `modules/intake/versions/v1.ts` holds the validator and renderer registry for version 1; version 2 is a sibling file, and the importer picks by `document.version`. Old intakes keep rendering with their own version.

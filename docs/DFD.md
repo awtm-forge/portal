@@ -1,6 +1,6 @@
 # Data flow diagrams
 
-Drafted 7 Sep 2026 from PORTAL-SPEC v2, INTAKE-SPEC v2 and CLAUDE.md §5. The build session keeps these true: any step that adds a process, a store or a flow updates this file in the same commit. Diagrams are Mermaid; GitHub renders them.
+Drafted 7 Sep 2026, last checked against the code on 7 Sep 2026 after step 5. From PORTAL-SPEC v2, INTAKE-SPEC v2 and CLAUDE.md §5. The build session keeps these true: any step that adds a process, a store or a flow updates this file in the same commit. Diagrams are Mermaid; GitHub renders them.
 
 Notation. Rounded boxes are external entities. Rectangles are processes, numbered so the level 1 diagram can be read against the build order. Cylinders are data stores. Every arrow is data, labelled with what moves, never with an action.
 
@@ -67,6 +67,7 @@ flowchart TB
 
   D1[(enquiry)]
   D2[(client, project, one_time_code, client_session)]
+  D12[(admin setup links)]
   D3[(intake, intake_file, image_library)]
   D4[(agreement, agreement_note)]
   D5[(signoff_event)]
@@ -82,7 +83,9 @@ flowchart TB
 
   Team -- "new project, contact, sign-off person" --> P9
   P9 -- "project, token hash" --> D2
-  P9 -- "project created" --> P10
+  P9 -- "project created, link to email" --> P10
+  P10 -- "the link, once, to the sign-off person" --> SMTP
+  P9 -- "setup link hash" --> D12
 
   Client -- "link, code" --> P2
   P2 -- "code request, attempts, session" --> D2

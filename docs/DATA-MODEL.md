@@ -1,6 +1,6 @@
 # Data model
 
-Drafted 7 Sep 2026. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
+Drafted 7 Sep 2026, last checked against the code on 7 Sep 2026 after step 5. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
 
 ## Entity relationship diagram
 
@@ -41,7 +41,9 @@ erDiagram
   }
   admin_user {
     string email PK
-    string password_hash "argon2"
+    string password_hash "bcrypt, null until the setup link is used"
+    string setup_token_hash
+    datetime setup_expires_at
     datetime setup_link_used_at
   }
   client {
@@ -236,9 +238,9 @@ These are constraints, not application code, so a bug in a route cannot get arou
 - `project.phase` is a database enum. Transitions are enforced in `modules/projects/phase.ts` (see ARCHITECTURE.md); the enum stops an unknown value, the module stops an illegal move.
 - `agreement.project_id` is unique: one agreement per project. A new version edits the row before `agreed_at`; after `agreed_at` a trigger-free check in the service refuses writes, and a test proves it.
 - `signoff_event`, `review_round`, `invoice` (once `issued_at` is set) and `agreement_note` have no update or delete in the Prisma client wrapper; the wrapper exposes only `create` and `findMany` for them.
-- `invoice.number` is unique. `invoice_sequence (prefix, fy)` is the row locked with `SELECT ... FOR UPDATE` inside the issuing transaction; `last_seq` only ever increases by one.
+- `invoice.number` is unique. `invoice_sequence (prefix, fy)` is incremented by one `INSERT ... ON DUPLICATE KEY UPDATE last_seq = last_seq + 1` inside the issuing transaction, which takes the row's exclusive lock in a single statement; the read that follows sees only this transaction's increment. An earlier version took a shared lock first and then upgraded it, which deadlocked under the parallel test. `last_seq` only ever increases by one, and a rollback reverts it, which is what makes "never skipped" true.
 - Every `_paise` column is `BIGINT`. No `DECIMAL`, no `FLOAT`.
-- `one_time_code.code_hash`, `project.access_token_hash`, `client_session.token_hash`, `admin_user.password_hash`: hashes only. There is no column anywhere that stores a token, a code or a password in clear.
+- `one_time_code.code_hash`, `project.access_token_hash`, `client_session.token_hash`, `admin_user.password_hash`, `admin_user.setup_token_hash`: hashes only. There is no column anywhere that stores a token, a code or a password in clear. `one_time_code.purpose` binds a code to what it may do (ADR 0010).
 - `intake` has no column for a credential, and the importer refuses an `upload` field inside the access section; `intake_file` rows can only point at question keys of type `upload`.
 - `activity_event.payload` is written through one function that runs the client serializer first, so internal cost cannot enter the log even by accident.
 

@@ -46,6 +46,26 @@ Verified: 18 unit tests covering the importer rules, the exe-renamed-to-jpg refu
 
 Deferred: none in behaviour.
 
+## Step 5, the agreement: done
+
+7 Sep 2026, AI-assisted.
+
+Built, in four commits. The foundations: money in paise with Indian grouping, words for the invoice, and an advance that rounds down so two invoices always sum to the total; the financial year in Asia/Kolkata; the phase machine holding the transition table, which is now the only thing that writes `project.phase`; the activity event log and its in-process dispatcher; the audience serializers; the company singleton; and invoice numbering allocated inside the issuing transaction.
+
+Then the agreement itself. Admin writes it with internal cost and notes in a block marked never shown to the client, and the project's timeline and outcome fields beside them (QUESTIONS.md Q2). Sending is gated on a submitted questionnaire, with an override that records who and when, and re-sending increments the version. The client reads the document, agrees with a fresh code, or says something is off without one, which writes an append-only note and puts the agreement back in draft. Agreeing writes the sign-off event, freezes the agreement and raises the advance invoice in one transaction. Both audiences share one print route.
+
+Also in this step, from the deferred list: the link email on project creation with `link_emailed_at` and a retry when it fails; team notifications and the enquiry email; the intake submit gate moving the phase; `scripts/admin-create.ts` rewritten to print a one-time setup link so no password is ever generated, printed or typed into a terminal; the append-only guard on the database client; the seed's realistic project in `building` with an agreed agreement and a paid advance, which completes step 2.
+
+Verified: 48 unit tests and 23 end to end tests, on desktop and a phone, against a production build. Acceptance criteria now passing: 1, 4, 5, 6, 7, 8, 13, 16, 17, 18, 19, 22, 23, and INTAKE-SPEC 14.7. Criterion 3 holds by construction, since `issueAdvance` and `issueBalance` are called only from the phase machine's side effects and no admin route reaches them.
+
+Three defects the tests found, and the fix in each case:
+
+- Invoice numbering deadlocked under the twenty-in-parallel test. `INSERT IGNORE` took a shared lock that `SELECT ... FOR UPDATE` then had to upgrade, and two transactions doing that deadlock. It is now one `INSERT ... ON DUPLICATE KEY UPDATE`, which takes the exclusive lock in a single statement.
+- The session cookie was marked `Secure` from `NODE_ENV`, so a production build served over plain HTTP set a cookie the browser silently dropped, and nothing could test the logged-in state. It is now keyed to whether `APP_URL` is https.
+- The client session cookie was scoped to `/p`, so the browser never sent it to `/agreement/[token]/print` and a client could not open their own agreement. The path is now `/`.
+
+Deferred: none from this step. The `modules/intake/versions/v1.ts` split named in §11 is still not done; the intake moved to `src/modules/intake/` in this step but keeps its flat layout, and the split lands with the second document version, since a versions folder holding one version is ceremony until there are two.
+
 ---
 
 ## Where the front half differs from CLAUDE.md §11, and where each is folded
@@ -54,17 +74,17 @@ The front half was built on 5 September under a brief that predated the architec
 
 | Difference | Fold into |
 |---|---|
-| No `src/modules/`. Domain logic sits in `src/lib/` (`client-auth.ts`, `admin-auth.ts`, `intake/`, `files.ts`, `storage.ts`, `whatsapp.ts`). | Per area, in the step that next touches it. Auth, notifications and serializers in step 5; intake at its next change. |
-| Some route files and server actions import `db` directly, against the "no route imports prisma" rule. | The same step that migrates each area. Project and agreement routes in step 5. |
-| No phase machine and no `project.phase`; the client landing state is derived from the intake. | Step 5. `modules/projects/phase.ts` with the transition table from `docs/DATA-MODEL.md`. |
-| No `activity_event`, no dispatcher, no notifications module. | Step 5. |
-| No serializers module. Internal cost does not exist yet, so nothing leaks today, but §2 rule 2 says the test ships with the field. | Step 5, in the same commit as `agreement.internal_cost_paise`. |
-| No `company` or `setting` tables; no settings screen. | Step 5, which needs the invoice prefix and the advance percentage. |
-| Intake validators are in `src/lib/intake/`, not `modules/intake/versions/v1.ts`. | The next step that changes intake behaviour. |
-| The Prisma client is not wrapped to hide update and delete on evidence tables. | Step 5, when `signoff_event` and `agreement_note` arrive. |
-| Unit tests only. No Playwright, no CI. | Step 5 sets both up and covers the screens built so far as well as the new ones. |
+| ~~No `src/modules/`.~~ Auth, intake, agreements, invoices, events, serializers, settings, notifications and the phase machine now live in `src/modules/`. `files.ts`, `storage.ts`, `whatsapp.ts`, `money.ts`, `dates.ts` and `logger.ts` stay in `src/lib/`, which is right: they have no domain knowledge. | Done in step 5. |
+| Some route files and server actions still import `db` directly, against the "no route imports prisma" rule. The agreement path goes through its module; the admin project pages and the intake routes read through `db`. | Each area at its next change: intake and files at their next behaviour change, admin project pages in step 11 with the needs-attention block. |
+| ~~No phase machine and no `project.phase`.~~ | Done in step 5. |
+| ~~No `activity_event`, no dispatcher, no notifications module.~~ | Done in step 5. |
+| ~~No serializers module.~~ Note against §2 rule 2: the fields landed in the schema commit and the leak test one commit later, the same afternoon, not in the same commit. | Done in step 5. |
+| ~~No `company` table.~~ The `setting` table exists but nothing reads it yet, and there is no settings screen. | Screen in step 11 or 12, wherever the booking URL and bank details are first needed. |
+| Intake validators moved to `src/modules/intake/` but are not split into `versions/v1.ts`. | With the second document version. A versions folder holding one version is ceremony. |
+| ~~The Prisma client is not wrapped to hide update and delete on evidence tables.~~ Guard is on the client itself, so a later screen cannot write its own query around it. | Done in step 5. |
+| ~~Unit tests only. No Playwright, no CI.~~ | Done in step 5. |
 | No `/healthz`, no structured logging with a request id. | Logging in step 11, `/healthz` in step 12 where Hostinger's monitor needs it. |
-| `scripts/admin-create.ts` reads a password from the terminal with echo off. It never generates or prints one, so §2 rule 4 holds, but §4 asks for a one-time setup link instead. | Step 5, as §4 says. |
+| ~~`scripts/admin-create.ts` reads a password from the terminal.~~ It now prints a one-time setup link, valid 48 hours and usable once, and the person chooses their own password at `/admin/setup/[token]`. | Done in step 5. |
 | Local database was a hand-run container named `awtm-mysql` on the database `awtmforge`. | Done now: `docker-compose.yml` with database `awtm` and a named volume. |
 
 Naming differences from `docs/DATA-MODEL.md` that are cosmetic and are aligned when the table is next touched: `LoginCode` becomes `one_time_code` with the purpose enum `login, agreement, delivery` (step 5); `IntakeFile` keys off `projectId` rather than `intakeId`; `ImageLibrary` has an id with `key` unique rather than `key` as the primary key, and `caption` rather than `label`.
@@ -80,7 +100,7 @@ All four decisions postdate the front half. None is built.
 
 | Decision | Step that takes it |
 |---|---|
-| The link is sent twice: one email on project creation, plus the prefilled WhatsApp message. `project.link_emailed_at`, and an "Email not sent" retry on the admin page. | Step 5 |
-| The client can push back on the agreement: `agreement_note`, phase back to `agreement_draft`, no code required. | Step 5 |
+| ~~The link is sent twice.~~ Done in step 5. Note: the retry rotates the token when the original is no longer in hand, because only its hash is stored. | Done |
+| ~~The client can push back on the agreement.~~ | Done in step 5 |
 | The thank-you page after delivery sign-off, with the first testimonial ask and the referral field. `testimonial` table with `moment`. | Step 8, day-30 prefill in step 10 |
 | Referral in its smallest form, admin-only, deletable. | Step 8 |

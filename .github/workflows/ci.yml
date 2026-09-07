@@ -46,7 +46,7 @@ jobs:
       - run: npm test
       - name: Seed for the end to end tests
         run: |
-          printf 'CiOnlyPassword-2026\n' | npm run admin:create -- ci@example.invalid "CI"
+          npm run admin:create -- ci@example.invalid "CI"
           npm run db:seed
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
