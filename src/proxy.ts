@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 /**
  * PORTAL-SPEC 3.1 and criteria 18 and 19. Every response in the client,
@@ -8,7 +7,7 @@ import type { NextRequest } from "next/server";
  * belt to that pair of braces, because Next sets its own Cache-Control on
  * dynamic pages.
  */
-export function proxy(_request: NextRequest) {
+export function proxy() {
   const response = NextResponse.next();
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
   response.headers.set("Cache-Control", "no-store");

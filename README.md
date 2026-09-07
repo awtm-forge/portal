@@ -1,27 +1,64 @@
-# awtm forge client portal, working folder
+# awtmforge.com
 
-Assembled 5 Sep 2026. This folder is the handover to the build. It is not the codebase; the portal is built inside the awtmforge.com Next.js repo.
+The awtm forge marketing site and client portal, one Next.js application on one domain. The portal takes a client from their first login to an approved testimonial: a questionnaire, one agreement with a code-gated sign-off, weekly updates, a review loop, one delivery sign-off, two invoices and a day-30 page.
 
-## What is authoritative
+Built AI-assisted from the specifications in this repo. The judgement in them is Rahul's and Ayush's.
 
-Two files. Everything else here is reference and loses to them wherever they disagree.
+## Running it locally
 
-- `PORTAL-SPEC.md` (version 2). The portal: one agreement, one review loop, two invoices, day 30. Build order in §9, acceptance criteria in §10, questions to ask rather than guess in §11.
-- `INTAKE-SPEC.md` (version 2). The questionnaire: a generated JSON document uploaded per client, eight field types, no editing inside the portal.
+Five commands from a fresh clone. Node 22 and Docker are the only prerequisites.
 
-## What is reference only
+```bash
+npm install
+```
 
-`reference/awtm-portal-screens.html` is the design canvas with all eighteen screens; `reference/mocks/*.dc.html` are the same screens as individual pages, one per file. Use them for layout, spacing, tone and the one-thing-to-do rule. Three of them predate version 2 and show a per-stage "Agree" button that no longer exists: `ClientReady`, `ClientAgreed`, `AdminStage`. Where a mock and the spec disagree, the spec wins.
+```bash
+docker compose up -d
+```
 
-`reference/awtm-funnel.html` and `reference/awtm-pipeline.html` are the planning pages the spec grew out of. Both still describe four stage gates and a 30/30/30/10 payment split. Superseded by PORTAL-SPEC §1 and §5. Read them for context, not for behaviour.
+```bash
+cp .env.example .env
+```
 
-`reference/awtm-dummy-site.html` is the marketing site draft. Its design tokens and component language are what the portal must match (PORTAL-SPEC §8 and acceptance criterion 20). Its "How we work" section is stale for the same reason and is rewritten separately before launch.
+Fill `.env`: `DATABASE_URL` is `mysql://awtm:awtmdev@127.0.0.1:3307/awtm` for the Compose database, `SESSION_SECRET` is any long random string, `UPLOAD_DIR` is a path outside the repo, `APP_URL` is `http://localhost:3200`. Leave the SMTP values empty; with no `SMTP_HOST` the mailer writes to the server log and one-time codes appear there. No route reveals a code, in any environment.
 
-## Image library
+```bash
+npx prisma migrate dev && npm run db:seed
+```
 
-`image-library/logo-directions/` holds six logo direction images (SVG plus PNG, and a contact sheet) for `image_choice` questions in the intake. They are uploaded into the portal's `image_library` table once INTAKE-SPEC §9 is built, keyed `logo-wordmark`, `logo-monogram`, `logo-emblem`, `logo-mascot`, `logo-abstract`, `logo-combination`. They are sample directions on a placeholder brand, not client work.
+```bash
+npm run dev
+```
 
-## Not in this folder
+The site is on http://localhost:3200. The seed prints a client link for the sample project. Admin is at `/admin`; create an account with `npm run admin:create`.
 
-- Questionnaire JSON files for real clients. Each one is finalised in conversation and dropped in as `intake-<client>-<date>.json` when ready. None exists yet.
-- Any credential, key or account detail. The specs forbid storing client secrets anywhere in the system, and nothing in this folder should ever need one either.
+## Tests
+
+```bash
+npm test
+```
+
+Unit tests with Vitest for rules, money and serializers. End-to-end tests with Playwright for the client screens and admin actions run with `npm run test:e2e`, and need the database up. Both run against MySQL, never SQLite: invoice numbering and the append-only rules depend on InnoDB behaviour that another engine would fake (ADR 0002).
+
+```bash
+npm run typecheck && npm run lint
+```
+
+## Where things are
+
+- `src/app/` routes only: validate the input, call a module, render a view.
+- `src/modules/` the domain, one folder per area, no HTTP and no React in it.
+- `src/lib/` database client, mailer, money, dates, files, rate limiting.
+- `prisma/` schema, migrations and the seed.
+- `docs/` the design this code is built to, kept true in the same commit as the code.
+
+## Documentation
+
+- `CLAUDE.md` the standing brief: non-negotiables, working method, decisions taken after the specs.
+- `PORTAL-SPEC.md` and `INTAKE-SPEC.md` the source of truth for behaviour.
+- `docs/ARCHITECTURE.md` zones, boundaries and the seams where later features attach.
+- `docs/DATA-MODEL.md` the entities, the rules the schema enforces, the phase machine.
+- `docs/DFD.md` what flows where. `docs/SEQUENCES.md` the four interactions where order matters.
+- `docs/adr/` the accepted decisions, one file each.
+- `BUILD-LOG.md` what is built, what is deferred and where each deferral lands. `QUESTIONS.md` what is waiting on Rahul. `CHANGELOG.md` one line per step.
+- `DEPLOY.md` the runbook for deployment. `docs/HANDOVER.md` the material the build started from.

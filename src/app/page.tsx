@@ -77,22 +77,19 @@ export default function Home() {
           <p className="lead">Custom software and SaaS builds run the same way, as serious projects with the same team and the same contract. If your problem does not fit a box above, that is normal. Most real ones do not.</p>
         </section>
 
-        {/* This section still describes four payment-gated stages and a 30/30/30/10 split.
-            PORTAL-SPEC section 11 flags it for a rewrite by Rahul before launch. Ported as-is. */}
         <section className="sec" id="how">
           <p className="kick">How we work</p>
-          <h2 className="sec-t">The same loop, every stage.</h2>
-          <p className="lead">Before a stage starts, we write down together what finished looks like. While it runs, you can open it on a real link whenever you want. At the end you check it against what we wrote. If it passes, you sign it off and we invoice for that stage. If it does not, we keep working, and we do not invoice.</p>
-          <p className="lead">That is the whole method. What follows is that loop, four times.</p>
+          <h2 className="sec-t">The same loop, once.</h2>
+          <p className="lead">Before we start, we write down together what finished looks like, one deliverable at a time, with how you will check each one. While the build runs, you can open it on a real link whenever you want. At the end you check it against what we wrote. If it holds, you sign off and we invoice the balance. If it does not, we keep working, and we do not invoice.</p>
           <div className="flow">
-            <div><span className="n">01</span><div className="t"><h3>Agree the shape</h3><p>One call, then one page: what we are building, what it costs, when it lands, and what done means at each stage. You read those criteria before you sign anything, because they are what you will be holding us to.</p></div></div>
+            <div><span className="n">01</span><div className="t"><h3>Agree the shape</h3><p>One call, then one page: what we are building in your words, each deliverable and how you will check it, what is not included, the dates, the price and how it splits. You read it and you agree to it once, before anything starts. After that, the only thing we ask you to sign is the delivery itself.</p></div></div>
             <div><span className="n">02</span><div className="t"><h3>Something you can open</h3><p>By day ten there is a real link, not a screenshot. It will be rough, and that is the point. You correct us while correcting is still cheap.</p></div></div>
-            <div><span className="n">03</span><div className="t"><h3>The build</h3><p>A working session every week in your timezone, and a short written update whether or not anything went wrong. You always know what moved, what is next, and what we need from you and by when.</p></div></div>
-            <div><span className="n">04</span><div className="t"><h3>Launch, and the month after</h3><p>We do not disappear at go-live. Either we run it monthly, or we hand over with everything documented and every access transferred. Both are fine. Quietly vanishing is not one of the options.</p></div></div>
+            <div><span className="n">03</span><div className="t"><h3>The build</h3><p>A short written update every week whether or not anything went wrong, and a call every two weeks that either of us can book. You always know what moved, what is next, and what we need from you and by when.</p></div></div>
+            <div><span className="n">04</span><div className="t"><h3>Delivery, and the month after</h3><p>You check the work against the page you agreed to. If something is off, you say so in one box and we keep going, as many rounds as it takes. When it holds, you sign off, the balance is invoiced, and either we run it monthly or we hand over with everything documented and every access transferred. Quietly vanishing is not one of the options.</p></div></div>
           </div>
           <div className="proof">
             <div className="fact"><h3>A price, not a rate</h3><p>One number for the whole thing, agreed before anyone starts. No meter running, no surprise at the end.</p></div>
-            <div className="fact"><h3>Paid on your sign-off</h3><p>30 percent to begin, 30 at the midpoint, 30 on delivery, 10 after launch. Each one released only when you have signed that stage off.</p></div>
+            <div className="fact"><h3>Paid on your sign-off</h3><p>An advance when you agree, the balance when you have signed off the delivery. Nothing in between, and nothing invoiced for work you have not accepted.</p></div>
             <div className="fact"><h3>A founder throughout</h3><p>The person on your first call runs your project to the last invoice. You are never handed to someone you have not met.</p></div>
             <div className="fact"><h3>We do not discount</h3><p>If the budget does not fit, we cut scope and tell you exactly what you are losing. New work gets a new number, agreed before it begins.</p></div>
           </div>
@@ -107,16 +104,6 @@ export default function Home() {
               <span className="c-k">In build · launching 31 Oct 2026</span>
               <h3>VRG EV</h3>
               <p>An EV charging and fleet platform: customer and driver apps, charging session billing, and the operations system behind them. The full case study, with what we found and what changed, ships the week it goes live.</p>
-            </div>
-            <div className="case pending">
-              <span className="c-k">Case study slot</span>
-              <h3>Awaiting the facts</h3>
-              <p>Who they are. What was wrong, in their words. What we found. What we built. What changed, with a number the client agreed to.</p>
-            </div>
-            <div className="case pending">
-              <span className="c-k">Case study slot</span>
-              <h3>Awaiting the facts</h3>
-              <p>Three real projects beat thirty logos. This page stays short on purpose.</p>
             </div>
           </div>
         </section>
@@ -145,7 +132,7 @@ export default function Home() {
           <div className="faq">
             <details><summary>I don&rsquo;t know what I need. Can you still help?</summary><p>That is the normal case, and it is what the two-week engagement is for. You describe what the business should be doing, we work out what is stopping it. You do not need to arrive with a specification.</p></details>
             <details><summary>What if you tell me I don&rsquo;t need what I came for?</summary><p>Then that is what we tell you. It costs us the bigger project and it is still the right answer. We would rather you spend forty thousand on the thing that works than four lakh on the thing you asked for.</p></details>
-            <details><summary>How do I know it will get finished?</summary><p>Before we start, we write down what has to be true for each stage to be signed off. We do not invoice a stage until it is. That is in the contract, not just on this page.</p></details>
+            <details><summary>How do I know it will get finished?</summary><p>Before we start, we write down what has to be true for the delivery to be signed off. We do not invoice the balance until you have signed it off. That is in the agreement you read, not just on this page.</p></details>
             <details><summary>You are in India and I am not. How does this work?</summary><p>A weekly working session in your timezone, overlap hours agreed before we start, and everything in writing so nothing depends on catching anyone awake. Gulf clients overlap our full working day; US clients get mornings and our evenings.</p></details>
             <details><summary>What if the problem is in a part a specialist built?</summary><p>Still ours. We chose them, we manage them, and your contract is with us. Fixing it is our job, not a negotiation between vendors you have never met.</p></details>
             <details><summary>Do you work with businesses my size?</summary><p>The smallest thing we sell takes a week. The largest runs for months. Tell us your budget on the first call and we will tell you honestly whether it reaches the thing you need, instead of finding out after three weeks of proposals.</p></details>

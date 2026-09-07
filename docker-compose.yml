@@ -1,0 +1,25 @@
+# Local development database. MySQL 8 everywhere, including tests: ADR 0002.
+# Never substitute SQLite or Postgres. The numbering and transaction tests
+# must run on the engine production runs on.
+services:
+  db:
+    image: mysql:8.4
+    container_name: awtm-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: devroot
+      MYSQL_DATABASE: awtm
+      MYSQL_USER: awtm
+      MYSQL_PASSWORD: awtmdev
+    ports:
+      - "3307:3306"
+    volumes:
+      - awtm-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uawtm", "-pawtmdev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  awtm-mysql-data:
