@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { processUpload, REASON_TEXT } from "@/lib/files";
 import { parseDocumentLoose } from "@/lib/intake/document";

@@ -1,4 +1,4 @@
-import { currentAdmin } from "@/lib/admin-auth";
+import { currentAdmin } from "@/modules/auth/admin";
 import { serveLibraryImage } from "@/lib/intake/handlers";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ key: string }> }) {

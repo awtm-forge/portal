@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { dayMonth, dayMonthTime } from "@/lib/format";
 import { readAnswers, readBoolMap, readStringList, type Answers } from "@/lib/intake/answers";

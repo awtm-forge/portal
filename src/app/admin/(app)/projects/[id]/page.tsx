@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireAdmin } from "@/lib/admin-auth";
-import { projectLink } from "@/lib/client-auth";
+import { requireAdmin } from "@/modules/auth/admin";
+import { projectLink } from "@/modules/auth/client";
 import { db } from "@/lib/db";
 import { dayMonth, dayMonthTime } from "@/lib/format";
 import { intakeProgress } from "@/lib/intake/progress";

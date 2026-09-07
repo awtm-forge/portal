@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { hashCode, hashToken, randomToken, safeEqualHex, sixDigitCode } from "@/lib/crypto";
 import { sendCode } from "@/lib/mail";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { CodePurpose } from "@/generated/prisma/enums";
 
 export const SESSION_DAYS = 30;
 const CODE_MINUTES = 10;
@@ -60,22 +61,27 @@ export function maskEmail(email: string): string {
 export type RequestCodeResult = { ok: true; sentTo: string } | { ok: false; reason: "rate_limited" | "send_failed" };
 
 /** PORTAL-SPEC 5.10 and 5.14. */
-export async function requestLoginCode(project: ProjectByToken, headers: Headers): Promise<RequestCodeResult> {
+export async function requestCode(
+  project: ProjectByToken,
+  purpose: CodePurpose,
+  headers: Headers,
+): Promise<RequestCodeResult> {
   const ip = clientIp(headers);
-  const okProject = await allow(`code-req:p:${project.id}`, 5, 10 * 60);
+  const okProject = await allow(`code-req:p:${project.id}`, 8, 10 * 60);
   const okIp = await allow(`code-req:ip:${ip}`, 20, 60 * 60);
   if (!okProject || !okIp) return { ok: false, reason: "rate_limited" };
 
   const code = sixDigitCode();
   const to = project.client.signoffPersonEmail;
   await db.$transaction([
-    db.loginCode.updateMany({
-      where: { projectId: project.id, consumedAt: null },
+    db.oneTimeCode.updateMany({
+      where: { projectId: project.id, purpose, consumedAt: null },
       data: { consumedAt: new Date() },
     }),
-    db.loginCode.create({
+    db.oneTimeCode.create({
       data: {
         projectId: project.id,
+        purpose,
         codeHash: hashCode(project.id, code),
         sentTo: to,
         expiresAt: new Date(Date.now() + CODE_MINUTES * 60 * 1000),
@@ -83,7 +89,7 @@ export async function requestLoginCode(project: ProjectByToken, headers: Headers
     }),
   ]);
   try {
-    await sendCode(to, code, project.client.businessName);
+    await sendCode(to, code, project.client.businessName, purpose);
   } catch {
     return { ok: false, reason: "send_failed" };
   }
@@ -94,15 +100,20 @@ export type VerifyCodeResult =
   | { ok: true }
   | { ok: false; reason: "rate_limited" | "no_code" | "expired" | "locked" | "wrong"; attemptsLeft?: number };
 
-export async function verifyLoginCode(project: ProjectByToken, input: string, headers: Headers): Promise<VerifyCodeResult> {
+export async function verifyCode(
+  project: ProjectByToken,
+  purpose: CodePurpose,
+  input: string,
+  headers: Headers,
+): Promise<VerifyCodeResult> {
   const ip = clientIp(headers);
-  const okProject = await allow(`code-ver:p:${project.id}`, 15, 10 * 60);
+  const okProject = await allow(`code-ver:p:${project.id}`, 20, 10 * 60);
   const okIp = await allow(`code-ver:ip:${ip}`, 40, 60 * 60);
   if (!okProject || !okIp) return { ok: false, reason: "rate_limited" };
 
   const code = input.replace(/\D/g, "");
-  const row = await db.loginCode.findFirst({
-    where: { projectId: project.id, consumedAt: null },
+  const row = await db.oneTimeCode.findFirst({
+    where: { projectId: project.id, purpose, consumedAt: null },
     orderBy: { createdAt: "desc" },
   });
   if (!row) return { ok: false, reason: "no_code" };
@@ -111,16 +122,18 @@ export async function verifyLoginCode(project: ProjectByToken, input: string, he
 
   const matches = code.length === 6 && safeEqualHex(row.codeHash, hashCode(project.id, code));
   if (!matches) {
-    const updated = await db.loginCode.update({ where: { id: row.id }, data: { attempts: { increment: 1 } } });
+    const updated = await db.oneTimeCode.update({ where: { id: row.id }, data: { attempts: { increment: 1 } } });
     const left = CODE_ATTEMPTS - updated.attempts;
     return left <= 0 ? { ok: false, reason: "locked" } : { ok: false, reason: "wrong", attemptsLeft: left };
   }
 
-  const consumed = await db.loginCode.updateMany({
+  const consumed = await db.oneTimeCode.updateMany({
     where: { id: row.id, consumedAt: null },
     data: { consumedAt: new Date() },
   });
   if (consumed.count !== 1) return { ok: false, reason: "expired" };
+
+  if (purpose !== CodePurpose.LOGIN) return { ok: true };
 
   const sessionToken = randomToken();
   const maxAge = SESSION_DAYS * 24 * 60 * 60;
@@ -146,7 +159,7 @@ export async function rotateProjectToken(projectId: string): Promise<string> {
       data: { accessTokenHash: hashToken(token), tokenRotatedAt: new Date() },
     }),
     db.clientSession.deleteMany({ where: { projectId } }),
-    db.loginCode.updateMany({ where: { projectId, consumedAt: null }, data: { consumedAt: new Date() } }),
+    db.oneTimeCode.updateMany({ where: { projectId, consumedAt: null }, data: { consumedAt: new Date() } }),
   ]);
   return token;
 }

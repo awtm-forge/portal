@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { dayMonth } from "@/lib/format";
 import { intakeProgress } from "@/lib/intake/progress";

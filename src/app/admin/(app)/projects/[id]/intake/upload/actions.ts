@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { readAnswers } from "@/lib/intake/answers";
 import { validateDocument, type ImportFailure } from "@/lib/intake/import";

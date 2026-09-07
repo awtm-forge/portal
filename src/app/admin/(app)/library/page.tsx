@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { deleteImageAction, libraryUsage } from "./actions";
 import { UploadImageForm } from "./UploadImageForm";

@@ -1,4 +1,4 @@
-import { currentAdmin } from "@/lib/admin-auth";
+import { currentAdmin } from "@/modules/auth/admin";
 import { serveProjectFile } from "@/lib/intake/handlers";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string; fileId: string }> }) {

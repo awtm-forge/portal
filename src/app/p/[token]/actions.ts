@@ -2,7 +2,8 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { projectByToken, requestLoginCode, verifyLoginCode } from "@/lib/client-auth";
+import { CodePurpose } from "@/generated/prisma/enums";
+import { projectByToken, requestCode, verifyCode } from "@/modules/auth/client";
 
 export type CodeState = { step: "start" | "enter"; message?: string; sentTo?: string; locked?: boolean };
 
@@ -10,7 +11,7 @@ export async function sendCodeAction(_prev: CodeState, formData: FormData): Prom
   const token = String(formData.get("token") ?? "");
   const project = await projectByToken(token);
   if (!project) redirect("/p/not-found");
-  const result = await requestLoginCode(project, await headers());
+  const result = await requestCode(project, CodePurpose.LOGIN, await headers());
   if (!result.ok) {
     return {
       step: "start",
@@ -27,7 +28,7 @@ export async function verifyCodeAction(prev: CodeState, formData: FormData): Pro
   const code = String(formData.get("code") ?? "");
   const project = await projectByToken(token);
   if (!project) redirect("/p/not-found");
-  const result = await verifyLoginCode(project, code, await headers());
+  const result = await verifyCode(project, CodePurpose.LOGIN, code, await headers());
   if (result.ok) redirect(`/p/${token}`);
   const sentTo = prev.sentTo;
   switch (result.reason) {

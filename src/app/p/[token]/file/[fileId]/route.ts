@@ -1,4 +1,4 @@
-import { currentClientSession, projectByToken } from "@/lib/client-auth";
+import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { serveProjectFile } from "@/lib/intake/handlers";
 
 export async function GET(request: Request, { params }: { params: Promise<{ token: string; fileId: string }> }) {

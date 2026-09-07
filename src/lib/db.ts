@@ -11,7 +11,9 @@ function connectionConfig() {
     user: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
     database: u.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
+    // Each interactive transaction holds a connection. The numbering test
+    // issues twenty at once; production is one node with two people on it.
+    connectionLimit: 10,
   };
 }
 

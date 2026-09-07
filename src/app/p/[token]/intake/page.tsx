@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { IntakeRenderer } from "@/components/intake/IntakeRenderer";
 import { ClientShell } from "@/components/portal/ClientShell";
-import { currentClientSession, projectByToken } from "@/lib/client-auth";
+import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { db } from "@/lib/db";
 import { readAnswers, readBoolMap, readStringList } from "@/lib/intake/answers";
 import { parseDocumentLoose } from "@/lib/intake/document";

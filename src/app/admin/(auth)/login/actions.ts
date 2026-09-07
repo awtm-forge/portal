@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { adminLogin } from "@/lib/admin-auth";
+import { adminLogin } from "@/modules/auth/admin";
 
 export type LoginState = { message?: string };
 

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { readAnswers } from "@/lib/intake/answers";
 import { UploadForm } from "./UploadForm";

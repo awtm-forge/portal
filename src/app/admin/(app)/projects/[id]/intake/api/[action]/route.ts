@@ -1,4 +1,4 @@
-import { currentAdmin } from "@/lib/admin-auth";
+import { currentAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { handleIntakeAction } from "@/lib/intake/handlers";
 

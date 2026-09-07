@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { adminLogout, requireAdmin } from "@/lib/admin-auth";
-import { rotateProjectToken } from "@/lib/client-auth";
+import { adminLogout, requireAdmin } from "@/modules/auth/admin";
+import { rotateProjectToken } from "@/modules/auth/client";
 import { hashToken, randomToken } from "@/lib/crypto";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/format";

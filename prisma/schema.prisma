@@ -13,13 +13,13 @@ datasource db {
 }
 
 model AdminUser {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime       @default(now())
-  sessions     AdminSession[]
-  intakeUploads Intake[]      @relation("uploadedBy")
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  sessions      AdminSession[]
+  intakeUploads Intake[]       @relation("uploadedBy")
 }
 
 model AdminSession {
@@ -35,20 +35,20 @@ model AdminSession {
 }
 
 model Client {
-  id                 String    @id @default(cuid())
-  businessName       String
-  contactName        String
-  contactPhone       String
-  contactEmail       String
-  signoffPersonName  String
-  signoffPersonEmail String
+  id                   String    @id @default(cuid())
+  businessName         String
+  contactName          String
+  contactPhone         String
+  contactEmail         String
+  signoffPersonName    String
+  signoffPersonEmail   String
   // A sign-off email the client typed in the intake that differs from the
   // one above. Codes keep going to signoffPersonEmail until admin confirms.
   proposedSignoffName  String?
   proposedSignoffEmail String?
   proposedAt           DateTime?
-  createdAt          DateTime  @default(now())
-  projects           Project[]
+  createdAt            DateTime  @default(now())
+  projects             Project[]
 }
 
 enum TypeOfWork {
@@ -60,20 +60,40 @@ enum TypeOfWork {
 }
 
 model Project {
-  id              String     @id @default(cuid())
-  clientId        String
-  client          Client     @relation(fields: [clientId], references: [id])
-  name            String
-  slug            String     @unique
-  typeOfWork      TypeOfWork
-  accessTokenHash String     @unique
-  tokenCreatedAt  DateTime   @default(now())
-  tokenRotatedAt  DateTime?
-  createdAt       DateTime   @default(now())
-  intake          Intake?
-  sessions        ClientSession[]
-  loginCodes      LoginCode[]
-  files           IntakeFile[]
+  id                       String          @id @default(cuid())
+  clientId                 String
+  client                   Client          @relation(fields: [clientId], references: [id])
+  name                     String
+  slug                     String          @unique
+  typeOfWork               TypeOfWork
+  accessTokenHash          String          @unique
+  tokenCreatedAt           DateTime        @default(now())
+  tokenRotatedAt           DateTime?
+  linkEmailedAt            DateTime?
+  linkEmailError           String?         @db.VarChar(300)
+  phase                    Phase           @default(INTAKE)
+  weekCount                Int?
+  metricName               String?
+  metricBaselineValue      String?
+  metricBaselineCapturedAt DateTime?
+  afterDelivery            AfterDelivery   @default(UNDECIDED)
+  retainerTier             String?
+  retainerNamedPerson      String?
+  retainerResponseTime     String?
+  handoverDocUrl           String?
+  deliveredAt              DateTime?
+  cancelledAt              DateTime?
+  cancelReason             String?         @db.VarChar(500)
+  createdAt                DateTime        @default(now())
+  intake                   Intake?
+  agreement                Agreement?
+  agreementNotes           AgreementNote[]
+  signoffEvents            SignoffEvent[]
+  invoices                 Invoice[]
+  activityEvents           ActivityEvent[]
+  sessions                 ClientSession[]
+  oneTimeCodes             OneTimeCode[]
+  files                    IntakeFile[]
 
   @@index([clientId])
 }
@@ -93,9 +113,11 @@ model ClientSession {
 
 enum CodePurpose {
   LOGIN
+  AGREEMENT
+  DELIVERY
 }
 
-model LoginCode {
+model OneTimeCode {
   id         String      @id @default(cuid())
   projectId  String
   project    Project     @relation(fields: [projectId], references: [id])
@@ -107,7 +129,7 @@ model LoginCode {
   attempts   Int         @default(0)
   consumedAt DateTime?
 
-  @@index([projectId, createdAt])
+  @@index([projectId, purpose, createdAt])
 }
 
 model RateLimit {
@@ -117,19 +139,21 @@ model RateLimit {
 }
 
 model Intake {
-  id                  String     @id @default(cuid())
-  projectId           String     @unique
-  project             Project    @relation(fields: [projectId], references: [id])
-  document            Json
-  documentUploadedAt  DateTime   @default(now())
+  id                   String    @id @default(cuid())
+  projectId            String    @unique
+  project              Project   @relation(fields: [projectId], references: [id])
+  document             Json
+  documentUploadedAt   DateTime  @default(now())
   documentUploadedById String
-  documentUploadedBy  AdminUser  @relation("uploadedBy", fields: [documentUploadedById], references: [id])
-  hiddenQuestionKeys  Json
-  sectionsDone        Json       @default("[]")
-  answers             Json
-  accessGranted       Json
-  submittedAt         DateTime?
-  lastSavedAt         DateTime?
+  documentUploadedBy   AdminUser @relation("uploadedBy", fields: [documentUploadedById], references: [id])
+  hiddenQuestionKeys   Json
+  sectionsDone         Json      @default("[]")
+  answers              Json
+  accessGranted        Json
+  submittedAt          DateTime?
+  lastSavedAt          DateTime?
+  overriddenAt         DateTime?
+  overriddenById       String?
 
   @@index([documentUploadedById])
 }
@@ -167,4 +191,179 @@ model Enquiry {
   adSpend   String
   contact   String
   createdAt DateTime @default(now())
+}
+
+enum Phase {
+  INTAKE
+  AGREEMENT_DRAFT
+  AGREEMENT_SENT
+  AGREED
+  BUILDING
+  IN_REVIEW
+  DELIVERED
+  CLOSED
+  CANCELLED
+}
+
+enum AfterDelivery {
+  RETAINER
+  HANDOVER
+  UNDECIDED
+}
+
+/// Singleton. The team's own details, on every invoice and agreement.
+model Company {
+  id                String   @id @default("company")
+  name              String
+  address           String   @db.Text
+  email             String
+  phone             String
+  logoUrl           String?
+  bankName          String?
+  bankAccountName   String?
+  bankAccountNumber String?
+  bankIfsc          String?
+  upiId             String?
+  invoicePrefix     String   @default("AWTM")
+  /// Null until registered. PORTAL-SPEC 5.8: no tax line while this is null.
+  gstin             String?
+  bookingUrl        String?
+  defaultAdvancePct Int      @default(50)
+  updatedAt         DateTime @updatedAt
+}
+
+/// Typed key-value. A new setting is a key with a default, not a migration.
+model Setting {
+  key       String   @id @db.VarChar(191)
+  value     String   @db.Text
+  type      String   @db.VarChar(16)
+  updatedAt DateTime @updatedAt
+}
+
+/// One per project. Read-only forever once agreedAt is set (PORTAL-SPEC 5.4).
+model Agreement {
+  id                 String         @id @default(cuid())
+  projectId          String         @unique
+  project            Project        @relation(fields: [projectId], references: [id])
+  scope              String         @db.Text
+  /// [{ key, text, how_to_check }]. The review checks against these.
+  deliverables       Json
+  notIncluded        String         @db.Text
+  startDate          DateTime?
+  launchTargetDate   DateTime?
+  /// [{ label, date }]. Shown as dates, never as sign-offs.
+  milestones         Json
+  totalPaise         BigInt         @default(0)
+  advancePct         Int
+  howWeWork          String         @db.Text
+  ifWeMiss           String         @db.Text
+  afterDeliveryOffer String         @db.Text
+  /// ADMIN ONLY. Never on a client route, print route, export or template.
+  internalCostPaise  BigInt         @default(0)
+  /// ADMIN ONLY.
+  internalNotes      String         @db.Text
+  sentAt             DateTime?
+  agreedAt           DateTime?
+  agreedByName       String?
+  agreedMethod       SignoffMethod?
+  version            Int            @default(1)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+/// Append-only. The client saying something is off, CLAUDE.md 5.1.
+model AgreementNote {
+  id               String   @id @default(cuid())
+  projectId        String
+  project          Project  @relation(fields: [projectId], references: [id])
+  agreementVersion Int
+  text             String   @db.Text
+  enteredBy        String   @db.VarChar(16)
+  createdAt        DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
+
+enum SignoffKind {
+  AGREEMENT
+  DELIVERY
+}
+
+enum SignoffMethod {
+  PORTAL
+  WHATSAPP
+}
+
+/// Append-only legal evidence. No update path, no delete path, no cascade.
+model SignoffEvent {
+  id               String        @id @default(cuid())
+  projectId        String
+  project          Project       @relation(fields: [projectId], references: [id])
+  kind             SignoffKind
+  occurredAt       DateTime      @default(now())
+  method           SignoffMethod
+  actorName        String
+  ip               String?       @db.VarChar(64)
+  userAgent        String?       @db.VarChar(400)
+  /// For whatsapp: the pasted message.
+  rawNote          String?       @db.Text
+  agreementVersion Int?
+
+  @@index([projectId, kind])
+}
+
+enum InvoiceKind {
+  ADVANCE
+  BALANCE
+  OTHER
+}
+
+enum InvoiceStatus {
+  ISSUED
+  PAID
+  CANCELLED
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  projectId      String
+  project        Project       @relation(fields: [projectId], references: [id])
+  kind           InvoiceKind
+  number         String        @unique
+  issuedAt       DateTime      @default(now())
+  description    String        @db.VarChar(300)
+  amountPaise    BigInt
+  taxAmountPaise BigInt        @default(0)
+  totalPaise     BigInt
+  status         InvoiceStatus @default(ISSUED)
+  paidAt         DateTime?
+  paidReference  String?
+  paymentMethod  String?
+
+  @@index([projectId, kind])
+}
+
+/// One row per prefix and financial year. Locked FOR UPDATE inside the
+/// transaction that issues an invoice. lastSeq only ever rises by one.
+model InvoiceSequence {
+  prefix  String @db.VarChar(16)
+  fy      String @db.VarChar(8)
+  lastSeq Int    @default(0)
+
+  @@id([prefix, fy])
+}
+
+/// Append-only. Every meaningful change. Payload passes through the client
+/// serializer before it is written, so internal cost cannot reach the log.
+model ActivityEvent {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  type      String   @db.VarChar(64)
+  payload   Json
+  actor     String   @db.VarChar(120)
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([type, createdAt])
 }

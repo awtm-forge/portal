@@ -1,4 +1,4 @@
-import { currentClientSession, projectByToken } from "@/lib/client-auth";
+import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { handleIntakeAction } from "@/lib/intake/handlers";
 
 export async function POST(request: Request, { params }: { params: Promise<{ token: string; action: string }> }) {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
-import { currentClientSession, projectByToken } from "@/lib/client-auth";
+import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { intakeProgress } from "@/lib/intake/progress";
 import { CodeScreen } from "./CodeScreen";
 

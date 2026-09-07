@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { currentAdmin } from "@/lib/admin-auth";
+import { currentAdmin } from "@/modules/auth/admin";
 import "@/components/portal/portal.css";
 import { LoginForm } from "./LoginForm";
 

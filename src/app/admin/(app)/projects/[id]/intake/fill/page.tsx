@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { IntakeRenderer } from "@/components/intake/IntakeRenderer";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
 import { readAnswers, readBoolMap, readStringList } from "@/lib/intake/answers";
 import { parseDocumentLoose } from "@/lib/intake/document";

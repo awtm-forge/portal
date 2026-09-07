@@ -1,12 +1,19 @@
 import nodemailer from "nodemailer";
 
+const PURPOSE_LINE: Record<string, string> = {
+  LOGIN: "It opens the {business} project page.",
+  AGREEMENT: "It confirms that you are agreeing to the {business} agreement.",
+  DELIVERY: "It confirms that you are signing off the {business} delivery.",
+};
+
 /** Used only for the one-time code. PORTAL-SPEC section 3. */
-export async function sendCode(to: string, code: string, businessName: string): Promise<void> {
+export async function sendCode(to: string, code: string, businessName: string, purpose = "LOGIN"): Promise<void> {
   const host = process.env.SMTP_HOST;
+  const what = (PURPOSE_LINE[purpose] ?? PURPOSE_LINE.LOGIN).replace("{business}", businessName);
   const text = [
     `Your awtm forge code is ${code}`,
     "",
-    `It opens the ${businessName} project page. It is good for ten minutes and works once.`,
+    `${what} It is good for ten minutes and works once.`,
     "If you did not ask for it, ignore this email. Nobody from awtm forge will ever ask you for this code, a password or an OTP.",
     "",
     "awtm forge",
