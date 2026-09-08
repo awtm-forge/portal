@@ -44,7 +44,7 @@ neither, and says what it would take.
 
 | # | Criterion | State | Where |
 |---|---|---|---|
-| 1 | An answer survives a new device and a fresh code | open | Nothing tests it end to end. Saving and reloading are covered as units (`answers.test.ts`), the device handover is not. |
+| 1 | An answer survives a new device and a fresh code | test | `e2e/phone.spec.ts`, with two browser contexts, which is what a second device is |
 | 2 | Duplicate key, and an upload in the access section, refused | test | `import.test.ts` |
 | 3 | An image key not in the library is refused | test | `import.test.ts` |
 | 4 | A renamed executable refused, EXIF stripped | test | `files.test.ts` |
@@ -60,7 +60,7 @@ neither, and says what it would take.
 
 ## What this adds up to
 
-Thirty of the thirty-four are covered by a passing test.
+Thirty-one of the thirty-four are covered by a passing test.
 
 Three need rewriting, and only Rahul can say how:
 
@@ -77,14 +77,13 @@ Three need rewriting, and only Rahul can say how:
 **17** is restated by ADR 0012 rather than broken: the way-in page at `/` reads
 nothing, so the check still passes, about a different page.
 
-Four still want a person, and none is a known defect:
+Three still want a person, and none is a known defect:
 
 - **15**, the print routes on A4. Needs a print dialog, which no test has.
-- **INTAKE 1**, an answer surviving a new device and a fresh code end to end.
 - **INTAKE 9**, that an image_choice shows its pictures. Storing the ids is
-  tested; the pictures appearing is not.
+  tested; the pictures appearing on the page is not.
 - **INTAKE 10**, that all eight question types render and are answerable at
   375px. The page is tested for one action and no sideways scroll; the eight
   types are not each exercised.
 
-Half an hour with a phone and a print dialog closes all four.
+Twenty minutes with a phone and a print dialog closes all three.

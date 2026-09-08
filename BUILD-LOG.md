@@ -99,9 +99,11 @@ Two defects, both mine, both in this work:
 - **A blanket replace patched the sanitiser's own body**, so `safeError` called itself on any value that was not an Error: an infinite recursion on the exact input it exists to handle. Caught by reading the file after the edit, and there is now a test for a plain string, a null and an object.
 - **The phone spec counted collapsed disclosures as actions**, and inherited a stale day-30 row, so it reported four "actions" on a page that has one. Both fixed before drawing any conclusion from it.
 
-Verified: 122 unit tests and 119 end to end.
+Also closed INTAKE-SPEC 14.1, an answer surviving a new device: two browser contexts, which is what a second device is, with a fresh code asked for on the second one. Three attempts, all three failures mine. The last is worth naming: the test polled the database for a marker word to know the answer had saved, and an earlier run had left that word there, so the poll returned instantly and the test read the page before anything was written. It polls for the exact string it just typed now. A test that waits for the wrong thing is worse than one that does not wait at all, because it passes.
 
-Left for a person, and none of them a known defect: the print routes on A4, an answer surviving a new device, an image_choice showing its pictures, and all eight question types at 375px.
+Verified: 122 unit tests and 121 end to end.
+
+Left for a person, and none of them a known defect: the print routes on A4, an image_choice showing its pictures, and all eight question types at 375px.
 
 ## The acceptance audit: done, with five things left for a person
 

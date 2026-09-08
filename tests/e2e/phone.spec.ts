@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { backToBuilding, closeDb, day30Open, freshLink, openRoundDirect, query, resetRateLimits, SEED_SLUG, setPhase, takeoverLatestCode } from "./fixtures";
+import { backToBuilding, closeDb, day30Open, freshLink, INTAKE_SLUG, openRoundDirect, query, resetRateLimits, SEED_SLUG, setPhase, takeoverLatestCode } from "./fixtures";
 
 /**
  * Acceptance criterion 13, for every client page rather than one of them, and
@@ -153,4 +153,85 @@ test("the pages that ask for something put exactly one button in reach", async (
   await day30Open(projectId);
   await page.goto(`/p/${token}/day30`);
   expect(await primaryActionsAboveFold(page)).toHaveLength(1);
+});
+
+test("an answer survives closing the tab and opening the link on another device", async ({ browser }) => {
+  // INTAKE-SPEC 14.1. Uses the project whose questionnaire is still open: the
+  // seed one has been submitted, and a submitted questionnaire renders its
+  // answers read-only, which is a different screen.
+  const own = await freshLink(INTAKE_SLUG);
+  await resetRateLimits();
+
+  const firstDevice = await browser.newContext();
+  const firstPage = await firstDevice.newPage();
+  await firstPage.goto(`/p/${own.token}`);
+  await firstPage.getByRole("button", { name: /email me a code/i }).click();
+  await expect(firstPage.getByLabel(/six digit code/i)).toBeVisible();
+  await firstPage.getByLabel(/six digit code/i).fill(await takeoverLatestCode(own.projectId, "LOGIN"));
+  await firstPage.getByRole("button", { name: /open my page/i }).click();
+  await expect(firstPage.getByText("Your project", { exact: true })).toBeVisible();
+
+  await firstPage.goto(`/p/${own.token}/intake`);
+  // Open a named section on both devices. The renderer opens the first
+  // unfinished one, which is not the same section on a fresh device, and the
+  // test would then be comparing two different questions.
+  await firstPage.getByRole("button", { name: /your business/i }).click();
+  const before = await firstPage.locator('input[type="text"]').first().inputValue();
+  const typed = `Zzyxth ${Date.now()}, appliances and white goods.`;
+  const field = firstPage.locator('textarea, input[type="text"]').first();
+  await expect(field).toBeVisible();
+  await field.fill(typed);
+  await field.blur();
+
+  // Saving happens on its own; wait for it rather than assuming a delay.
+  await expect
+    .poll(async () => {
+      const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE projectId = ?", [own.projectId]);
+      // The driver parses a JSON column, so stringify it back to search it.
+      return JSON.stringify(rows[0]?.answers ?? "");
+    }, { timeout: 10000 })
+    .toContain(typed);
+  await firstDevice.close();
+
+  // A different device: a fresh cookie jar, so it asks for a code again
+  // (PORTAL-SPEC 5.10) and then shows what was typed on the first one.
+  await resetRateLimits();
+  const secondDevice = await browser.newContext();
+  const secondPage = await secondDevice.newPage();
+  await secondPage.goto(`/p/${own.token}`);
+  await secondPage.getByRole("button", { name: /email me a code/i }).click();
+  await expect(secondPage.getByLabel(/six digit code/i)).toBeVisible();
+  await secondPage.getByLabel(/six digit code/i).fill(await takeoverLatestCode(own.projectId, "LOGIN"));
+  await secondPage.getByRole("button", { name: /open my page/i }).click();
+  await expect(secondPage.getByText("Your project", { exact: true })).toBeVisible();
+
+  await secondPage.goto(`/p/${own.token}/intake`);
+  // One section is open at a time, so a finished one has to be reopened before
+  // its answers are on the page at all. That is the design, not a bug.
+  await secondPage.getByRole("button", { name: /your business/i }).click();
+  await expect(secondPage.locator('input[type="text"]').first()).toHaveValue(typed);
+  await secondDevice.close();
+
+  // Put the demo answer back, so the seed project reads as it was written.
+  const firstAgain = await browser.newContext();
+  const restorePage = await firstAgain.newPage();
+  await resetRateLimits();
+  await restorePage.goto(`/p/${own.token}`);
+  await restorePage.getByRole("button", { name: /email me a code/i }).click();
+  await expect(restorePage.getByLabel(/six digit code/i)).toBeVisible();
+  await restorePage.getByLabel(/six digit code/i).fill(await takeoverLatestCode(own.projectId, "LOGIN"));
+  await restorePage.getByRole("button", { name: /open my page/i }).click();
+  await expect(restorePage.getByText("Your project", { exact: true })).toBeVisible();
+  await restorePage.goto(`/p/${own.token}/intake`);
+  await restorePage.getByRole("button", { name: /your business/i }).click();
+  const restore = restorePage.locator('input[type="text"]').first();
+  await restore.fill(before);
+  await restore.blur();
+  await expect
+    .poll(async () => {
+      const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE projectId = ?", [own.projectId]);
+      return JSON.stringify(rows[0]?.answers ?? "");
+    }, { timeout: 10000 })
+    .not.toContain(typed);
+  await firstAgain.close();
 });
