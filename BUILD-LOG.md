@@ -84,6 +84,32 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## Step 9, invoice numbering, mark paid, print route: done
+
+8 Sep 2026, AI-assisted.
+
+Built: the printable invoice at `/invoice/[id]/print`, per PORTAL-SPEC 6.7: company block, client block, number and date, the line naming the project, the total in figures and in words, bank details, and a GST block that appears only once `company.gstin` is set. It takes print views only, so internal cost has no way onto the page. An admin can open any invoice; a client can open their own, and gets a 404 for anyone else's.
+
+Mark paid is the one thing that moves on an issued invoice. The date must read, must not be in the future and must not be before the invoice was raised, and the write is conditional on the invoice still being issued, so two admins marking the same one at once record one payment and one event. Raising an extra is the only invoice an admin can raise by hand, per criterion 3: no route reaches `issueAdvance` or `issueBalance`, and both of those still follow a sign-off and nothing else.
+
+Numbering itself was built in step 5 and is unchanged. Criterion 4 was already covered by `tests/invoice-numbering.test.ts`, including twenty issued in parallel with no duplicate and no gap, and a rollback that consumes no number.
+
+Verified: 68 unit tests and 77 end to end, on desktop and a phone, plus the production build on webpack. Acceptance criteria now passing: 3, 12 and, for the invoice print route, 8 and 18. The leak walk now includes every invoice on the seed project.
+
+Six defects found and fixed:
+
+- **The team email for an extra invoice would have named the description where the amount goes**, so a notification would have read "Extra invoice AWTM/26-27/003 for Two extra photography sets" with no sum in it. Caught by reading the payload against the subscriber, not by a test.
+- **The admin invoice list never showed the description**, so two extras were indistinguishable from each other. The line is now shown for `other`, where it is the only thing that says what the invoice is for. Advance and balance already carry the project name in theirs. Found by an end to end test that could not tell which invoice it had just raised.
+- **The invoice reads and the date validation sat in the route**, against the CLAUDE.md section 11 rule that no route imports prisma. Both moved into `modules/invoices`, and the admin page's invoice read now goes through `forProject` as well, folding in part of the debt recorded below.
+
+- **Raising an extra was hidden behind an unrelated condition.** The invoices card only rendered once the project had an invoice or an agreed agreement, and the raise control sat inside it, so on a project with neither there was no way to raise an extra at all. Nothing in PORTAL-SPEC 5.1 ties an extra to the agreement. The card is now always there. Found by the phone run of the full suite, not by the spec run on its own.
+- **The printed invoice said the project name twice**, once as the line item and again inside the description, because `issueAdvance` and `issueBalance` put it in the description and every screen that shows a description shows the project beside it. The descriptions are now just "Advance, 50 percent of the agreed total" and "Balance, on sign-off of the delivery". Found by looking at the page at 375 px, not by a test. Invoices already issued keep the wording they were issued with, which is correct: the guard does not let a description change.
+- **My own end to end spec was not independent.** It acted on whichever invoice an earlier spec happened to leave on the seed project, so it passed alone and failed twelve ways in the full run. It makes its own invoice now. Worth recording because the first full run appeared to pass: the command piped the runner into `tail`, so the shell reported `tail`'s exit code and the failures scrolled past. Test commands are not piped any more.
+
+One thing that was not a defect, recorded because it looked like one: a client signed in to a second project could open the first project's invoice in the same browser. Sessions are cookied per project on purpose, so one device may legitimately hold several, and `currentClientSession` checks the session's own project. The test was reusing a browser context that still held the first session. It uses a fresh context now.
+
+Deferred: none for the step. Two questions added, Q7 on what tax rate to charge once a GSTIN exists, and Q8 on the bank details being empty, which the admin invoice list now says out loud.
+
 ## Fixing a client bundle that reached for node:crypto: done
 
 8 Sep 2026, AI-assisted. Found while integrating Ayush's build fix, not by a test.

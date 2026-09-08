@@ -43,6 +43,7 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 | Route | Method | Auth | Notes |
 |---|---|---|---|
 | `/agreement/[token]/print` | GET | the project's link and session, or an admin session | The path segment is a link token; an admin may pass a project id instead, since admin never holds a token. Renders the print view, which has no field for internal cost (criteria 8, 15). |
+| `/invoice/[id]/print` | GET | an admin session, or a client session for that invoice's project | Company block, client block, number and date, the line naming the project, the total in figures and in words, bank details, and the GST block only once `company.gstin` is set (PORTAL-SPEC 5.8, 6.7). Sessions are cookied per project, so a client signed in elsewhere gets a 404, not someone else's invoice. Takes print views only, so internal cost has no way onto the page (criteria 8, 12). |
 
 ## Team admin, dynamic, unindexed
 
@@ -75,9 +76,10 @@ prints a one-time setup link and never a password.
 | `/admin/settings` | GET, server action | admin | Our own details: company, bank, invoice prefix, GSTIN, booking URL, default advance percentage. The prefix refuses to change once invoices carry it. Nothing here belongs to a client. |
 | `/admin/projects/[id]/updates` | GET, server action | admin | The weekly update. A draft until sent, frozen after. `?week=N` opens a particular week. The WhatsApp message is built from the same fields. |
 | `/admin/projects/[id]` (mark kickoff) | server action | admin | PORTAL-SPEC 5.2, `agreed` to `building`. Offered only while the phase is `agreed`. |
+| `/admin/projects/[id]` (mark paid) | server action | admin | The only thing that moves on an issued invoice, and the guard in `lib/db` allows only the four payment fields. The date must read, must not be in the future, and must not be before the invoice was raised. Conditional on the invoice still being issued, so two admins at once record one payment (criterion 16). |
+| `/admin/projects/[id]` (raise an extra) | server action | admin | `kind=other` only, and the only invoice an admin can raise by hand. The advance and the balance follow a sign-off and nothing else: no route reaches `issueAdvance` or `issueBalance` (criterion 3). |
 
 ## Not built yet
 
-Weekly updates, the review loop, delivery sign-off and the thank-you page, the
-invoice print route and mark-paid, day 30, the needs-attention block, and
-settings. Each arrives in its step; see `BUILD-LOG.md`.
+Day 30 and the needs-attention block. Each arrives in its step; see
+`BUILD-LOG.md`.

@@ -72,3 +72,23 @@ The limit is eight code requests per project per ten minutes, counted across log
 - **Count each purpose separately.** A sign-off is never blocked by an earlier login attempt. Three counters instead of one, and a small widening of what an attacker can ask for.
 
 Leaving it, and noting it here because it is foreseeable rather than unlikely.
+
+## Q7. What tax rate an invoice charges once a GSTIN exists
+
+Open, 8 Sep 2026. Taking zero for now, which is what the spec says today.
+
+PORTAL-SPEC 5.8 says render tax lines only when `company.gstin` is set, and until then `tax_amount_paise = 0`. It never says what rate to charge once it is set. The column exists, the print page shows a tax line the moment a GSTIN appears, and `issue()` writes zero regardless, so today a registered GSTIN would print a tax line reading zero, which is wrong on a real invoice.
+
+- **Leave it at zero and set the rate when you register.** Nothing to decide now. The risk is that the day the GSTIN goes into settings, invoices quietly go out understating tax.
+- **Add `company.gst_rate_pct`, defaulted to 18.** One settings field, one line in `issue()`. Software services are 18 percent, but whether you charge CGST plus SGST or IGST depends on where the client is, and that is a second field on the client and a rule about place of supply.
+- **Refuse to issue while a GSTIN is set and no rate is.** Safest, and it stops the build if you register mid-project.
+
+Taking the first, because you are not registered and the spec is explicit about the current state. Worth deciding before you register rather than after.
+
+## Q8. Bank details are empty, so a printed invoice has nowhere to pay it
+
+Open, 8 Sep 2026. Not blocking, and now visible in admin.
+
+CLAUDE.md 5 seeds the company row with a name, a city, a prefix and an advance percentage, and no bank details. PORTAL-SPEC 6.7 says the printed invoice carries them. The document hides the "How to pay" block when there is nothing to show rather than printing empty labels, so the invoice is still valid, but it tells the client nothing about where to send the money.
+
+Fill in account name, bank, account number and IFSC, or a UPI id, at `/admin/settings`. Until one of those exists the admin invoice list says so. Nothing to decide, only something to do, and it belongs to you rather than to the build because it is our own detail and not a credential.

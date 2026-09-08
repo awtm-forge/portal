@@ -12,11 +12,14 @@ import { isoDate } from "@/lib/dates";
 import { Phase } from "@/generated/prisma/enums";
 import { RecordWhatsapp } from "./whatsapp/RecordWhatsapp";
 import { markKickoffAction } from "./updates/actions";
-import { agreementReadyMessage, readyForReviewMessage, waLink } from "@/lib/whatsapp";
+import { agreementReadyMessage, invoiceIssuedMessage, readyForReviewMessage, waLink } from "@/lib/whatsapp";
 import { deliverableCount, roundsForProject } from "@/modules/review";
 import { referralsForAdmin, testimonialsForAdmin } from "@/modules/day30";
 import { testimonialToAdminView } from "@/modules/serializers";
 import { MarkReady } from "./review/MarkReady";
+import { MarkPaid, RaiseOther } from "./invoices/InvoiceControls";
+import { forProject } from "@/modules/invoices";
+import { company } from "@/modules/settings";
 import { forgetReferralAction } from "./review/actions";
 import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
@@ -30,8 +33,9 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
     include: { client: true, intake: { include: { documentUploadedBy: { select: { name: true } } } }, agreement: true },
   });
   if (!project) notFound();
+  const co = await company();
   const [invoices, signoffs, noteCount, updates, rounds, testimonialRows, referrals] = await Promise.all([
-    db.invoice.findMany({ where: { projectId: id }, orderBy: { issuedAt: "asc" } }),
+    forProject(id),
     db.signoffEvent.findMany({ where: { projectId: id }, orderBy: { occurredAt: "asc" } }),
     db.agreementNote.count({ where: { projectId: id } }),
     db.update.findMany({ where: { projectId: id }, orderBy: { weekNumber: "desc" }, take: 4 }),
@@ -227,29 +231,59 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             />
           )}
 
-          {invoices.length > 0 && (
+          {/* Always here. An extra invoice is a real document whether or not
+              anything has been agreed yet, and hiding the control behind the
+              agreement was an accident of where it was put. */}
             <div className="a-card">
               <span className="k">Invoices</span>
+              {invoices.length === 0 && <p className="c-sub" style={{ fontSize: 14 }}>None yet. The advance follows the agreement, the balance follows the delivery.</p>}
               <div className="stack">
                 {invoices.map((raw) => {
                   const i = invoiceToClientView(raw);
                   return (
-                    <div className="between" key={i.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
-                      <span className="stack" style={{ gap: 2 }}>
-                        <span className="mono-sm" style={{ color: "var(--ink)" }}>{i.number}</span>
-                        <span className="help">{i.kindLabel} · {i.issuedAt}</span>
-                      </span>
-                      <span className="stack" style={{ gap: 2, alignItems: "flex-end" }}>
-                        <span className="mono-sm" style={{ color: "var(--ink)" }}>{i.total}</span>
-                        <span className="tag">{i.statusLabel}</span>
-                      </span>
+                    <div className="row" key={i.id}>
+                      <div className="between">
+                        <span className="stack" style={{ gap: 2 }}>
+                          <a className="mono-sm" href={`/invoice/${i.id}/print`} target="_blank" rel="noopener" style={{ color: "var(--ink)" }}>{i.number}</a>
+                          <span className="help">{i.kindLabel} · {i.issuedAt}</span>
+                      {i.kind === "OTHER" && <span className="help" style={{ color: "var(--ink)" }}>{i.description}</span>}
+                        </span>
+                        <span className="stack" style={{ gap: 2, alignItems: "flex-end" }}>
+                          <span className="mono-sm" style={{ color: "var(--ink)" }}>{i.total}</span>
+                          <span className="tag" style={{ color: i.status === "PAID" ? "var(--muted)" : "var(--ember)" }}>
+                            {i.statusLabel}{i.paidAt ? ` ${i.paidAt}` : ""}
+                          </span>
+                        </span>
+                      </div>
+                      {i.status === "ISSUED" && <MarkPaid invoice={i} projectId={project.id} today={isoDate(new Date())} />}
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", paddingTop: 6 }}>
+                        <a className="mono-sm" href={`/invoice/${i.id}/print`} target="_blank" rel="noopener">Print view</a>
+                        <a
+                          className="mono-sm"
+                          href={waLink(c.contactPhone, invoiceIssuedMessage({
+                            contactName: c.contactName.trim().split(/\s+/)[0] || c.contactName,
+                            number: i.number,
+                            amount: i.total,
+                            kindLabel: i.kindLabel,
+                          }))}
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          Tell them on WhatsApp
+                        </a>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-              <p className="help">Raised by a sign-off and by nothing else. Marking one paid arrives in step 9.</p>
+              {!co.bankAccountNumber && !co.upiId && (
+                <p className="help err">
+                  No bank details in <Link href="/admin/settings">settings</Link>, so a printed invoice has nowhere to pay it.
+                </p>
+              )}
+              <RaiseOther projectId={project.id} />
+              <p className="help">Raised by a sign-off and by nothing else, apart from an extra. An issued invoice keeps its number, and only its payment moves.</p>
             </div>
-          )}
 
           {signoffs.length > 0 && (
             <div className="a-card">

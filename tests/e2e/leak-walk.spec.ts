@@ -53,6 +53,11 @@ test.describe("the leak walk", () => {
     // "Your project" only renders once the session cookie is accepted.
     await expect(page.getByText(/your project/i)).toBeVisible();
 
+    // Every invoice on the project, printed. PORTAL-SPEC 6.7 says neither
+    // printable route carries internal cost, so both are walked.
+    const invoiceIds = await query<{ id: string }>("SELECT id FROM Invoice WHERE projectId = ?", [projectId]);
+    const invoiceRoutes = invoiceIds.map((i) => `/invoice/${i.id}/print`);
+
     const cookies = await page.context().cookies();
     const header = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
 
@@ -63,6 +68,7 @@ test.describe("the leak walk", () => {
       `/p/${token}/review`,
       `/p/${token}/thanks`,
       `/agreement/${token}/print`,
+      ...invoiceRoutes,
       `/admin/projects/${projectId}/intake/answers.json`,
     ];
 

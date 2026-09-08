@@ -164,7 +164,6 @@ export async function signOffDelivery(args: {
     }
     const invoice = await issueBalance(tx, {
       projectId: project.id,
-      projectName: project.name,
       totalPaise: project.agreement.totalPaise,
       advancePct: project.agreement.advancePct,
       prefix: ctx.prefix,

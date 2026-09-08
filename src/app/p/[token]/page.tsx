@@ -214,10 +214,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
                     <span className="stack" style={{ gap: 2 }}>
                       <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 12 }}>{i.number}</span>
                       <span className="help">{i.kindLabel} · {i.issuedAt}</span>
+                      {i.kind === "OTHER" && <span className="help" style={{ color: "var(--ink)" }}>{i.description}</span>}
                     </span>
                     <span className="stack" style={{ gap: 2, alignItems: "flex-end" }}>
                       <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 13 }}>{i.total}</span>
-                      <span className="tag">{i.statusLabel}</span>
+                      <a className="tag" href={`/invoice/${i.id}/print`} target="_blank" rel="noopener" style={{ color: "var(--ember)" }}>
+                        {i.statusLabel}, open it
+                      </a>
                     </span>
                   </div>
                 );

@@ -136,3 +136,20 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .pushback summary::-webkit-details-marker { display: none; }
 .pushback summary::after { content: "+"; color: var(--ember); margin-left: 8px; }
 .pushback[open] summary::after { content: "\2013"; }
+
+/* The printable invoice. PORTAL-SPEC 6.7. */
+.inv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+.inv-name { font-family: var(--font-display-stack); font-weight: 600; font-size: 19px; letter-spacing: -0.01em; color: var(--ink); }
+.inv-number { font-family: var(--font-mono-stack); font-size: 17px; color: var(--ember); }
+.inv-table { width: 100%; border-collapse: collapse; }
+.inv-table td { padding: 12px 0; border-bottom: 1px solid var(--rule-soft); font-size: 15px; color: var(--muted); vertical-align: top; }
+.inv-table td.num { font-family: var(--font-mono-stack); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; color: var(--ink); }
+.inv-table tr.total td { border-bottom: none; border-top: 2px solid var(--ember); color: var(--ink); font-weight: 500; padding-top: 14px; }
+
+@media print {
+  .inv-name, .inv-number { color: #141110; }
+  .inv-head { border-bottom-color: #b5661f; }
+  .inv-table td { color: #2e2925; border-bottom-color: #ded5c8; }
+  .inv-table td.num, .inv-table tr.total td { color: #141110; }
+  .inv-table tr.total td { border-top-color: #b5661f; }
+}
