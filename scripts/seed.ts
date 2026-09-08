@@ -49,6 +49,8 @@ async function seedProject() {
       name: "Store rebuild and checkout",
       slug: "kavya-appliances-store",
       typeOfWork: "STORE",
+      signoffPersonName: "Kavya Menon",
+      signoffPersonEmail: "kavya@kavyaappliances.example",
       accessTokenHash: hashToken(token),
       createdAt: new Date("2026-08-18T09:00:00+05:30"),
       client: {
@@ -57,8 +59,7 @@ async function seedProject() {
           contactName: "Kavya Menon",
           contactPhone: "+91 98450 12345",
           contactEmail: "kavya@kavyaappliances.example",
-          signoffPersonName: "Kavya Menon",
-          signoffPersonEmail: "kavya@kavyaappliances.example",
+          location: "Bengaluru",
         },
       },
       intake: {
@@ -137,6 +138,8 @@ async function seedBuildingProject() {
       name: "Storefront and returns flow",
       slug: "sundara-living-storefront",
       typeOfWork: "STORE",
+      signoffPersonName: "Arjun Sundaram",
+      signoffPersonEmail: "arjun@sundaraliving.example",
       accessTokenHash: hashToken(token),
       createdAt: new Date("2026-08-05T09:00:00+05:30"),
       phase: "AGREEMENT_SENT",
@@ -155,8 +158,7 @@ async function seedBuildingProject() {
           contactName: "Arjun Sundaram",
           contactPhone: "+91 98860 44120",
           contactEmail: "arjun@sundaraliving.example",
-          signoffPersonName: "Arjun Sundaram",
-          signoffPersonEmail: "arjun@sundaraliving.example",
+          location: "Chennai",
         },
       },
       intake: {

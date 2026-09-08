@@ -18,8 +18,6 @@ async function freshProject(): Promise<string> {
       contactName: "T",
       contactPhone: "+910000000000",
       contactEmail: "t@example.test",
-      signoffPersonName: "T",
-      signoffPersonEmail: "t@example.test",
     },
   });
   const project = await db.project.create({
@@ -28,6 +26,8 @@ async function freshProject(): Promise<string> {
       name: "Numbering",
       slug: `numbering-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       typeOfWork: "STORE",
+      signoffPersonName: "T",
+      signoffPersonEmail: "t@example.test",
       accessTokenHash: `test-${Math.random().toString(36).slice(2)}`,
     },
   });

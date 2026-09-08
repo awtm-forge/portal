@@ -106,9 +106,9 @@ export default async function IntakeAdminPage({ params }: { params: Promise<{ id
           </div>
           <div className="a-card">
             <span className="k">Who decides</span>
-            <p style={{ margin: 0 }}>{c.signoffPersonName} signs off</p>
-            <p className="mono-sm" style={{ margin: 0 }}>{c.signoffPersonEmail}</p>
-            {c.proposedSignoffEmail && <p className="help" style={{ color: "var(--ember)" }}>The client typed {c.proposedSignoffEmail}. Confirm it on the project page.</p>}
+            <p style={{ margin: 0 }}>{project.signoffPersonName} signs off</p>
+            <p className="mono-sm" style={{ margin: 0 }}>{project.signoffPersonEmail}</p>
+            {project.proposedSignoffEmail && <p className="help" style={{ color: "var(--ember)" }}>The client typed {project.proposedSignoffEmail}. Confirm it on the project page.</p>}
             {typeof answers.dec_others?.value === "string" && answers.dec_others.value && <p style={{ margin: 0, fontSize: 13.5, color: "var(--muted)" }}>{answers.dec_others.value}</p>}
             {typeof answers.dec_calendar?.value === "string" && answers.dec_calendar.value && <p style={{ margin: 0, fontSize: 13.5, color: "var(--ember)", borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>{answers.dec_calendar.value}</p>}
           </div>

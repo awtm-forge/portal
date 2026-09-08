@@ -23,7 +23,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   if (!session) {
     return (
       <ClientShell businessName={project.client.businessName}>
-        <CodeScreen token={token} personName={project.client.signoffPersonName} />
+        <CodeScreen token={token} personName={project.signoffPersonName} />
       </ClientShell>
     );
   }

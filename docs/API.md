@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 7 September 2026, after step 5.
+route; last checked against the code on 8 September 2026.
 
 Zones and their rules are in `ARCHITECTURE.md`. Everything outside the
 marketing zone sends `X-Robots-Tag: noindex, nofollow`, `Cache-Control:
@@ -50,7 +50,11 @@ prints a one-time setup link and never a password.
 | `/admin/login` | GET, server action | none | Rate limited to ten attempts in fifteen minutes per IP. An account with no password yet cannot be signed into. |
 | `/admin/setup/[token]` | GET, server action | a valid, unused setup link | The person chooses their own password, at least twelve characters, and is signed in. The link works once and expires in 48 hours. |
 | `/admin` | GET | admin | Projects, with the questionnaire state of each. |
-| `/admin/projects/new` | GET, server action | admin | Creates the client, the project and the link, emails the link to the sign-off person and records `link_emailed_at` (criterion 22). |
+| `/admin/clients` | GET | admin | Every client, who we talk to, their projects, and whether each link has gone out. |
+| `/admin/clients/new` | GET, server action | admin | Adds a client on its own. Sends nothing. Can continue straight into a project. |
+| `/admin/clients/[id]` | GET, server action | admin | The client record, their projects, and their contact details, edited here rather than on a project. |
+| `/admin/clients/[id]/projects/new` | GET, server action | admin | Starts a project for that client. The sign-off person is asked here, defaulting to the day to day contact. Creating it mints the link, emails it and records `link_emailed_at` (criterion 22). |
+| `/admin/projects/[id]/link` | GET, server action | admin | The handover. Shows the link in the clear while a fifteen minute cookie holds it, the WhatsApp message ready to send, and the email's state with a retry. Once that cookie is gone the link cannot be shown again, because only its hash is stored; rotating makes a new one. |
 | `/admin/projects/[id]` | GET | admin | Phase, the agreement, invoices, sign-offs, the client link and its email status, the questionnaire, and the sign-off email confirmation. |
 | `/admin/projects/[id]/agreement` | GET, server action | admin | The editor, with internal cost and notes in a block marked never shown to the client. Saving, sending, and the questionnaire override. |
 | `/admin/projects/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer. |

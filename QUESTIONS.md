@@ -39,3 +39,17 @@ PORTAL-SPEC §3.1 says the printable routes need "auth or token required" withou
 - **Admin only.** The client would have to ask for a PDF, which puts the team back in the loop the portal exists to remove.
 
 Taking the first. Neither shape carries internal cost, and the leak-walk test covers both.
+
+## Q4. Whether the sign-off person belongs to the client or to the project
+
+Decided by Rahul on 8 Sep 2026: **on the project**.
+
+PORTAL-SPEC section 4 puts `signoff_person_name` and `signoff_person_email` on
+`client`. They are now on `project`, because one business can have a different
+approver for a brand job than for a store rebuild, and the six digit code has
+to reach the person who is actually agreeing this piece of work.
+
+What it cost: a migration that copied every existing project's approver across
+before dropping the client columns, and the questionnaire's proposed-change
+prompt moving to the project too. What it buys: a second project for the same
+client does not silently inherit the wrong approver.

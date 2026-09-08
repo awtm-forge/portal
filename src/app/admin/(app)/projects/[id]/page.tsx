@@ -2,16 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
-import { projectLink } from "@/modules/auth/client";
 import { db } from "@/lib/db";
 import { dayMonth, dayMonthTime } from "@/lib/format";
 import { intakeProgress } from "@/modules/intake/progress";
 import { parseDocumentLoose } from "@/modules/intake/document";
-import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { PHASE_LABEL } from "@/modules/projects/phase";
 import { agreementToAdminView, invoiceToClientView } from "@/modules/serializers";
-import { rotateLinkAction, resendLinkAction, signoffDecisionAction, takeFlashLink, updateContactAction } from "../../actions";
-import { CopyLink } from "./CopyLink";
+import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
 
@@ -30,8 +27,6 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
   ]);
   const agreement = project.agreement ? agreementToAdminView(project.agreement) : null;
   const c = project.client;
-  const freshToken = await takeFlashLink(project.id);
-  const link = freshToken ? projectLink(freshToken) : null;
   const intake = project.intake;
   const doc = intake ? parseDocumentLoose(intake.document) : null;
   const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
@@ -139,69 +134,48 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
           </div>
 
           <div className="a-card">
-            <span className="k">Contact</span>
-            <form action={updateContactAction} className="stack" style={{ gap: 14 }}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <div className="grid2">
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Contact name</span><input className="a-fld" name="contactName" defaultValue={c.contactName} required /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Phone, with country code</span><input className="a-fld" name="contactPhone" defaultValue={c.contactPhone} required /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Contact email</span><input className="a-fld" name="contactEmail" type="email" defaultValue={c.contactEmail} required /></label>
-                <span />
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Sign-off person</span><input className="a-fld" name="signoffPersonName" defaultValue={c.signoffPersonName} required /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Sign-off email, where the code goes</span><input className="a-fld" name="signoffPersonEmail" type="email" defaultValue={c.signoffPersonEmail} required /></label>
-              </div>
-              <div><button className="a-btn ghost" type="submit">Save contact</button></div>
-            </form>
+            <div className="between"><span className="k">The client</span><Link className="mono-sm" href={`/admin/clients/${c.id}`}>Open the client</Link></div>
+            <div className="stack">
+              <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>{c.businessName}</span><span className="mono-sm">{c.location ?? ""}</span></div>
+              <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>{c.contactName}</span><span className="mono-sm">{c.contactPhone}</span></div>
+              <div className="between" style={{ padding: "9px 0" }}><span>{c.contactEmail}</span><span className="help">who we talk to day to day</span></div>
+            </div>
+            <p className="help">Their details are the same on every project, so they are edited on the client, not here.</p>
           </div>
         </div>
 
         <div className="aside">
-          <div className={`a-card${link ? " ember" : ""}`}>
-            <span className={`k${link ? " ember" : ""}`}>The client link</span>
-            {link ? (
-              <>
-                <div className="a-fld mono" style={{ wordBreak: "break-all", color: "var(--ink)" }}>{link}</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <CopyLink link={link} />
-                  <a className="a-btn ghost" href={waLink(c.contactPhone, questionnaireReadyMessage({ contactName: c.contactName, link }))} target="_blank" rel="noopener">Send on WhatsApp</a>
-                </div>
-                <p className="help" style={{ lineHeight: 1.6 }}>Shown this once. Only a hash of it is stored, so copy it now. Leaving this page hides it. Rotating makes a new one.</p>
-              </>
-            ) : (
-              <>
-                <div className="a-fld mono" style={{ color: "var(--muted)" }}>awtmforge.com/p/…</div>
-                <p className="help" style={{ lineHeight: 1.6 }}>Only a hash of the link is stored. It was shown once when created{project.tokenRotatedAt ? ` and again when rotated on ${dayMonth(project.tokenRotatedAt)}` : ""}. To send it again, rotate it.</p>
-              </>
-            )}
+          <div className="a-card">
+            <span className="k">The client link</span>
+            <div className="a-fld mono" style={{ color: "var(--muted)" }}>awtmforge.com/p/…</div>
+            <p className="help" style={{ lineHeight: 1.6 }}>
+              Only a hash is stored, so the link itself can only be shown just after it is made. Created {dayMonth(project.tokenCreatedAt)}
+              {project.tokenRotatedAt ? `, rotated ${dayMonth(project.tokenRotatedAt)}` : ""}.
+            </p>
             {project.linkEmailError ? (
-              <form action={resendLinkAction} className="stack" style={{ gap: 8, borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
-                <input type="hidden" name="projectId" value={project.id} />
-                <span className="k ember">Email not sent</span>
-                <p className="help">The link email to {c.signoffPersonEmail} did not go out. The project was still created.</p>
-                <button className="a-btn ghost" type="submit">Try sending it again</button>
-              </form>
+              <p className="help" style={{ color: "var(--ember)" }}>The link email to {project.signoffPersonEmail} did not go out.</p>
             ) : (
-              <p className="help" style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
-                {project.linkEmailedAt ? `Link emailed to ${c.signoffPersonEmail} on ${dayMonth(project.linkEmailedAt)}.` : "The link has not been emailed yet."}
+              <p className="help">
+                {project.linkEmailedAt ? `Emailed to ${project.signoffPersonEmail} on ${dayMonth(project.linkEmailedAt)}.` : "Not emailed yet."}
               </p>
             )}
-            <form action={rotateLinkAction} style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <p className="help" style={{ lineHeight: 1.6, marginBottom: 8 }}>Created {dayMonth(project.tokenCreatedAt)}. {project.tokenRotatedAt ? `Rotated ${dayMonth(project.tokenRotatedAt)}.` : "Never rotated."}<br />Rotating kills the old link and every signed-in phone immediately.</p>
-              <button className="link-mono" type="submit" style={{ padding: 0, color: "var(--faint)", fontSize: "10.5px" }}>Rotate the link</button>
-            </form>
+            <div><Link className="a-btn ghost" href={`/admin/projects/${project.id}/link`}>Send them the link</Link></div>
           </div>
 
-          <div className={`a-card${c.proposedSignoffEmail ? " ember" : ""}`}>
-            <span className="k">Who signs off</span>
-            <p style={{ margin: 0 }}>{c.signoffPersonName}</p>
-            <p className="mono-sm" style={{ margin: 0 }}>{c.signoffPersonEmail}</p>
-            <p className="help">The six digit code goes here.</p>
-            {c.proposedSignoffEmail && (
+          <div className={`a-card${project.proposedSignoffEmail ? " ember" : ""}`}>
+            <span className="k">Who signs off, on this project</span>
+            <form action={updateSignoffAction} className="stack" style={{ gap: 10 }}>
+              <input type="hidden" name="projectId" value={project.id} />
+              <label className="stack" style={{ gap: 6 }}><span className="lbl">Name</span><input className="a-fld" name="signoffPersonName" defaultValue={project.signoffPersonName} required /></label>
+              <label className="stack" style={{ gap: 6 }}><span className="lbl">Their email, where the code goes</span><input className="a-fld" name="signoffPersonEmail" type="email" defaultValue={project.signoffPersonEmail} required /></label>
+              <div><button className="a-btn ghost" type="submit">Save</button></div>
+            </form>
+            <p className="help">Per project, not per client: a business can have a different approver for a brand job than for a store rebuild.</p>
+            {project.proposedSignoffEmail && (
               <form action={signoffDecisionAction} className="stack" style={{ gap: 8, borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
                 <input type="hidden" name="projectId" value={project.id} />
                 <span className="k ember">The client typed a different sign-off</span>
-                <p className="mono-sm" style={{ margin: 0, color: "var(--ink)" }}>{c.proposedSignoffName ? `${c.proposedSignoffName}, ` : ""}{c.proposedSignoffEmail}</p>
+                <p className="mono-sm" style={{ margin: 0, color: "var(--ink)" }}>{project.proposedSignoffName ? `${project.proposedSignoffName}, ` : ""}{project.proposedSignoffEmail}</p>
                 <p className="help">Codes keep going to the address above until you switch it.</p>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="a-btn" name="decision" value="use" type="submit">Use the new one</button>

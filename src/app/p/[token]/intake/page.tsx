@@ -31,7 +31,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         fileBase={`${base}/file`}
         libBase={`${base}/lib`}
         mode="client"
-        prefill={{ name: project.client.signoffPersonName, email: project.client.signoffPersonEmail }}
+        prefill={{ name: project.signoffPersonName, email: project.signoffPersonEmail }}
         kickoffDateText="the kickoff date"
         contactFirstName={project.client.contactName.split(" ")[0] ?? ""}
       />

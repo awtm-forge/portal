@@ -199,7 +199,7 @@ export function projectToClientView(p: ProjectModel & { client: ClientModel }): 
     name: p.name,
     businessName: p.client.businessName,
     contactName: p.client.contactName,
-    signoffPersonName: p.client.signoffPersonName,
+    signoffPersonName: p.signoffPersonName,
     phase: p.phase,
     deliveredAt: p.deliveredAt ? dayMonthYear(p.deliveredAt) : null,
     weekCount: p.weekCount,

@@ -43,21 +43,18 @@ model AdminSession {
   @@index([adminUserId])
 }
 
+/// The business. Exists on its own, before any project does, so a client can
+/// be added on the discovery call and the work decided later.
 model Client {
-  id                   String    @id @default(cuid())
-  businessName         String
-  contactName          String
-  contactPhone         String
-  contactEmail         String
-  signoffPersonName    String
-  signoffPersonEmail   String
-  // A sign-off email the client typed in the intake that differs from the
-  // one above. Codes keep going to signoffPersonEmail until admin confirms.
-  proposedSignoffName  String?
-  proposedSignoffEmail String?
-  proposedAt           DateTime?
-  createdAt            DateTime  @default(now())
-  projects             Project[]
+  id           String    @id @default(cuid())
+  businessName String
+  location     String?
+  contactName  String
+  contactPhone String
+  contactEmail String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  projects     Project[]
 }
 
 enum TypeOfWork {
@@ -75,6 +72,18 @@ model Project {
   name                     String
   slug                     String          @unique
   typeOfWork               TypeOfWork
+  /// Who says yes for this project. On the project rather than the client,
+  /// decided by Rahul on 8 Sep 2026: one business can have a different
+  /// approver for a brand job than for a store rebuild. This departs from
+  /// PORTAL-SPEC section 4, which puts these on client. The six digit code
+  /// goes to signoffPersonEmail.
+  signoffPersonName        String
+  signoffPersonEmail       String
+  /// A sign-off email the client typed in the questionnaire that differs from
+  /// the one above. Codes keep going to signoffPersonEmail until admin says.
+  proposedSignoffName      String?
+  proposedSignoffEmail     String?
+  proposedAt               DateTime?
   accessTokenHash          String          @unique
   tokenCreatedAt           DateTime        @default(now())
   tokenRotatedAt           DateTime?

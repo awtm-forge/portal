@@ -67,7 +67,7 @@ export async function confirmAgreeAction(prev: AgreeState, formData: FormData): 
 
   const result = await agree({
     projectId: project.id,
-    actorName: name || project.client.signoffPersonName,
+    actorName: name || project.signoffPersonName,
     method: SignoffMethod.PORTAL,
     ip: clientIp(head),
     userAgent: head.get("user-agent"),

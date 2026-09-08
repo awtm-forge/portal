@@ -20,7 +20,7 @@ export default async function ProjectsPage() {
         <p className="a-sub">{projects.length} {projects.length === 1 ? "project" : "projects"}. {waiting} waiting on a questionnaire.</p>
       </div>
       <div className="a-card">
-        <div className="between"><span className="k">All projects</span><Link className="a-btn" href="/admin/projects/new">New project</Link></div>
+        <div className="between"><span className="k">All projects</span><Link className="a-btn" href="/admin/clients">New project, from a client</Link></div>
         <div className="grid-head" style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1.6fr 1.2fr 0.7fr", gap: 16, paddingBottom: 8, borderBottom: "1px solid var(--rule)" }}>
           <span className="k">Project</span><span className="k">Client</span><span className="k">Questionnaire</span><span className="k">Signs off</span><span className="k" style={{ textAlign: "right" }}>Created</span>
         </div>
@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
               <Link href={`/admin/projects/${p.id}`} className="sec-name" style={{ fontSize: 14.5, textDecoration: "none" }}>{p.name}</Link>
               <span style={{ fontSize: 13.5, color: "var(--muted)" }}>{p.client.businessName}</span>
               <span className="mono-sm" style={{ color: q.tone === "ember" ? "var(--ember)" : q.tone === "dim" ? "var(--faint)" : "var(--muted)" }}>{q.text}</span>
-              <span style={{ fontSize: 13.5, color: "var(--muted)" }}>{p.client.signoffPersonName}</span>
+              <span style={{ fontSize: 13.5, color: "var(--muted)" }}>{p.signoffPersonName}</span>
               <span className="mono-sm" style={{ textAlign: "right", color: "var(--ink)" }}>{dayMonth(p.createdAt)}</span>
             </div>
           );

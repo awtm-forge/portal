@@ -14,9 +14,9 @@ export function CodeScreen({ token, personName }: { token: string; personName: s
       <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
         <div className="stack" style={{ gap: 8 }}>
           <p className="k">First time on this phone</p>
-          <h1 className="c-title" style={{ fontSize: 24 }}>Let us make sure it is you</h1>
+          <h1 className="c-title" style={{ fontSize: 24 }}>One code and you are in</h1>
           <p className="c-sub">
-            We will email a six digit code to {personName}. Once it is in, this phone stays signed in for thirty days, so you will not do this again for a while.
+            We will email six digits to {personName}. Type them in and this phone stays signed in for thirty days, so you will not do this again for a while.
           </p>
           <p className="c-sub">There is no password to remember, now or ever.</p>
         </div>

@@ -77,7 +77,7 @@ export async function requestCode(
   if (!okProject || !okIp) return { ok: false, reason: "rate_limited" };
 
   const code = sixDigitCode();
-  const to = project.client.signoffPersonEmail;
+  const to = project.signoffPersonEmail;
   await db.$transaction([
     db.oneTimeCode.updateMany({
       where: { projectId: project.id, purpose, consumedAt: null },

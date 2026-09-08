@@ -101,12 +101,12 @@ export async function saveAnswer(intakeId: string, key: string, raw: unknown, en
     await tx.intake.update({ where: { id: intakeId }, data: { answers, lastSavedAt: new Date() } });
 
     if (enteredBy === "client" && (key === SIGNOFF_EMAIL_KEY || key === SIGNOFF_NAME_KEY)) {
-      const c = row.project.client;
+      const project = row.project;
       const email = (answers[SIGNOFF_EMAIL_KEY]?.value as string | undefined) ?? "";
       const name = (answers[SIGNOFF_NAME_KEY]?.value as string | undefined) ?? "";
-      const differs = email !== "" && email.toLowerCase() !== c.signoffPersonEmail.toLowerCase();
-      await tx.client.update({
-        where: { id: c.id },
+      const differs = email !== "" && email.toLowerCase() !== project.signoffPersonEmail.toLowerCase();
+      await tx.project.update({
+        where: { id: project.id },
         data: differs
           ? { proposedSignoffEmail: email, proposedSignoffName: name || null, proposedAt: new Date() }
           : { proposedSignoffEmail: null, proposedSignoffName: null, proposedAt: null },

@@ -24,7 +24,7 @@ export default async function ClientAgreementPage({ params }: { params: Promise<
     <ClientShell businessName={project.client.businessName}>
       <AgreementDocument view={view} projectName={project.name} businessName={project.client.businessName} />
 
-      {open && <AgreeControls token={token} signoffPersonName={project.client.signoffPersonName} />}
+      {open && <AgreeControls token={token} signoffPersonName={project.signoffPersonName} />}
 
       {!open && !view.isAgreed && (
         <div className="card" style={{ margin: "0 20px", padding: "18px 16px" }}>

@@ -38,7 +38,7 @@ export default async function FillPage({ params }: { params: Promise<{ id: strin
           fileBase={`/admin/projects/${id}/file`}
           libBase="/admin/lib"
           mode="team"
-          prefill={{ name: project.client.signoffPersonName, email: project.client.signoffPersonEmail }}
+          prefill={{ name: project.signoffPersonName, email: project.signoffPersonEmail }}
           kickoffDateText="the kickoff date"
           contactFirstName={project.client.contactName.split(" ")[0] ?? ""}
         />

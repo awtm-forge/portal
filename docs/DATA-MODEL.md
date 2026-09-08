@@ -1,6 +1,6 @@
 # Data model
 
-Drafted 7 Sep 2026, last checked against the code on 7 Sep 2026 after step 5. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
+Drafted 7 Sep 2026, last checked against the code on 8 Sep 2026. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
 
 ## Entity relationship diagram
 
@@ -49,11 +49,10 @@ erDiagram
   client {
     id id PK
     string business_name
+    string location "nullable"
     string contact_name
     string contact_phone
     string contact_email
-    string signoff_person_name
-    string signoff_person_email
   }
   project {
     id id PK
@@ -62,10 +61,14 @@ erDiagram
     string slug
     string type_of_work
     enum phase "intake, agreement_draft, agreement_sent, agreed, building, in_review, delivered, closed, cancelled"
+    string signoff_person_name "who says yes on THIS project"
+    string signoff_person_email "where the six digit code goes"
+    string proposed_signoff_email "what the client typed, until admin confirms"
     string access_token_hash
     datetime token_created_at
     datetime token_rotated_at
     datetime link_emailed_at
+    string link_email_error "nullable, shown with a retry"
     int week_count
     string metric_name
     string metric_baseline_value
@@ -243,6 +246,7 @@ These are constraints, not application code, so a bug in a route cannot get arou
 - `one_time_code.code_hash`, `project.access_token_hash`, `client_session.token_hash`, `admin_user.password_hash`, `admin_user.setup_token_hash`: hashes only. There is no column anywhere that stores a token, a code or a password in clear. `one_time_code.purpose` binds a code to what it may do (ADR 0010).
 - `intake` has no column for a credential, and the importer refuses an `upload` field inside the access section; `intake_file` rows can only point at question keys of type `upload`.
 - `activity_event.payload` is written through one function that runs the client serializer first, so internal cost cannot enter the log even by accident.
+- The sign-off person lives on `project`, not `client`. Decided by Rahul on 8 Sep 2026, departing from PORTAL-SPEC section 4: one business can have a different approver per piece of work. See QUESTIONS.md Q4.
 
 ## The phase machine
 

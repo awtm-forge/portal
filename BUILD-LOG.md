@@ -66,6 +66,20 @@ Three defects the tests found, and the fix in each case:
 
 Deferred: none from this step. The `modules/intake/versions/v1.ts` split named in §11 is still not done; the intake moved to `src/modules/intake/` in this step but keeps its flat layout, and the split lands with the second document version, since a versions folder holding one version is ceremony until there are two.
 
+## Client onboarding, and the sign-off person: done
+
+8 Sep 2026, AI-assisted. Asked for by Rahul between steps 5 and 6, on the grounds that onboarding a client should exist before more of the journey is built. Not a numbered step in PORTAL-SPEC section 9; it revisits step 3.
+
+Built: a client is now its own record, so it can be added on the discovery call before anyone knows what the project is. Clients list, add a client, one client with their projects. Starting a project begins from a client, and the sign-off person is asked there. The handover has its own screen at `/admin/projects/[id]/link`, showing the link in the clear, the WhatsApp message ready to send, and the email's state with a retry. Clients sits above Projects in the sidebar.
+
+The sign-off person moved from `client` to `project`, decided by Rahul, departing from PORTAL-SPEC section 4. See QUESTIONS.md Q4. The migration copied every existing project's approver across before dropping the client columns, so nothing was lost.
+
+Copy: the link email and the code email were rewritten in a warmer voice, and every client-facing screen followed. The development mailer now prints whole message bodies, since the wording is the thing worth checking and there is no inbox to check it in.
+
+Verified: 48 unit tests, 29 end to end. The onboarding journey has its own test, including the rule that matters: a reload still shows the link, and once the fifteen minute cookie is gone nothing can bring it back, because only its hash was ever stored.
+
+Deferred: none. Two notes. The old `/admin/projects/new` route is gone, since a project without a client made no sense. And `docs/DFD.md` still draws the sign-off person under the client stores; it is corrected at the next change to that file.
+
 ---
 
 ## Where the front half differs from CLAUDE.md §11, and where each is folded
