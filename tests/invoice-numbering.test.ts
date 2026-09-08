@@ -44,13 +44,21 @@ async function clearTestInvoices() {
   await db.$executeRaw`DELETE FROM InvoiceSequence WHERE prefix = ${PREFIX}`;
 }
 
+/** The fixtures make a project per test; without this they pile up in the dev database. */
+async function clearTestProjects() {
+  await db.$executeRaw`DELETE FROM Project WHERE slug LIKE 'numbering-%'`;
+  await db.$executeRaw`DELETE FROM Client WHERE businessName = 'Numbering Test'`;
+}
+
 beforeEach(async () => {
   await clearTestInvoices();
+  await clearTestProjects();
   projectId = await freshProject();
 });
 
 afterAll(async () => {
   await clearTestInvoices();
+  await clearTestProjects();
   await db.$disconnect();
 });
 
