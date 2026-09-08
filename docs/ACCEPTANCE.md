@@ -87,3 +87,24 @@ Three still want a person, and none is a known defect:
   types are not each exercised.
 
 Twenty minutes with a phone and a print dialog closes all three.
+
+## Checked against the live site
+
+`dashboard.awtmforge.com`, 9 September 2026, on the build carrying step 11.
+
+| Check | Result |
+|---|---|
+| `robots.txt` | `Disallow: /`, the whole host |
+| Headers on `/admin` | `noindex, nofollow`, `no-store`, `no-referrer` |
+| `/healthz` | `{"status":"ok"}`, so the database answers |
+| `/p/anything` | 404 |
+| `/` | carries no internal cost or notes |
+
+Not yet checkable, and both need Ayush:
+
+- **The two hosts holding apart.** `portal.awtmforge.com` has no DNS record and
+  `ADMIN_URL` is unset, so the app is running single-host. That is a valid way
+  to deploy and nothing is wrong; the split simply is not on yet.
+- **A real one-time code arriving.** The only check that proves SMTP, and it
+  needs a mailbox Ayush controls.
+
