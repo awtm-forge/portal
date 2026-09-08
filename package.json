@@ -14,7 +14,8 @@
     "admin:create": "tsx scripts/admin-create.ts",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:all": "vitest run && playwright test"
+    "test:all": "vitest run && playwright test",
+    "dev:link": "tsx scripts/dev-link.ts"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",

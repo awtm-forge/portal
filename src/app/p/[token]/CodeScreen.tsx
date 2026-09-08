@@ -13,13 +13,16 @@ export function CodeScreen({ token, personName }: { token: string; personName: s
     return (
       <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
         <div className="stack" style={{ gap: 8 }}>
-          <p className="k">Confirming it is you</p>
-          <h1 className="c-title" style={{ fontSize: 24 }}>We will send a six digit code</h1>
-          <p className="c-sub">It goes to {personName}, the person named on this project. It is good for ten minutes, and once it is in, this phone stays signed in for thirty days.</p>
+          <p className="k">First time on this phone</p>
+          <h1 className="c-title" style={{ fontSize: 24 }}>Let us make sure it is you</h1>
+          <p className="c-sub">
+            We will email a six digit code to {personName}. Once it is in, this phone stays signed in for thirty days, so you will not do this again for a while.
+          </p>
+          <p className="c-sub">There is no password to remember, now or ever.</p>
         </div>
         <form action={action} className="stack" style={{ gap: 12 }}>
           <input type="hidden" name="token" value={token} />
-          <button className="btn-full" type="submit" disabled={pending}>{pending ? "Sending" : "Send the code"}</button>
+          <button className="btn-full" type="submit" disabled={pending}>{pending ? "Sending" : "Email me a code"}</button>
           {state.message && <p className="help err">{state.message}</p>}
         </form>
       </div>
@@ -29,9 +32,9 @@ export function CodeScreen({ token, personName }: { token: string; personName: s
   return (
     <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
       <div className="stack" style={{ gap: 8 }}>
-        <p className="k">Confirming it is you</p>
-        <h1 className="c-title" style={{ fontSize: 24 }}>We sent a six digit code</h1>
-        <p className="c-sub">It went to {state.sentTo}. It is good for ten minutes.</p>
+        <p className="k">Almost in</p>
+        <h1 className="c-title" style={{ fontSize: 24 }}>Have a look at your email</h1>
+        <p className="c-sub">Six digits are on their way to {state.sentTo}. They last ten minutes. If nothing arrives, check the spam folder before asking for another.</p>
       </div>
       <form action={action} className="stack" style={{ gap: 12 }}>
         <input type="hidden" name="token" value={token} />
@@ -49,7 +52,7 @@ export function CodeScreen({ token, personName }: { token: string; personName: s
           />
         </div>
         {state.message && <p className="help err">{state.message}</p>}
-        <button className="btn-full" type="submit" disabled={state.locked || pending}>{pending ? "Checking" : "Confirm"}</button>
+        <button className="btn-full" type="submit" disabled={state.locked || pending}>{pending ? "Checking" : "Open my page"}</button>
         <button className="link-mono" type="submit" name="intent" value="resend" disabled={pending} style={{ textAlign: "center" }}>Send it again</button>
       </form>
     </div>

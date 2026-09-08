@@ -27,11 +27,11 @@ test.describe("the leak walk", () => {
 
     // Sign in the way a client does.
     await page.goto(`/p/${token}`);
-    await page.getByRole("button", { name: /send the code/i }).click();
+    await page.getByRole("button", { name: /email me a code/i }).click();
     await expect(page.getByLabel(/six digit code/i)).toBeVisible();
     const code = await takeoverLatestCode(projectId, "LOGIN");
     await page.getByLabel(/six digit code/i).fill(code);
-    await page.getByRole("button", { name: /^confirm$/i }).click();
+    await page.getByRole("button", { name: /open my page/i }).click();
     // "Your project" only renders once the session cookie is accepted.
     await expect(page.getByText(/your project/i)).toBeVisible();
 

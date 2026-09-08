@@ -47,14 +47,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
         {phase === Phase.CANCELLED && (
           <Card>
             <span className="sec-name" style={{ fontSize: 17 }}>This project was closed on {dayMonthYear(project.cancelledAt)}.</span>
-            <p className="c-sub">Message Rahul on WhatsApp if that is a surprise.</p>
+            <p className="c-sub">Everything below is still here to read. If that is a surprise, message Rahul and he will explain.</p>
           </Card>
         )}
 
         {phase === Phase.INTAKE && !intake && (
           <Card>
-            <span className="sec-name" style={{ fontSize: 17 }}>Nothing to do yet</span>
-            <p className="c-sub">Rahul is writing your questionnaire from the call. It appears here when it is ready, and we will message you on WhatsApp.</p>
+            <span className="sec-name" style={{ fontSize: 17 }}>Nothing for you to do yet</span>
+            <p className="c-sub">
+              Rahul is writing your questionnaire from what you said on the call, so it asks about your business and not everyone else&rsquo;s. It turns up here when it is ready and we will message you.
+            </p>
+            <p className="c-sub">Nothing is needed from you until then.</p>
           </Card>
         )}
 
@@ -63,9 +66,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
             <p className="k ember">Now</p>
             <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Before we start, about ten minutes</span>
             <p className="c-sub">
-              {progress.total} short sections. It saves as you type, so you can leave and come back.
-              {progress.done > 0 ? ` You are ${progress.done} of ${progress.total} sections in.` : ""}
+              {progress.done > 0
+                ? `You are ${progress.done} of ${progress.total} sections in. Pick up where you left off.`
+                : `${progress.total} short sections, mostly about what is going wrong in your own words.`}
             </p>
+            <p className="c-sub">It saves as you type, so you can stop anywhere and come back.</p>
             <Link className="btn-full" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>
               {progress.done > 0 ? "Carry on with the questionnaire" : "Open the questionnaire"}
             </Link>
@@ -75,9 +80,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
         {phase === Phase.AGREEMENT_DRAFT && (
           <Card>
             <span className="sec-name" style={{ fontSize: 17 }}>
-              {intake?.submittedAt ? `Sent on ${dayMonthYear(intake.submittedAt)}. Thank you.` : "Thank you."}
+              {intake?.submittedAt ? `Got it, thank you. Sent ${dayMonthYear(intake.submittedAt)}.` : "Got it, thank you."}
             </span>
-            <p className="c-sub">We are writing your agreement from your answers. It appears here when it is ready, and we will message you.</p>
+            <p className="c-sub">
+              We are turning your answers into one page: what we are building, what it costs, when it lands, and how you will know it is done. It turns up here when it is ready and we will message you.
+            </p>
           </Card>
         )}
 
@@ -85,7 +92,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           <Card loud>
             <p className="k ember">Now</p>
             <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Your agreement is ready to read</span>
-            <p className="c-sub">One page: what we are building, what it costs, when it lands, and how you will check it.</p>
+            <p className="c-sub">One page, and worth reading properly. If anything in it is wrong, say so on the same page and we will change it. Nothing is invoiced until you agree.</p>
             <Link className="btn-full" href={`/p/${token}/agreement`} style={{ marginTop: 4 }}>Read the agreement</Link>
           </Card>
         )}
@@ -93,20 +100,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
         {(phase === Phase.AGREED || phase === Phase.BUILDING) && (
           <Card>
             <span className="sec-name" style={{ fontSize: 17 }}>
-              {phase === Phase.AGREED ? "Agreed. We start shortly." : "We are building."}
+              {phase === Phase.AGREED ? "Agreed, thank you. We start shortly." : "We are building it."}
             </span>
             <p className="c-sub">
               {phase === Phase.AGREED
-                ? "Rahul will confirm the kickoff. The weekly updates start then."
-                : "A written update lands here every week."}
+                ? "Rahul will confirm the kickoff date with you, and the weekly updates start from there."
+                : "A written update lands here every week, whether or not anything went wrong."}
             </p>
           </Card>
         )}
 
         {/* Below the fold, collapsed: the record so far. */}
         {intake?.submittedAt && phase !== Phase.INTAKE && (
-          <Collapsed summary="Your answers">
-            <Link className="btn-full ghost" href={`/p/${token}/intake`}>Look at them, and change any of them</Link>
+          <Collapsed summary="What you told us">
+            <Link className="btn-full ghost" href={`/p/${token}/intake`}>Read it back, and change anything</Link>
           </Collapsed>
         )}
 

@@ -105,6 +105,7 @@ async function deliverLink(projectId: string, token: string): Promise<void> {
       to: project.client.signoffPersonEmail,
       contactName: project.client.contactName,
       businessName: project.client.businessName,
+      projectName: project.name,
       link: projectLink(token),
     });
     await db.project.update({ where: { id: projectId }, data: { linkEmailedAt: new Date(), linkEmailError: null } });

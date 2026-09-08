@@ -15,6 +15,16 @@ function transportMode(): "smtp" | "log" {
   return "log";
 }
 
+/**
+ * Development and the test runs. The whole message goes to the log, body and
+ * all, because the wording is the thing worth checking and there is no inbox
+ * to check it in. Never reached in production: transportMode throws first.
+ */
+function logMail(to: string, subject: string, text: string): void {
+  const rule = "-".repeat(64);
+  console.log(`\n[mail:log] to ${to}\nSubject: ${subject}\n${rule}\n${text}\n${rule}\n`);
+}
+
 function smtpTransport() {
   const port = Number(process.env.SMTP_PORT ?? 465);
   return nodemailer.createTransport({
@@ -26,25 +36,29 @@ function smtpTransport() {
 }
 
 const PURPOSE_LINE: Record<string, string> = {
-  LOGIN: "It opens the {business} project page.",
-  AGREEMENT: "It confirms that you are agreeing to the {business} agreement.",
-  DELIVERY: "It confirms that you are signing off the {business} delivery.",
+  LOGIN: "It opens your {business} page.",
+  AGREEMENT: "It goes with your yes to the {business} agreement, so the record shows it was you.",
+  DELIVERY: "It goes with your sign-off on the {business} delivery, so the record shows it was you.",
 };
 
 /** Used only for the one-time code. PORTAL-SPEC section 3. */
 export async function sendCode(to: string, code: string, businessName: string, purpose = "LOGIN"): Promise<void> {
   const what = (PURPOSE_LINE[purpose] ?? PURPOSE_LINE.LOGIN).replace("{business}", businessName);
   const text = [
-    `Your awtm forge code is ${code}`,
+    `${code}`,
     "",
-    `${what} It is good for ten minutes and works once.`,
-    "If you did not ask for it, ignore this email. Nobody from awtm forge will ever ask you for this code, a password or an OTP.",
+    `That is your code. ${what} It lasts ten minutes and works once.`,
     "",
+    "If you did not ask for it, nothing has happened and you can ignore this.",
+    "",
+    "One rule worth knowing: we will never ask you to send this code on to anyone, and we will never ask you for a password. Neither will anyone who says they are us.",
+    "",
+    "Rahul",
     "awtm forge",
   ].join("\n");
 
   if (transportMode() === "log") {
-    console.log(`[mail:log] to ${to}: code ${code}`);
+    logMail(to, `${code} is your awtm forge code`, text);
     return;
   }
 
@@ -59,7 +73,7 @@ export async function sendCode(to: string, code: string, businessName: string, p
 /** A plain message from the record. Never carries internal cost: ADR 0009. */
 export async function sendPlain(to: string, subject: string, text: string): Promise<void> {
   if (transportMode() === "log") {
-    console.log(`[mail:log] to ${to}: ${subject}`);
+    logMail(to, subject, text);
     return;
   }
   await smtpTransport().sendMail({

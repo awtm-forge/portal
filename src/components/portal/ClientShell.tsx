@@ -9,8 +9,8 @@ export function ClientShell({ businessName, children }: { businessName: string; 
       </div>
       {children}
       <div className="c-foot">
-        <p>Anything at all, message Rahul on WhatsApp.</p>
-        <p>This page is yours. The link does not expire.</p>
+        <p>Stuck on anything, or just want to talk it through, message Rahul on WhatsApp.</p>
+        <p>This page is yours and the link does not expire. Nothing here will ever ask you for a password.</p>
       </div>
     </div>
   );

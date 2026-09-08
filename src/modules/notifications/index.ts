@@ -81,23 +81,35 @@ subscribe(async (activity) => {
  * CLAUDE.md 5.1: creating a project sends one email with the link. A failure
  * does not block creation; the admin page shows it and offers a retry.
  */
-export async function sendLinkEmail(args: { to: string; contactName: string; businessName: string; link: string }): Promise<void> {
+export async function sendLinkEmail(args: {
+  to: string;
+  contactName: string;
+  businessName: string;
+  projectName: string;
+  link: string;
+}): Promise<void> {
+  const firstName = args.contactName.trim().split(/\s+/)[0] || args.contactName;
   const body = [
-    `Hello ${args.contactName},`,
+    `Hello ${firstName},`,
     "",
-    "Your awtm forge project page is ready. Everything about your project lives here: the questionnaire first, then the agreement, the weekly updates and the invoices.",
+    `Thank you for trusting us with ${args.projectName}. Here is your page.`,
     "",
     args.link,
     "",
-    "The first thing on it is a short questionnaire, about ten minutes. It saves as you type, so you can leave it and come back.",
+    "Everything to do with your project will be on it: the questionnaire first, then the agreement you read before anything starts, a written update every week, and your invoices. It is one link, it is yours, and it does not expire. Keep it wherever you keep things.",
     "",
-    "The page will ask for a six digit code the first time you open it on a phone or a laptop. We send that code to this address.",
+    "The first thing on it is a questionnaire. About ten minutes, mostly about what is going wrong in your own words. Do not tidy your answers up for us, the messy version is the useful one, and I do not know is a real answer to any of it. It saves as you type, so you can start it in a queue somewhere and finish it later.",
     "",
-    "We will never ask you for a password, an API key or a one-time code. Nobody from awtm forge will ever ask you to type one into a message.",
+    "The page will ask for a six digit code the first time you open it on a phone or a laptop. That code comes to this address. There is no password to remember, and there never will be one.",
     "",
+    "Worth reading twice: we will never ask you for a password, an API key or a one-time code, and neither will anyone who says they are us. There is no box anywhere on your page that wants one.",
+    "",
+    "Anything at all, message me on WhatsApp. You do not need to wait for a call.",
+    "",
+    "Rahul",
     "awtm forge",
   ].join("\n");
-  await sendPlain(args.to, `Your awtm forge project page, ${args.businessName}`, body);
+  await sendPlain(args.to, `Your project page, ${args.businessName}`, body);
 }
 
 /** Import for the side effect of registering subscribers. */
