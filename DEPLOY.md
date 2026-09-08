@@ -1,4 +1,4 @@
-# Deploying awtmforge.com on Hostinger
+# Deploying the awtm forge portal on Hostinger
 
 One Node.js web app on Cloud Professional, deployed from GitHub. Hostinger builds
 on every push to the connected branch.
@@ -25,10 +25,19 @@ Websites, Add website, Node.js web app, Import Git repository, connect the
 | Output directory | `.next` |
 | Entry file | leave as detected; Hostinger ignores it for Next.js |
 | Branch | `main` |
-| Domain | awtmforge.com |
+| Domain | `portal.awtmforge.com`, with `dashboard.awtmforge.com` added to the same app |
 
-Hostinger applies `output: "standalone"` itself. `next.config.ts` must keep
-exporting a plain object.
+Two hostnames, one app (ADR 0013). Add both domains to the same Node.js
+application in hPanel and point both A records at it. `portal.awtmforge.com`
+serves the client portal, `dashboard.awtmforge.com` serves the team admin, and
+each refuses the other's zone. There is no marketing site on either: it left
+the root on 9 September (ADR 0012), so both hostnames are private.
+
+Hostinger applies `output: "standalone"` itself. `next.config.mjs` must keep
+exporting a plain object, and stay plain JavaScript: the build host's glibc is
+older than 2.29, so Next's native SWC cannot load and a TypeScript config
+fails to transpile against the WASM fallback. The build script passes
+`--webpack` for the same reason.
 
 The build script runs `prisma generate`, then `prisma migrate deploy` when
 `DATABASE_URL` is set (skipped when it is not, so step 1 builds without a
@@ -43,7 +52,8 @@ Set these in hPanel, never in the repo. None are needed for step 1.
 | `DATABASE_URL` | `mysql://USER:PASSWORD@localhost:3306/DBNAME`, from hPanel Databases |
 | `SESSION_SECRET` | 32 or more random characters; signs session and code hashes |
 | `UPLOAD_DIR` | an absolute path outside the deploy directory, `/home/zekst/awtm-uploads`. Create it with `mkdir -p` and `chmod 700`. |
-| `APP_URL` | `https://awtmforge.com` |
+| `APP_URL` | `https://portal.awtmforge.com`, where clients land. Every project link is built from it. Must include the scheme; a bare hostname is ignored with a warning. |
+| `ADMIN_URL` | `https://dashboard.awtmforge.com`, where the team signs in. Team notification links are built from it. Leave empty to run both zones on `APP_URL`. |
 | `SMTP_HOST` | `smtp.hostinger.com` |
 | `SMTP_PORT` | `465` |
 | `SMTP_USER` | `hello@awtmforge.com` |
@@ -84,21 +94,31 @@ client link. Delete that project before real use, or keep it as a demo.
 
 ## Checks
 
-1. Open https://awtmforge.com on a phone. The awtm forge fonts, no
-   horizontal scroll.
-2. https://awtmforge.com/robots.txt disallows `/p/`, `/admin/`, `/invoice/`,
-   `/agreement/` and `/api/`.
-3. `curl -sI https://awtmforge.com/admin` shows `x-robots-tag: noindex, nofollow`
-   and `cache-control: no-store`.
-4. Uploads survive a redeploy: put a marker file in `UPLOAD_DIR`, push a
+1. Open https://portal.awtmforge.com on a phone. The awtm forge fonts, no
+   horizontal scroll, and the page says to open the link that was emailed.
+2. https://portal.awtmforge.com/robots.txt is `Disallow: /`. Both hostnames
+   are private; there is nothing here to index.
+3. `curl -sI https://dashboard.awtmforge.com/admin` shows
+   `x-robots-tag: noindex, nofollow` and `cache-control: no-store`.
+4. The hosts hold apart: `curl -so /dev/null -w "%{http_code}"
+   https://portal.awtmforge.com/admin` is 404, and the same against
+   `https://dashboard.awtmforge.com/p/anything` is 404. If either is 200,
+   `ADMIN_URL` is unset or does not match, and both zones are answering on
+   both names.
+5. Uploads survive a redeploy: put a marker file in `UPLOAD_DIR`, push a
    trivial commit, confirm the marker is still there. If it is not, uploads
    need a different home and the build stops to say so.
-5. Stop MySQL from hPanel and load `/`. It still renders.
+6. Stop MySQL from hPanel and load `/`. The way-in page still renders: it
+   reads nothing.
 
 ## Known and accepted
 
-- The "How we work" section still describes four payment-gated stages. It
-  is ported as-is. PORTAL-SPEC section 11 assigns the rewrite to Rahul.
+- The marketing site is not served here. It is kept whole and compiling at
+  `src/components/marketing/MarketingSite.tsx` and is not routed (ADR 0012).
+  When it returns it gets its own hostname. Its "How we work" section already
+  carries the one-agreement copy from `CLAUDE.md` section 8.
+- `/api/enquiry` and the `enquiry` table are still here and still work. They
+  cost nothing while nothing posts to them.
 - The client link is shown once, when created and when rotated, because
   only its hash is stored (PORTAL-SPEC 5.9). The nudge message points at
   the link already sent.

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { clientBase } from "@/lib/hosts";
 import { hashCode, hashToken, randomToken, safeEqualHex, sixDigitCode } from "@/lib/crypto";
 import { sendCode } from "@/lib/mail";
 import { allow, clientIp } from "@/lib/rate-limit";
@@ -170,6 +171,5 @@ export async function rotateProjectToken(projectId: string): Promise<string> {
 }
 
 export function projectLink(token: string): string {
-  const base = (process.env.APP_URL ?? "https://awtmforge.com").replace(/\/$/, "");
-  return `${base}/p/${token}`;
+  return `${clientBase()}/p/${token}`;
 }

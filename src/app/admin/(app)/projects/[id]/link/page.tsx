@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { db } from "@/lib/db";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
+import { projectLink } from "@/modules/auth/client";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
 import { CopyLink } from "../CopyLink";
@@ -19,7 +20,7 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
   if (!project) notFound();
 
   const token = await takeFlashLink(project.id);
-  const link = token ? `${(process.env.APP_URL ?? "https://awtmforge.com").replace(/\/$/, "")}/p/${token}` : null;
+  const link = token ? projectLink(token) : null;
   const c = project.client;
   const firstName = c.contactName.trim().split(/\s+/)[0] || c.contactName;
   const message = link ? questionnaireReadyMessage({ contactName: firstName, link }) : "";

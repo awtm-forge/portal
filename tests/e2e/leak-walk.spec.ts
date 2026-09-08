@@ -120,21 +120,23 @@ test.describe("the leak walk", () => {
   });
 
   test("private zones send noindex and no-store, and robots disallows them", async ({ request }) => {
+    // The whole host is private now, so one Disallow covers it (ADR 0012).
     const robots = await (await request.get("/robots.txt")).text();
-    for (const prefix of ["/p/", "/admin/", "/invoice/", "/agreement/"]) {
-      expect(robots).toContain(`Disallow: ${prefix}`);
-    }
-    for (const route of ["/p/anything", "/admin", "/agreement/anything/print"]) {
+    expect(robots).toContain("Disallow: /");
+    expect(robots).not.toContain("Allow: /");
+    for (const route of ["/", "/p/anything", "/admin", "/agreement/anything/print"]) {
       const response = await request.get(route, { maxRedirects: 0 });
       expect(response.headers()["x-robots-tag"], route).toContain("noindex");
       expect(response.headers()["cache-control"], route).toContain("no-store");
     }
   });
 
-  test("the marketing page is static and says nothing about stages", async ({ request }) => {
+  test("the root is a way into the portal, not the marketing site", async ({ request }) => {
+    // ADR 0012: this host serves the portal and the admin. The marketing site
+    // is kept in components/marketing and is not routed here.
     const body = await (await request.get("/")).text();
-    expect(body).toContain("The same loop, once.");
-    expect(body).not.toContain("30 percent to begin");
-    expect(body).not.toContain("Awaiting the facts");
+    expect(body).toContain("Open the link we sent you");
+    expect(body).not.toContain("The same loop, once.");
+    expect(body).not.toContain("Start the two weeks");
   });
 });

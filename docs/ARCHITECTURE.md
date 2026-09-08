@@ -4,21 +4,21 @@ Drafted 7 Sep 2026, before the code; last checked against it on 7 Sep 2026 after
 
 ## The shape in one paragraph
 
-One Next.js application, one MySQL database, one upload directory, on one domain. Three zones share one design system and one codebase and nothing else: the marketing site is static and never touches the database; the client portal is dynamic, unindexed and reached only by link plus code; the admin is dynamic, unindexed and reached by password. All business behaviour lives in domain modules that know nothing about HTTP; route handlers validate input, call a module, and render a view. Every meaningful change writes an activity event, and everything that notifies anyone listens to those events rather than being called from the place the change happened. That last sentence is what leaves room for later features.
+One Next.js application, one MySQL database, one upload directory. Two zones share one design system and one codebase and nothing else: the client portal is dynamic, unindexed and reached only by link plus code; the admin is dynamic, unindexed and reached by password. They answer on two hostnames from the one app, and each refuses the other's zone (ADR 0013). The marketing site was the third zone and left the root on 9 September; it is kept whole and compiling in `components/marketing`, is not routed, and gets its own host when it returns (ADR 0012). All business behaviour lives in domain modules that know nothing about HTTP; route handlers validate input, call a module, and render a view. Every meaningful change writes an activity event, and everything that notifies anyone listens to those events rather than being called from the place the change happened. That last sentence is what leaves room for later features.
 
 ## Zones and boundaries
 
 ```mermaid
 flowchart LR
-  subgraph Site [Marketing site, static]
-    Pages["/, /pricing, /work, /contact"]
-    EnqAPI["POST /api/enquiry"]
+  subgraph Site [Not routed here, ADR 0012]
+    Pages["components/marketing, its own host later"]
+    EnqAPI["POST /api/enquiry, kept, unused"]
   end
-  subgraph Portal [Client portal, dynamic, noindex, no-store]
+  subgraph Portal [Client portal, APP_URL host, noindex, no-store]
     P["/p/[token]/..."]
     Print["/agreement/[id]/print, /invoice/[id]/print"]
   end
-  subgraph Admin [Team admin, dynamic, noindex, no-store]
+  subgraph Admin [Team admin, ADMIN_URL host, noindex, no-store]
     A["/admin/..."]
   end
   subgraph Domain [modules/, no HTTP, no React]
@@ -64,13 +64,13 @@ The scaffold already uses `src/`, so everything application-side lives under it.
 
 ```
 src/app/                 routes only: validate, call a module, render
-  (site)/                static marketing pages
+  page.tsx               the way in: open the link we sent you
   p/[token]/             client portal screens
   admin/                 team screens
   agreement/[id]/print   print views
   invoice/[id]/print
   api/                   the few JSON endpoints (enquiry, code request, code verify)
-src/components/          React only, grouped by zone: marketing, portal, admin, intake
+src/components/          React only, grouped by zone: marketing (kept, unrouted), portal, admin, intake
 src/modules/             domain, one folder per bounded area, no HTTP, no React
   auth/                  tokens, codes, sessions, admin passwords
   projects/              project CRUD, phase.ts (the transition table), needs-attention

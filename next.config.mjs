@@ -6,7 +6,12 @@
 // than 2.29, so Next's native SWC binary cannot load and a .ts config fails
 // to transpile against the WASM fallback.
 
-const privateZones = ["/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"];
+// This host serves the portal and the admin only; the marketing site is no
+// longer routed here (ADR 0012), so the root is private too. Listed zone by
+// zone rather than as one catch-all, because a catch-all would also put
+// no-store on Next's content-hashed static assets, which are safe to cache
+// forever. These are the zones PORTAL-SPEC criterion 18 names, plus "/".
+const privateZones = ["/", "/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"];
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {

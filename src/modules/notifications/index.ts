@@ -6,14 +6,16 @@
  * Payloads reach here already serialized, so no template can carry internal
  * cost even by accident (PORTAL-SPEC 5.13).
  */
+import { adminBase } from "@/lib/hosts";
 import { logger } from "@/lib/logger";
 import { sendPlain, teamNotifyAddress } from "@/lib/mail";
 import { subscribe, type Activity } from "@/modules/events";
 
-const APP = () => (process.env.APP_URL ?? "https://awtmforge.com").replace(/\/$/, "");
-
+/** Team links go to the team host, which is a different name from the
+ *  client's when the two are split (ADR 0013). */
 function adminLink(projectId: string | null): string {
-  return projectId ? `${APP()}/admin/projects/${projectId}` : `${APP()}/admin`;
+  const base = adminBase();
+  return projectId ? `${base}/admin/projects/${projectId}` : `${base}/admin`;
 }
 
 /** One line each, plain text. CLAUDE.md section 5: name the project and the event. */

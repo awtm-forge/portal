@@ -84,6 +84,22 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The marketing site leaves the root, and the two portals get two hostnames: done
+
+9 Sep 2026, AI-assisted. Two decisions from Rahul, both outside the step order.
+
+**The marketing site is not served here.** Asked what "not needed" should mean, Rahul chose to keep the code and stop routing it. `src/app/page.tsx` moved to `src/components/marketing/MarketingSite.tsx`, still compiling, not routed. `/` is now a small way in: the project page opens from the emailed link, there is no password, and a quiet team sign-in sits under it. The whole host is private, so `robots.txt` is one `Disallow: /` and `/` joins the zones sending noindex and no-store. The zones are still listed one by one in `next.config.mjs` rather than as a catch-all, because a catch-all would also put `no-store` on Next's content-hashed static assets. ADR 0012.
+
+**Two hostnames, one app.** `APP_URL` is where clients land, `ADMIN_URL` is where the team signs in, and `src/lib/hosts.ts` is the only thing that reads them. `src/proxy.ts` answers 404 for `/admin` on the client host and `/p/` on the team host, sends the bare team host to the projects list, and serves the printable routes on both because both need them. With `ADMIN_URL` unset the two run on one hostname and nothing is refused, which is what development and the tests do. ADR 0013.
+
+Two deployments was offered and not taken, and this is the ADR that `CLAUDE.md` section 11 asks for: it would buy isolation the serializers already provide, at the cost of two builds, two deploys and shared code either duplicated or packaged.
+
+Verified: 17 more unit tests, and the full end to end suite. The leak walk now asserts the root is the way in rather than the marketing page, and that robots disallows the host rather than four prefixes.
+
+One thing worth saying plainly: this is not a security boundary. Anyone who learns the team hostname reaches its login page. What keeps a client's data out of the team's views, and internal cost out of the client's, is the serializers and the session checks, exactly as before.
+
+Where this leaves the written brief: `CLAUDE.md` section 1 and PORTAL-SPEC section 9 step 1 both describe three zones on one domain, and are now out of step. The rule in `CLAUDE.md` section 2 item 7, that marketing routes never touch the database, has nothing to apply to on this host, though the check it names still passes: the way-in page reads nothing either. `docs/API.md`, `docs/ARCHITECTURE.md` and `DEPLOY.md` are updated; the specs are Rahul's to change.
+
 ## Step 9, invoice numbering, mark paid, print route: done
 
 8 Sep 2026, AI-assisted.

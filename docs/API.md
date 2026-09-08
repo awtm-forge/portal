@@ -2,20 +2,25 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 8 September 2026, after step 8.
+route; last checked against the code on 9 September 2026, after step 9.
 
-Zones and their rules are in `ARCHITECTURE.md`. Everything outside the
-marketing zone sends `X-Robots-Tag: noindex, nofollow`, `Cache-Control:
-no-store` and `Referrer-Policy: no-referrer` through `src/proxy.ts`, and is
-disallowed in `robots.txt` (criteria 18 and 19).
+Zones and their rules are in `ARCHITECTURE.md`. This host is entirely private
+(ADR 0012): every route sends `X-Robots-Tag: noindex, nofollow`,
+`Cache-Control: no-store` and `Referrer-Policy: no-referrer` through
+`src/proxy.ts`, and `robots.txt` is a single `Disallow: /` (criteria 18, 19).
 
-## Marketing, static, indexed
+The client portal and the team admin answer on two hostnames from one app
+(ADR 0013). `src/proxy.ts` refuses `/admin` on the client host and `/p/` on
+the team host with a 404, and sends the bare team host to `/admin`. When
+`ADMIN_URL` is unset the two run on one hostname and nothing is refused.
+
+## The way in, and the host itself
 
 | Route | Method | Auth | Notes |
 |---|---|---|---|
-| `/` | GET | none | Statically generated, never reads the database (criterion 17). |
-| `/robots.txt` | GET | none | Generated from `src/app/robots.ts`. |
-| `/api/enquiry` | POST | none, same origin only | `{name, business, problem, budget, adSpend, contact}` as JSON. Rate limited to five an hour per IP. Writes `enquiry` and emits `enquiry.received`, which emails the team. Answers 503 rather than pretending when the database is down. |
+| `/` | GET | none | Says the project page opens from the emailed link and offers a quiet team sign-in. Reads nothing, so it renders with the database stopped. On the team host it redirects to `/admin`. |
+| `/robots.txt` | GET | none | `Disallow: /`. Generated from `src/app/robots.ts`. |
+| `/api/enquiry` | POST | none, same origin only | `{name, business, problem, budget, adSpend, contact}` as JSON. Rate limited to five an hour per IP. Writes `enquiry` and emits `enquiry.received`, which emails the team. Answers 503 rather than pretending when the database is down. Nothing posts to it while the marketing site is unrouted; it is kept for when the site returns on its own host. |
 
 ## Client portal, dynamic, unindexed
 
