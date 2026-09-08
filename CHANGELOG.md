@@ -13,3 +13,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-08 Step 7, weekly updates on both sides, the kickoff action, the booking button, the settings screen, and the agreement, weekly and invoice WhatsApp messages.
 - 2026-09-08 Fixed a sign-off that could happen twice: the phase write is now conditional and is what stops it, closing the one-function rule at the same time (ADR 0011).
 - 2026-09-08 Step 8, the review loop: mark ready, the client review page, unlimited changes-requested rounds, the code-gated delivery sign-off with its balance invoice and day-30 row, the thank-you page with the testimonial and referral, and the delivery half of the WhatsApp recording path.
+- 2026-09-08 Moved `phoneDigits` out of `crypto.ts`, so a client component no longer drags `node:crypto` into the browser bundle and the webpack build Hostinger needs succeeds.

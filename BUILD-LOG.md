@@ -84,6 +84,18 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## Fixing a client bundle that reached for node:crypto: done
+
+8 Sep 2026, AI-assisted. Found while integrating Ayush's build fix, not by a test.
+
+Ayush changed the build to webpack, because Hostinger's build host has glibc older than 2.29 and Next falls back to WASM there, which has no Turbopack. Everything up to step 8 was built with Turbopack, which tolerated something webpack refuses: `src/lib/whatsapp.ts` imported `phoneDigits` from `src/lib/crypto.ts`, and `UpdateForm.tsx` is a client component that imports `whatsapp.ts`. So the browser bundle pulled in `node:crypto` and the build died on it.
+
+`phoneDigits` is a pure string function that was in the wrong file. It moved to `src/lib/format.ts` and `crypto.ts` is now server-only in fact as well as intent. No behaviour changed.
+
+Worth saying plainly: this would have failed on Hostinger the first time anyone deployed, and no test in the suite would have caught it, because the tests run a Turbopack build. `npm run build` is the check that catches this class of thing, and it now runs on the same bundler production runs on.
+
+Verified: `npm run build` with webpack, then the full suite against that build.
+
 ## Fixing a sign-off that could happen twice: done
 
 8 Sep 2026, AI-assisted. Found while designing step 8, and committed on its own before it.

@@ -1,4 +1,4 @@
-import { phoneDigits } from "@/lib/crypto";
+import { phoneDigits } from "@/lib/format";
 
 /** PORTAL-SPEC section 7. Every message is a function of the record. */
 export function waLink(phone: string, body: string): string {

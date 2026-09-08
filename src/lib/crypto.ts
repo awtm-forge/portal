@@ -33,8 +33,3 @@ export function safeEqualHex(a: string, b: string): boolean {
   if (ba.length !== bb.length || ba.length === 0) return false;
   return timingSafeEqual(ba, bb);
 }
-
-/** Digits only, for a wa.me link. */
-export function phoneDigits(phone: string): string {
-  return phone.replace(/\D/g, "");
-}
