@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { db } from "@/lib/db";
 import { dayMonth, isoDate } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
-import { nextWeekNumber } from "@/modules/updates";
+import { withClientAndAgreement } from "@/modules/projects";
+import { nextWeekNumber, forProject } from "@/modules/updates";
 import { UpdateForm } from "./UpdateForm";
 
 export default async function UpdatesPage({
@@ -16,10 +16,10 @@ export default async function UpdatesPage({
 }) {
   const admin = await requireAdmin();
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const project = await db.project.findUnique({ where: { id }, include: { client: true, agreement: true } });
+  const project = await withClientAndAgreement(id);
   if (!project) notFound();
 
-  const updates = await db.update.findMany({ where: { projectId: id }, orderBy: { weekNumber: "desc" } });
+  const updates = await forProject(id);
   const asked = query.week ? Number(query.week) : null;
   const week = asked && Number.isInteger(asked) ? asked : await nextWeekNumber(id, project.agreement?.startDate ?? null);
   const editing = updates.find((u) => u.weekNumber === week) ?? null;

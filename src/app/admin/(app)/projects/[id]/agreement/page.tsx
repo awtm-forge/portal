@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Phase } from "@/generated/prisma/enums";
-import { db } from "@/lib/db";
 import { dayMonthTime } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
+import { forAgreementEditor, notesForAdmin } from "@/modules/projects";
 import { agreementToAdminView } from "@/modules/serializers";
 import { readAnswers } from "@/modules/intake/answers";
 import { company } from "@/modules/settings";
@@ -14,13 +14,10 @@ import { overrideIntakeAction } from "./actions";
 export default async function AgreementEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   const { id } = await params;
-  const project = await db.project.findUnique({
-    where: { id },
-    include: { client: true, agreement: true, intake: true },
-  });
+  const project = await forAgreementEditor(id);
   if (!project) notFound();
 
-  const notes = await db.agreementNote.findMany({ where: { projectId: id }, orderBy: { createdAt: "asc" } });
+  const notes = await notesForAdmin(id);
   const c = await company();
   const view = project.agreement ? agreementToAdminView(project.agreement) : null;
   const answers = project.intake ? readAnswers(project.intake.answers) : {};

@@ -84,6 +84,31 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## Step 11, needs attention, the runbook and the request id: done
+
+9 Sep 2026, AI-assisted.
+
+Built: the needs-attention block on the projects list, PORTAL-SPEC 6.6, with all six conditions. It is computed when the page loads, from timestamps that already exist, because all six are silence rather than events: nobody submits a questionnaire late, they simply do not submit it. So there is no reminder table, no job, and nothing to reconcile when a project moves. Worst first, since the top of the list is the order to work in. Cancelled and closed projects are left out; nothing about them is waiting.
+
+`docs/RUNBOOK.md`: every admin action with what it does and what it cannot undo, what to check when something looks wrong, the nightly backup, and a restore that goes into a scratch database rather than over the live one. The restore section says out loud that it has not been rehearsed on the live host, with a place to write the date when it has.
+
+Structured logs already existed. What was missing was the request id, so `src/proxy.ts` now stamps every request with one, forwards it to the render and echoes it on the response. An id in a browser's network tab or a `curl -I` matches the lines in Hostinger's log viewer, which is the whole point: "it broke, here is the id" becomes one search. An id that arrives with the request is kept, so a proxy in front of us stays in charge of it.
+
+Two things the specs describe and nothing had implemented:
+
+- **Cancelling a project.** CLAUDE.md 5 has always described it and the phase machine has always allowed it, but there was no way to do it. Now there is, folded away behind its own confirmation, with the reason required. It creates no invoice and changes no issued one: cancelling is not a refund, and pretending otherwise in the record would be worse than a conversation.
+- **`project.kickoff_at`.** The eight-day rule needed to know when building started, and nothing recorded it. Measuring from the agreement would have blamed us for a gap that was theirs. One additive column, set when the kickoff is marked done.
+
+The deferred debt in the table below is now mostly paid: the projects list, the project page, the agreement editor, the updates page, the link page and the WhatsApp actions all go through `modules/`, and no route file among them imports prisma. What remains is the intake and file routes, which stay assigned to their next behaviour change.
+
+Verified: 111 unit tests and 107 end to end, on desktop and a phone, plus the webpack build.
+
+One defect, and it is the third of its kind: **a test leaned on an invoice another spec happened to leave on the seed project.** The invoices spec taught this in step 9 and the day-30 spec taught it again this morning. Every spec that needs a row now makes its own.
+
+Deferred: the restore rehearsal, which needs Ayush and the live database.
+
+Needs Rahul: none new.
+
 ## Step 10, day 30: done
 
 9 Sep 2026, AI-assisted.

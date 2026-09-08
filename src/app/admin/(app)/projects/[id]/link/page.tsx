@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { db } from "@/lib/db";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
+import { withClient } from "@/modules/projects";
 import { projectLink } from "@/modules/auth/client";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
@@ -16,7 +16,7 @@ import { CopyLink } from "../CopyLink";
 export default async function SendLinkPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   const { id } = await params;
-  const project = await db.project.findUnique({ where: { id }, include: { client: true } });
+  const project = await withClient(id);
   if (!project) notFound();
 
   const token = await takeFlashLink(project.id);

@@ -128,6 +128,8 @@ test.describe("the leak walk", () => {
       const response = await request.get(route, { maxRedirects: 0 });
       expect(response.headers()["x-robots-tag"], route).toContain("noindex");
       expect(response.headers()["cache-control"], route).toContain("no-store");
+      // One id per request, echoed so a log line and a response can be matched.
+      expect(response.headers()["x-request-id"], route).toMatch(/^[0-9a-f]{16}$/);
     }
   });
 

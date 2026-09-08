@@ -103,6 +103,10 @@ model Project {
   /// Set when the client sends or skips the thank-you page, so a decline is
   /// distinguishable from never having got there.
   thanksSeenAt             DateTime?
+  /// When Rahul marked the kickoff done, which is when building started.
+  /// The needs-attention rule counts silence from here: measuring from the
+  /// agreement would blame us for a gap that was theirs.
+  kickoffAt                DateTime?
   cancelledAt              DateTime?
   cancelReason             String?         @db.VarChar(500)
   createdAt                DateTime        @default(now())

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SignoffMethod, TestimonialMoment } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/modules/auth/admin";
 import { approveTestimonial, setFrictionNotes } from "@/modules/day30";
-import { closeProject } from "@/modules/projects";
+import { cancelProject, closeProject } from "@/modules/projects";
 import "@/modules/notifications/register";
 
 /** ADMIN ONLY, and there is no client view that could carry it. */
@@ -35,5 +35,28 @@ export async function closeProjectAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await closeProject(projectId);
+  redirect(`/admin/projects/${projectId}`);
+}
+
+export type CancelState = { message?: string };
+
+/**
+ * CLAUDE.md 5. Kept behind its own confirmation in the UI, and the reason is
+ * required: this is the one move that ends a project without a delivery.
+ */
+export async function cancelProjectAction(_prev: CancelState, formData: FormData): Promise<CancelState> {
+  await requireAdmin();
+  const projectId = String(formData.get("projectId") ?? "");
+  const result = await cancelProject(projectId, String(formData.get("reason") ?? ""));
+  if (!result.ok) {
+    return {
+      message: {
+        no_reason: "Say why. It is the only thing anyone will have to go on later.",
+        wrong_phase: "A delivered or closed project cannot be cancelled.",
+        not_found: "That project is not there any more.",
+        raced: "The project moved while you were typing. Look at it again.",
+      }[result.reason],
+    };
+  }
   redirect(`/admin/projects/${projectId}`);
 }

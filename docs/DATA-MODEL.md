@@ -280,3 +280,11 @@ Side effects are attached to transitions, never to screens: `agreement_sent → 
 ## What is deliberately not modelled yet
 
 A `currency` column (INR only in v1), a `role` on `admin_user` (both founders equal), a `payment` table (bank transfers marked paid by hand), a `referral_reward` or tracking code, and a `message` or `comment` table of any kind. Each has a named place to go in ARCHITECTURE.md so adding it later is a migration, not a redesign.
+
+## Changed in step 11
+
+`project.kickoff_at`, nullable, set when the kickoff is marked done. The
+needs-attention rule counts silence during `building` from here: measuring
+from the agreement would blame us for a gap that was theirs, and there was no
+other record of when building started. Additive, one migration,
+`20260908205855_kickoff_at`.

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { logger } from "@/lib/logger";
+import { requestLogger } from "@/lib/logger";
 import type { Activity } from "./types";
 
 export type { Activity, ActivityPayload, EventType } from "./types";
@@ -30,7 +30,7 @@ export async function emit(activity: Activity): Promise<void> {
       },
     });
   } catch (error) {
-    logger.error("activity_event write failed", { type: activity.type, error: String(error) });
+    await requestLogger.error("activity_event write failed", { type: activity.type, error: String(error) });
   }
 
   await Promise.all(
@@ -38,7 +38,7 @@ export async function emit(activity: Activity): Promise<void> {
       try {
         await fn(activity);
       } catch (error) {
-        logger.error("subscriber failed", { type: activity.type, error: String(error) });
+        await requestLogger.error("subscriber failed", { type: activity.type, error: String(error) });
       }
     }),
   );

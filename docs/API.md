@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 9 September 2026, after step 10.
+route; last checked against the code on 9 September 2026, after step 11.
 
 Zones and their rules are in `ARCHITECTURE.md`. This host is entirely private
 (ADR 0012): every route sends `X-Robots-Tag: noindex, nofollow`,
@@ -20,6 +20,7 @@ the team host with a 404, and sends the bare team host to `/admin`. When
 |---|---|---|---|
 | `/` | GET | none | Says the project page opens from the emailed link and offers a quiet team sign-in. Reads nothing, so it renders with the database stopped. On the team host it redirects to `/admin`. |
 | `/robots.txt` | GET | none | `Disallow: /`. Generated from `src/app/robots.ts`. |
+| `/healthz` | GET | none | `{"status":"ok"}` when the database answers, 503 and `degraded` when it does not. Says nothing else: it is reachable without signing in, so the failure detail goes to the log. |
 | `/api/enquiry` | POST | none, same origin only | `{name, business, problem, budget, adSpend, contact}` as JSON. Rate limited to five an hour per IP. Writes `enquiry` and emits `enquiry.received`, which emails the team. Answers 503 rather than pretending when the database is down. Nothing posts to it while the marketing site is unrouted; it is kept for when the site returns on its own host. |
 
 ## Client portal, dynamic, unindexed
@@ -60,7 +61,7 @@ prints a one-time setup link and never a password.
 |---|---|---|---|
 | `/admin/login` | GET, server action | none | Rate limited to ten attempts in fifteen minutes per IP. An account with no password yet cannot be signed into. |
 | `/admin/setup/[token]` | GET, server action | a valid, unused setup link | The person chooses their own password, at least twelve characters, and is signed in. The link works once and expires in 48 hours. |
-| `/admin` | GET | admin | Projects, with the questionnaire state of each. |
+| `/admin` | GET | admin | Projects, with the questionnaire state of each, under a needs-attention block computed on read (PORTAL-SPEC 6.6). |
 | `/admin/clients` | GET | admin | Every client, who we talk to, their projects, and whether each link has gone out. |
 | `/admin/clients/new` | GET, server action | admin | Adds a client on its own. Sends nothing. Can continue straight into a project. |
 | `/admin/clients/[id]` | GET, server action | admin | The client record, their projects, and their contact details, edited here rather than on a project. |
@@ -84,10 +85,11 @@ prints a one-time setup link and never a password.
 | `/admin/projects/[id]` (mark kickoff) | server action | admin | PORTAL-SPEC 5.2, `agreed` to `building`. Offered only while the phase is `agreed`. |
 | `/admin/projects/[id]` (friction notes) | server action | admin | ADMIN ONLY in the schema, and no client view has a field for it. |
 | `/admin/projects/[id]` (approve a testimonial) | server action | admin | For a quote they approved on WhatsApp. Records `approved_method = whatsapp`, so a tap and a message never become indistinguishable (PORTAL-SPEC 5.11). |
+| `/admin/projects/[id]` (cancel) | server action | admin | CLAUDE.md 5. Any phase except delivered, closed and cancelled. The reason is required. Creates no invoice and changes no issued one. |
 | `/admin/projects/[id]` (close) | server action | admin | PORTAL-SPEC 5.2, `delivered` to `closed`, by hand. The record stays readable at the same link. |
 | `/admin/projects/[id]` (mark paid) | server action | admin | The only thing that moves on an issued invoice, and the guard in `lib/db` allows only the four payment fields. The date must read, must not be in the future, and must not be before the invoice was raised. Conditional on the invoice still being issued, so two admins at once record one payment (criterion 16). |
 | `/admin/projects/[id]` (raise an extra) | server action | admin | `kind=other` only, and the only invoice an admin can raise by hand. The advance and the balance follow a sign-off and nothing else: no route reaches `issueAdvance` or `issueBalance` (criterion 3). |
 
 ## Not built yet
 
-The needs-attention block, which arrives in step 11. See `BUILD-LOG.md`.
+Nothing. Steps 1 to 11 of PORTAL-SPEC section 9 are built; step 12 is the deploy. See `BUILD-LOG.md`.

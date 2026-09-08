@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
-import { db } from "@/lib/db";
 import { dayMonth, dayMonthTime } from "@/lib/format";
 import { intakeProgress } from "@/modules/intake/progress";
 import { parseDocumentLoose } from "@/modules/intake/document";
@@ -19,9 +18,12 @@ import { testimonialToAdminView } from "@/modules/serializers";
 import { MarkReady } from "./review/MarkReady";
 import { MarkPaid, RaiseOther } from "./invoices/InvoiceControls";
 import { forProject } from "@/modules/invoices";
+import { agreementNoteCount, forAdmin, signoffsForAdmin } from "@/modules/projects";
+import { forProject as updatesForProject } from "@/modules/updates";
 import { company } from "@/modules/settings";
 import { forgetReferralAction } from "./review/actions";
 import { approveTestimonialAction, closeProjectAction, saveFrictionNotesAction } from "./day30/actions";
+import { CancelProject } from "./day30/CancelProject";
 import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
@@ -29,17 +31,14 @@ const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "
 export default async function ProjectAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   const { id } = await params;
-  const project = await db.project.findUnique({
-    where: { id },
-    include: { client: true, intake: { include: { documentUploadedBy: { select: { name: true } } } }, agreement: true },
-  });
+  const project = await forAdmin(id);
   if (!project) notFound();
   const co = await company();
   const [invoices, signoffs, noteCount, updates, rounds, testimonialRows, referrals, day30] = await Promise.all([
     forProject(id),
-    db.signoffEvent.findMany({ where: { projectId: id }, orderBy: { occurredAt: "asc" } }),
-    db.agreementNote.count({ where: { projectId: id } }),
-    db.update.findMany({ where: { projectId: id }, orderBy: { weekNumber: "desc" }, take: 4 }),
+    signoffsForAdmin(id),
+    agreementNoteCount(id),
+    updatesForProject(id),
     roundsForProject(id),
     testimonialsForAdmin(id),
     referralsForAdmin(id),
@@ -278,6 +277,13 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
               <p className="help" style={{ lineHeight: 1.65 }}>
                 Shown here and nowhere else: not on any client page, not in an export, not in a WhatsApp message. This is the one record in the system that can be deleted, because it holds someone else&rsquo;s details and they never agreed to be here.
               </p>
+            </div>
+          )}
+
+          {project.phase !== Phase.DELIVERED && project.phase !== Phase.CLOSED && project.phase !== Phase.CANCELLED && (
+            <div className="a-card">
+              <span className="k">Ending it early</span>
+              <CancelProject projectId={project.id} />
             </div>
           )}
 

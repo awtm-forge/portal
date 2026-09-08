@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { splitHosts } from "@/lib/hosts";
+import { REQUEST_ID_HEADER, newRequestId } from "@/lib/request-id";
 
 /**
  * PORTAL-SPEC 3.1 and criteria 18 and 19. Every response in the client,
@@ -13,6 +14,11 @@ import { splitHosts } from "@/lib/hosts";
  * cannot end up in one cookie jar. The printable routes answer on both,
  * because a client saves their own invoice from theirs and the team opens the
  * same document from theirs.
+ *
+ * And it stamps every request with an id, forwarded to the render and echoed
+ * on the response, so a line in the log and a response in a browser can be
+ * matched without guessing from timestamps. An id that arrives with the
+ * request is kept, so a proxy in front of us stays in charge of it.
  */
 export function proxy(request: NextRequest) {
   const hosts = splitHosts();
@@ -34,8 +40,13 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
+  const requestId = request.headers.get(REQUEST_ID_HEADER) ?? newRequestId();
+  const forwarded = new Headers(request.headers);
+  forwarded.set(REQUEST_ID_HEADER, requestId);
+
+  const response = NextResponse.next({ request: { headers: forwarded } });
   for (const [key, value] of Object.entries(PRIVATE)) response.headers.set(key, value);
+  response.headers.set(REQUEST_ID_HEADER, requestId);
   return response;
 }
 

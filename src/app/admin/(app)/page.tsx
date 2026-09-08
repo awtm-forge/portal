@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
-import { db } from "@/lib/db";
 import { dayMonth } from "@/lib/format";
 import { intakeProgress } from "@/modules/intake/progress";
+import { listForAdmin } from "@/modules/projects";
+import { needsAttention } from "@/modules/projects/attention";
+import { NeedsAttention } from "./NeedsAttention";
 
 export default async function ProjectsPage() {
   const admin = await requireAdmin();
-  const projects = await db.project.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { client: true, intake: { select: { submittedAt: true, lastSavedAt: true, document: true, answers: true, sectionsDone: true } } },
-  });
+  const attention = await needsAttention();
+  const projects = await listForAdmin();
   const waiting = projects.filter((p) => !p.intake?.submittedAt).length;
 
   return (
@@ -19,6 +19,8 @@ export default async function ProjectsPage() {
         <h1 className="a-title">Projects</h1>
         <p className="a-sub">{projects.length} {projects.length === 1 ? "project" : "projects"}. {waiting} waiting on a questionnaire.</p>
       </div>
+      <NeedsAttention items={attention} />
+
       <div className="a-card">
         <div className="between"><span className="k">All projects</span><Link className="a-btn" href="/admin/clients">New project, from a client</Link></div>
         <div className="grid-head" style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1.6fr 1.2fr 0.7fr", gap: 16, paddingBottom: 8, borderBottom: "1px solid var(--rule)" }}>

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { hashToken, randomToken } from "@/lib/crypto";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/format";
-import { logger } from "@/lib/logger";
+import { requestLogger } from "@/lib/logger";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
 import { projectLink, rotateProjectToken } from "@/modules/auth/client";
 import { emit } from "@/modules/events";
@@ -181,7 +181,7 @@ async function deliverLink(projectId: string, token: string): Promise<void> {
     await db.project.update({ where: { id: projectId }, data: { linkEmailedAt: new Date(), linkEmailError: null } });
     await emit({ type: "project.link_emailed", projectId, actor: "system", payload: {} });
   } catch (error) {
-    logger.error("link email failed", { projectId, error: String(error) });
+    await requestLogger.error("link email failed", { projectId, error: String(error) });
     await db.project.update({ where: { id: projectId }, data: { linkEmailError: String(error).slice(0, 300) } });
   }
 }
