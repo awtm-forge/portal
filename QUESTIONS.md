@@ -105,3 +105,20 @@ Acceptance criterion 26 says a testimonial with `status = draft` never appears o
 Taking the first, because CLAUDE.md 5.1 is a decision of yours that postdates the criterion, and 5.1 wins under CLAUDE.md 1. The code enforces it narrowly: `draftTextForClient` returns the text and nothing else, no status, no dates, no method, and there is still no client serializer for a testimonial. A draft belonging to any other project cannot reach any client page, and there is a test for exactly that.
 
 Worth rewording criterion 26 in PORTAL-SPEC to say what it means: an unapproved quote is never used anywhere it could be read as an endorsement.
+
+## Q10. Criterion 13 says "exactly one primary action above the fold", and three pages have none
+
+Found while automating the check, 9 Sep 2026. Testing "never more than one" instead.
+
+Criterion 13 and CLAUDE.md 2 item 9 both say every client page shows exactly one primary action above the fold on a 375px screen. Measured against the real pages, three have none, and each for a reason worth keeping:
+
+- **While building** there is nothing for the client to do. They read the week's update. Adding a button would be inventing work.
+- **The agreement** puts "I agree" after the document, not before it. Agreeing to something you have not scrolled through is the thing the whole design is against.
+- **The review** does the same with the sign-off.
+
+The pages that do ask for something, the thank-you page and day 30, have exactly one and it is on the first screen. Both halves are now tested.
+
+- **Reword it to "never more than one".** What the rule was reaching for, and what the code does.
+- **Keep "exactly one" and add buttons.** Three buttons that exist to satisfy a sentence.
+
+Taking the first. Worth changing the wording in PORTAL-SPEC and CLAUDE.md so the next person does not read the code as broken.

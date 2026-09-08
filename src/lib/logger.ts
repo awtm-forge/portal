@@ -18,6 +18,27 @@ function write(level: "info" | "warn" | "error", message: string, fields?: Field
   else console.log(text);
 }
 
+/**
+ * What is safe to put in an `error` field.
+ *
+ * `String(error)` is not. A connection failure from the database driver or the
+ * mailer can carry the URL it was using, and that URL has a password in it.
+ * A criterion that says no log line holds a credential is not satisfied by
+ * nobody having tried it yet.
+ *
+ * So: the error's name and message, with any `scheme://user:pass@host`
+ * credentials removed and any long opaque run of characters, which is what a
+ * token or a hash looks like, replaced. Truncated, because a stack trace in a
+ * log field helps nobody.
+ */
+export function safeError(error: unknown): string {
+  const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  return raw
+    .replace(/([a-z][a-z0-9+.-]*:\/\/)[^\s:@/]+:[^\s@/]+@/gi, "$1REDACTED@")
+    .replace(/\b[A-Za-z0-9_-]{32,}\b/g, "REDACTED")
+    .slice(0, 300);
+}
+
 export const logger = {
   info: (message: string, fields?: Fields) => write("info", message, fields),
   warn: (message: string, fields?: Fields) => write("warn", message, fields),

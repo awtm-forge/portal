@@ -84,6 +84,25 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## Closing the audit's gaps: done, with four things left for a person
+
+9 Sep 2026, AI-assisted. Straight after the audit below, because most of what it called "needs a person" turned out to be automatable.
+
+**Criterion 11, that nothing holds a client's credential.** Every client-zone form input is `code`, `intent`, `metricAfter`, `name`, `quote`, `referralContact`, `referralName`, `text`, `token`, `useLogo`, `useName`, and no schema column could hold a secret of theirs. That half was fine. The log was not: every error line was `String(error)`, and a connection failure from the database driver or the mailer carries the URL it was dialling, password and all. `safeError` now takes the name and message, redacts credentials inside URLs and anything token-shaped, and truncates. Tested.
+
+**Criterion 13 and INTAKE 14.13, on a phone.** `tests/e2e/phone.spec.ts` walks every client page at 375px and checks for navigation, sideways scroll and loud buttons above the fold. Automating it found the criterion is wrong: it says exactly one primary action above the fold, and three pages have none. While building there is nothing for the client to do but read the week. On the agreement and the review the button sits after the document on purpose, because agreeing to something you have not scrolled through is what the design is against. So the test asserts never more than one, and separately that the pages which do ask for something have exactly one within reach. QUESTIONS.md Q10.
+
+Thirty of the thirty-four criteria now have a passing test, up from twenty-one this morning.
+
+Two defects, both mine, both in this work:
+
+- **A blanket replace patched the sanitiser's own body**, so `safeError` called itself on any value that was not an Error: an infinite recursion on the exact input it exists to handle. Caught by reading the file after the edit, and there is now a test for a plain string, a null and an object.
+- **The phone spec counted collapsed disclosures as actions**, and inherited a stale day-30 row, so it reported four "actions" on a page that has one. Both fixed before drawing any conclusion from it.
+
+Verified: 122 unit tests and 119 end to end.
+
+Left for a person, and none of them a known defect: the print routes on A4, an answer surviving a new device, an image_choice showing its pictures, and all eight question types at 375px.
+
 ## The acceptance audit: done, with five things left for a person
 
 9 Sep 2026, AI-assisted.

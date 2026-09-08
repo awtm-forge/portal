@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requestLogger } from "@/lib/logger";
+import { requestLogger, safeError } from "@/lib/logger";
 
 /**
  * What Hostinger's monitor pings, and the first thing to curl when something
@@ -18,7 +18,7 @@ export async function GET() {
     await db.$queryRaw`SELECT 1`;
     return NextResponse.json({ status: "ok" }, { headers: NO_STORE });
   } catch (error) {
-    await requestLogger.error("healthz: the database did not answer", { error: String(error) });
+    await requestLogger.error("healthz: the database did not answer", { error: safeError(error) });
     return NextResponse.json({ status: "degraded" }, { status: 503, headers: NO_STORE });
   }
 }

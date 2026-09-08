@@ -7,7 +7,7 @@
  * cost even by accident (PORTAL-SPEC 5.13).
  */
 import { adminBase } from "@/lib/hosts";
-import { requestLogger } from "@/lib/logger";
+import { requestLogger, safeError } from "@/lib/logger";
 import { sendPlain, teamNotifyAddress } from "@/lib/mail";
 import { subscribe, type Activity } from "@/modules/events";
 
@@ -75,7 +75,7 @@ subscribe(async (activity) => {
   try {
     await sendPlain(to, `awtm forge, ${message.subject}`, message.body);
   } catch (error) {
-    await requestLogger.error("team notification failed", { type: activity.type, error: String(error) });
+    await requestLogger.error("team notification failed", { type: activity.type, error: safeError(error) });
   }
 });
 

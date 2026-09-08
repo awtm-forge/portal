@@ -23,9 +23,9 @@ neither, and says what it would take.
 | 8 | Internal cost never in a client body, export or template | test | `e2e/leak-walk.spec.ts`, `serializers.test.ts` |
 | 9 | Rotating a link 404s the old one | test | `e2e/onboarding.spec.ts` |
 | 10 | Day 30 shut before the date, no scheduled job | test | `day30.test.ts`, `e2e/day30.spec.ts` |
-| 11 | Nothing holds a client's own credential | part | The importer refuses uploads in the access section (`import.test.ts`) and no schema column exists for one. That no log line can hold one is a reading of the code, not a test. **Open**: worth one pass over every `logger` call and every form, recorded here with a date. |
+| 11 | Nothing holds a client's own credential | test | `import.test.ts` for the access section, `logger.test.ts` for the log. Checked 9 Sep 2026: every client-zone form input is `code`, `intent`, `metricAfter`, `name`, `quote`, `referralContact`, `referralName`, `text`, `token`, `useLogo`, `useName`, and no schema column could hold one. The audit found that `String(error)` could carry a database or SMTP password into a log line; `safeError` now redacts credentials in URLs and anything token-shaped. |
 | 12 | Money in paise, words match the figure | test | `money.test.ts`, `e2e/invoices.spec.ts` |
-| 13 | One primary action above the fold at 375px, no navigation | part | `e2e/agreement.spec.ts` covers the questionnaire page and the absence of navigation across the client zone. **Open**: the same assertion for the review, thanks and day-30 pages. Each was looked at by hand when built; none is recorded with a date. |
+| 13 | One primary action above the fold at 375px, no navigation | test, reworded | `e2e/phone.spec.ts` walks every client page. Measured, three pages have no primary action above the fold and should not: see QUESTIONS.md Q10. What is tested is never more than one, plus exactly one where the page asks for something. |
 | 14 | Both themes render with no invisible text | **dead** | There is one theme. You chose dark only on 5 September. The criterion needs rewriting or removing, and until then it cannot pass or fail. |
 | 15 | Both print routes on A4, no navigation, no internal cost | part | No navigation and no internal cost are tested (`e2e/agreement.spec.ts`, `e2e/leak-walk.spec.ts`). **Open**: A4 margins and page breaks, which need a person and a print dialog. |
 | 16 | No code path deletes evidence rows | test | `append-only.test.ts` |
@@ -53,31 +53,38 @@ neither, and says what it would take.
 | 7 | The agreement is blocked by an unsubmitted questionnaire, override recorded | test | `intake-gaps.test.ts` |
 | 8 | An answer typed by the team reads `entered_by: team` | test | `intake-gaps.test.ts` |
 | 9 | An image_choice shows its pictures and stores option ids | part | Storing is tested (`answers.test.ts`). Rendering is not. |
-| 10 | Every question type renders on a 375px screen | open | Needs a person and a phone, or an end-to-end pass over a document using all eight types. |
+| 10 | Every question type renders on a 375px screen | part | `e2e/phone.spec.ts` asserts the questionnaire does not scroll sideways at 375px and offers one action. That every one of the eight types renders and is answerable there is still a person's job. |
 | 11 | Replacing a document keeps the answers that still have a question | test | `intake-gaps.test.ts`, including that a removed question hides its answer rather than losing it |
 | 12 | No admin control edits a question | part | True by construction: there is no such route or action, and CLAUDE.md 2 item 12 forbids one. Worth recording as checked with a date rather than left implied. |
-| 13 | On a phone, only the open section is interactive above the fold | open | Needs a person and a phone. |
+| 13 | On a phone, only the open section is interactive above the fold | test | `e2e/phone.spec.ts` |
 
 ## What this adds up to
 
-Twenty-six of the thirty-four are covered by a passing test.
+Thirty of the thirty-four are covered by a passing test.
 
-Two need rewriting because your own decisions overtook them, and only you can
-say how: **14**, both themes, when there is one theme; and **20**, looking like
-the marketing site, when the marketing site is not deployed. **17** is restated
-by ADR 0012 rather than broken.
+Three need rewriting, and only Rahul can say how:
 
-Five are open, and every one of them needs a person rather than a test:
+- **14**, both themes render, when you chose one theme on 5 September. It
+  cannot pass or fail as written.
+- **20**, the portal looks like the marketing site, when the marketing site is
+  not deployed. It still exists in `components/marketing` and shares the
+  tokens, so the comparison is possible, but the criterion points at something
+  nobody can visit.
+- **13**, exactly one primary action above the fold, when three pages have none
+  and should. See QUESTIONS.md Q10. The rule is now tested as "never more than
+  one", plus "exactly one where the page asks for something".
 
-- **11**, that no log line can hold a client's credential. One pass over every
-  `logger` call and every form, written down here with the date.
-- **13**, one action above the fold at 375px, for the review, thanks and
-  day-30 pages. Each was looked at when built; none is recorded.
-- **15**, the print routes on A4. Needs a print dialog.
-- **INTAKE 1**, an answer surviving a new device and a fresh code.
-- **INTAKE 9, 10 and 13**, the eight question types rendering and behaving on a
-  phone.
+**17** is restated by ADR 0012 rather than broken: the way-in page at `/` reads
+nothing, so the check still passes, about a different page.
 
-None is a known defect. They are places where the guarantee rests on reading
-the code or on somebody having looked, rather than on something that would go
-red. Half an hour with a phone closes most of them.
+Four still want a person, and none is a known defect:
+
+- **15**, the print routes on A4. Needs a print dialog, which no test has.
+- **INTAKE 1**, an answer surviving a new device and a fresh code end to end.
+- **INTAKE 9**, that an image_choice shows its pictures. Storing the ids is
+  tested; the pictures appearing is not.
+- **INTAKE 10**, that all eight question types render and are answerable at
+  375px. The page is tested for one action and no sideways scroll; the eight
+  types are not each exercised.
+
+Half an hour with a phone and a print dialog closes all four.
