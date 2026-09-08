@@ -57,6 +57,7 @@ prints a one-time setup link and never a password.
 | `/admin/projects/[id]/link` | GET, server action | admin | The handover. Shows the link in the clear while a fifteen minute cookie holds it, the WhatsApp message ready to send, and the email's state with a retry. Once that cookie is gone the link cannot be shown again, because only its hash is stored; rotating makes a new one. |
 | `/admin/projects/[id]` | GET | admin | Phase, the agreement, invoices, sign-offs, the client link and its email status, the questionnaire, and the sign-off email confirmation. |
 | `/admin/projects/[id]/agreement` | GET, server action | admin | The editor, with internal cost and notes in a block marked never shown to the client. Saving, sending, and the questionnaire override. |
+| `/admin/projects/[id]` (record WhatsApp) | server action | admin | PORTAL-SPEC 5.11. Records a yes that arrived on WhatsApp: same sign-off event, same advance invoice, `method=whatsapp`, no ip, and the pasted message kept. Offered only while the phase is `agreement_sent`. |
 | `/admin/projects/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer. |
 | `/admin/projects/[id]/intake/upload` | GET, server action | admin | Import or replace a questionnaire. Every failing rule is reported at once and nothing is saved (INTAKE-SPEC 14.2, 14.3). |
 | `/admin/projects/[id]/intake/fill` | GET | admin | Typing answers from a call; each is marked `entered_by: team`. |

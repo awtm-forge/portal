@@ -66,6 +66,16 @@ Three defects the tests found, and the fix in each case:
 
 Deferred: none from this step. The `modules/intake/versions/v1.ts` split named in §11 is still not done; the intake moved to `src/modules/intake/` in this step but keeps its flat layout, and the split lands with the second document version, since a versions folder holding one version is ceremony until there are two.
 
+## Step 6, the WhatsApp sign-off recording path: partial
+
+8 Sep 2026, AI-assisted.
+
+Built: the agreement kind, in full. A block on the project page, shown only while the phase is `agreement_sent`, takes who said it, the day they said it, and the message pasted exactly as they wrote it. It goes through the same `agree()` function as a tap, so the same sign-off event is written, the agreement freezes the same way, and the same advance invoice is raised with the next number. What differs is recorded and never smoothed over: `method` is `whatsapp`, `ip` is null, and `raw_note` holds what they sent. The project page shows the two side by side, one reading "tapped in the portal" and the other "recorded from WhatsApp", with the message underneath.
+
+Verified: 3 end to end tests, on desktop and a phone. The recorded yes raises the same advance for the same amount; a date in the future or before the project existed is refused and writes nothing; the block disappears once the phase moves on, so it cannot be recorded twice. Acceptance criterion 6 now passes for the agreement kind.
+
+Deferred, and why: the delivery kind. PORTAL-SPEC step 6 asks for both, but a delivery sign-off needs a project in `in_review`, which needs the review loop from step 8. Recording one now would mean inventing a phase transition ahead of the step that owns it. The recording action is written so the delivery kind is a second call to the same shape, and step 8 takes it.
+
 ## Client onboarding, and the sign-off person: done
 
 8 Sep 2026, AI-assisted. Asked for by Rahul between steps 5 and 6, on the grounds that onboarding a client should exist before more of the journey is built. Not a numbered step in PORTAL-SPEC section 9; it revisits step 3.

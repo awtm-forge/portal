@@ -9,3 +9,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-07 Step 1 completed to the new brief: the one-agreement "How we work" copy, empty case study slots hidden, Docker Compose, and the build tracking documents.
 - 2026-09-07 Step 5, the agreement: money and dates, the phase machine, activity events, audience serializers, invoice numbering, the admin editor with the internal block, the client page with sign-off and push-back, the print route, the admin setup link, Playwright and CI.
 - 2026-09-08 Client onboarding: clients as their own record, projects started from a client, the handover on its own screen, and the sign-off person moved to the project. Warmer copy on every client-facing email and screen.
+- 2026-09-08 Step 6, the WhatsApp sign-off recording path, for the agreement kind: the same sign-off, the same invoice, and a record that never pretends they tapped. The delivery kind waits for the review loop in step 8.

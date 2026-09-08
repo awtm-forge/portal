@@ -8,6 +8,9 @@ import { intakeProgress } from "@/modules/intake/progress";
 import { parseDocumentLoose } from "@/modules/intake/document";
 import { PHASE_LABEL } from "@/modules/projects/phase";
 import { agreementToAdminView, invoiceToClientView } from "@/modules/serializers";
+import { isoDate } from "@/lib/dates";
+import { Phase } from "@/generated/prisma/enums";
+import { RecordWhatsapp } from "./whatsapp/RecordWhatsapp";
 import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
@@ -62,6 +65,14 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             </div>
           </div>
 
+          {project.phase === Phase.AGREEMENT_SENT && (
+            <RecordWhatsapp
+              projectId={project.id}
+              suggestedName={project.signoffPersonName}
+              today={isoDate(new Date())}
+            />
+          )}
+
           {invoices.length > 0 && (
             <div className="a-card">
               <span className="k">Invoices</span>
@@ -93,11 +104,23 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
                 {signoffs.map((s) => (
                   <div className="between" key={s.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
                     <span>{s.kind === "AGREEMENT" ? "Agreement" : "Delivery"} by {s.actorName}</span>
-                    <span className="mono-sm">{dayMonthTime(s.occurredAt)} · {s.method === "WHATSAPP" ? "WhatsApp" : "portal"}</span>
+                    <span className="mono-sm" style={{ color: s.method === "WHATSAPP" ? "var(--ember)" : "var(--muted)" }}>
+                      {dayMonthTime(s.occurredAt)} · {s.method === "WHATSAPP" ? "recorded from WhatsApp" : "tapped in the portal"}
+                    </span>
                   </div>
                 ))}
               </div>
-              <p className="help">Append only. There is no path in the system that edits or deletes one.</p>
+              {signoffs.some((s) => s.method === "WHATSAPP") && (
+                <div className="stack">
+                  {signoffs.filter((s) => s.method === "WHATSAPP" && s.rawNote).map((s) => (
+                    <div className="row" key={`note-${s.id}`}>
+                      <span className="lbl">What {s.actorName} sent</span>
+                      <p style={{ margin: 0, fontSize: 14, whiteSpace: "pre-wrap", color: "var(--ink)" }}>{s.rawNote}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="help">Append only, and the two ways in stay distinguishable forever. There is no path in the system that edits or deletes one.</p>
             </div>
           )}
 
