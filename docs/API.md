@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 8 September 2026, after step 7.
+route; last checked against the code on 8 September 2026, after step 8.
 
 Zones and their rules are in `ARCHITECTURE.md`. Everything outside the
 marketing zone sends `X-Robots-Tag: noindex, nofollow`, `Cache-Control:
@@ -33,6 +33,10 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 | `/p/[token]/agreement` | GET | link and session | The agreement once it has been sent. Frozen and stamped after sign-off. |
 | `/p/[token]/agreement` (agree) | server action | link, session, and a fresh `agreement` code | Writes `signoff_event`, freezes the agreement, raises the advance invoice, all in one transaction (criteria 1, 5, 6, 7). |
 | `/p/[token]/agreement` (push back) | server action | link and session, no code | Writes an append-only `agreement_note` and returns the phase to `agreement_draft` (criterion 23). |
+| `/p/[token]/review` | GET | link and session | The deliverables with their how-to-check lines, the link to the finished work, and earlier rounds collapsed. |
+| `/p/[token]/review` (changes) | server action | link and session, no code | Writes the note on the open round and returns the phase to `building`. Creates no invoice (criterion 2). |
+| `/p/[token]/review` (sign off) | server action | link, session, and a fresh `delivery` code | One transaction: `signoff_event` kind delivery, round accepted, `delivered_at`, the balance invoice, the day-30 row. Redirects once to `/thanks` (criteria 2, 5, 6). |
+| `/p/[token]/thanks` | GET, server action | link and session | 404 before the delivery sign-off, renders after (criterion 24). Two optional fields and Send, plus Skip; both record that they saw it. |
 
 ## Printable, dynamic, unindexed
 
@@ -57,7 +61,9 @@ prints a one-time setup link and never a password.
 | `/admin/projects/[id]/link` | GET, server action | admin | The handover. Shows the link in the clear while a fifteen minute cookie holds it, the WhatsApp message ready to send, and the email's state with a retry. Once that cookie is gone the link cannot be shown again, because only its hash is stored; rotating makes a new one. |
 | `/admin/projects/[id]` | GET | admin | Phase, the agreement, invoices, sign-offs, the client link and its email status, the questionnaire, and the sign-off email confirmation. |
 | `/admin/projects/[id]/agreement` | GET, server action | admin | The editor, with internal cost and notes in a block marked never shown to the client. Saving, sending, and the questionnaire override. |
-| `/admin/projects/[id]` (record WhatsApp) | server action | admin | PORTAL-SPEC 5.11. Records a yes that arrived on WhatsApp: same sign-off event, same advance invoice, `method=whatsapp`, no ip, and the pasted message kept. Offered only while the phase is `agreement_sent`. |
+| `/admin/projects/[id]` (record WhatsApp) | server action | admin | PORTAL-SPEC 5.11, both kinds. Records a yes that arrived on WhatsApp: the same sign-off event and the same invoice, `method=whatsapp`, no ip, the pasted message kept. Offered while the phase is `agreement_sent` for the agreement, `in_review` for the delivery. |
+| `/admin/projects/[id]` (mark ready) | server action | admin | Opens a review round. The link to the finished work is required. Offered only while the phase is `building` and the agreement is agreed. |
+| `/admin/projects/[id]` (forget a referral) | server action | admin | The one delete in the system. Removes the row and writes a `referral.forgotten` event, so the fact survives without the details. |
 | `/admin/projects/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer. |
 | `/admin/projects/[id]/intake/upload` | GET, server action | admin | Import or replace a questionnaire. Every failing rule is reported at once and nothing is saved (INTAKE-SPEC 14.2, 14.3). |
 | `/admin/projects/[id]/intake/fill` | GET | admin | Typing answers from a call; each is marked `entered_by: team`. |

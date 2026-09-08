@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { recordWhatsappAgreementAction, type RecordState } from "./actions";
+import { recordWhatsappAgreementAction, recordWhatsappDeliveryAction, type RecordState } from "./actions";
 
 /**
  * The WhatsApp fallback, PORTAL-SPEC 5.11. Deliberately as prominent as the
@@ -12,24 +12,31 @@ export function RecordWhatsapp({
   projectId,
   suggestedName,
   today,
+  kind,
 }: {
   projectId: string;
   suggestedName: string;
   today: string;
+  kind: "AGREEMENT" | "DELIVERY";
 }) {
-  const [state, action, pending] = useActionState<RecordState, FormData>(recordWhatsappAgreementAction, {});
+  const [state, action, pending] = useActionState<RecordState, FormData>(
+    kind === "DELIVERY" ? recordWhatsappDeliveryAction : recordWhatsappAgreementAction,
+    {},
+  );
   const v = state.values ?? {};
+  const what = kind === "DELIVERY" ? "signed it off" : "agreed";
+  const summary = kind === "DELIVERY" ? "They signed off on WhatsApp instead" : "They agreed on WhatsApp instead";
 
   return (
     <details className="a-card">
       <summary style={{ cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-        <span className="k">They agreed on WhatsApp instead</span>
+        <span className="k">{summary}</span>
         <span className="mono-sm" style={{ color: "var(--ember)" }}>Record it</span>
       </summary>
       <form action={action} className="stack" style={{ gap: 14, paddingTop: 16 }}>
         <input type="hidden" name="projectId" value={projectId} />
         <p className="c-sub" style={{ fontSize: 14 }}>
-          A client who replies on WhatsApp has agreed just as much as one who tapped. This writes the same sign-off and raises the same advance invoice. It does not pretend they tapped: the record says WhatsApp, keeps what they wrote, and stays that way forever.
+          A client who replies on WhatsApp has {what} just as much as one who tapped. This writes the same sign-off and raises the same invoice. It does not pretend they tapped: the record says WhatsApp, keeps what they wrote, and stays that way forever.
         </p>
         <div className="grid2">
           <label className="stack" style={{ gap: 6 }}>
@@ -43,7 +50,7 @@ export function RecordWhatsapp({
         </div>
         <label className="stack" style={{ gap: 6 }}>
           <span className="lbl">Paste what they sent, exactly</span>
-          <textarea className="a-fld" name="rawNote" rows={4} defaultValue={v.rawNote} placeholder="ok done, go ahead" required />
+          <textarea className="a-fld" name="rawNote" rows={4} defaultValue={v.rawNote} placeholder={kind === "DELIVERY" ? "looks good, we are happy with it" : "ok done, go ahead"} required />
         </label>
         <p className="help">Paste it as they wrote it. Tidying it up is the one thing that would make this worth less later.</p>
         {state.message && <p className="help err">{state.message}</p>}

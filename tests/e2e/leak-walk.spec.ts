@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { agreementSecrets, closeDb, freshLink, resetRateLimits, SEED_SLUG, takeoverLatestCode } from "./fixtures";
+import { agreementSecrets, closeDb, freshLink, query, resetRateLimits, SEED_SLUG, takeoverLatestCode } from "./fixtures";
 
 test.afterAll(async () => {
   await closeDb();
@@ -17,12 +17,30 @@ test.describe("the leak walk", () => {
     const { token, projectId } = await freshLink(SEED_SLUG);
     const secrets = await agreementSecrets(projectId);
 
+    // Criteria 25 and 26: someone else's details, and words the client has not
+    // approved, must not reach a client page, a print route or an export.
+    const REFERRAL_NAME = "Zzyxth Referralperson";
+    const REFERRAL_CONTACT = "zzyxth-referral@example.invalid";
+    const DRAFT_QUOTE = "Zzyxth unapproved draft testimonial text";
+    await query("DELETE FROM Referral WHERE projectId = ?", [projectId]);
+    await query("DELETE FROM Testimonial WHERE projectId = ?", [projectId]);
+    await query("INSERT INTO Referral (id, projectId, name, contact, createdAt) VALUES (?, ?, ?, ?, NOW(3))", [
+      `leak${Date.now()}`, projectId, REFERRAL_NAME, REFERRAL_CONTACT,
+    ]);
+    await query(
+      "INSERT INTO Testimonial (id, projectId, moment, text, status, createdAt, updatedAt) VALUES (?, ?, 'DELIVERY', ?, 'DRAFT', NOW(3), NOW(3))",
+      [`leakt${Date.now()}`, projectId, DRAFT_QUOTE],
+    );
+
     const forbidden = [
       secrets.costPaise,
       secrets.rupees,
       secrets.notes,
       "internalCost",
       "internalNotes",
+      REFERRAL_NAME,
+      REFERRAL_CONTACT,
+      DRAFT_QUOTE,
     ].filter((s) => s.length > 3);
 
     // Sign in the way a client does.
@@ -42,6 +60,8 @@ test.describe("the leak walk", () => {
       `/p/${token}`,
       `/p/${token}/intake`,
       `/p/${token}/agreement`,
+      `/p/${token}/review`,
+      `/p/${token}/thanks`,
       `/agreement/${token}/print`,
       `/admin/projects/${projectId}/intake/answers.json`,
     ];
@@ -53,6 +73,44 @@ test.describe("the leak walk", () => {
         expect(body, `${route} leaked ${secret.slice(0, 24)}`).not.toContain(secret);
       }
     }
+  });
+
+  test("no WhatsApp message ever carries someone else's details", async ({ page }) => {
+    // The sneakiest path out: a template author being helpful. Every wa.me link
+    // on the admin project page is decoded and checked (criterion 25).
+    const { projectId } = await freshLink(SEED_SLUG);
+    const REFERRAL_NAME = "Zzyxth Referralperson";
+    const REFERRAL_CONTACT = "zzyxth-referral@example.invalid";
+    await query("DELETE FROM Referral WHERE projectId = ?", [projectId]);
+    await query("INSERT INTO Referral (id, projectId, name, contact, createdAt) VALUES (?, ?, ?, ?, NOW(3))", [
+      `leakw${Date.now()}`, projectId, REFERRAL_NAME, REFERRAL_CONTACT,
+    ]);
+
+    const { hash } = await import("bcryptjs");
+    const email = "e2e-leak@example.invalid";
+    await query("DELETE FROM AdminSession WHERE adminUserId IN (SELECT id FROM AdminUser WHERE email = ?)", [email]);
+    await query("DELETE FROM AdminUser WHERE email = ?", [email]);
+    await query("INSERT INTO AdminUser (id, email, name, passwordHash, createdAt) VALUES (?, ?, ?, ?, NOW(3))", [
+      `e2elk${Date.now()}`, email, "Leak", await hash("a-long-enough-passphrase", 12),
+    ]);
+    await page.goto("/admin/login");
+    await page.getByLabel(/email/i).fill(email);
+    await page.getByLabel(/password/i).fill("a-long-enough-passphrase");
+    await page.getByRole("button", { name: /sign in/i }).click();
+    await expect(page.getByRole("heading", { name: /^projects$/i })).toBeVisible();
+
+    await page.goto(`/admin/projects/${projectId}`);
+    const links = await page.locator('a[href*="wa.me"]').evaluateAll((els) =>
+      els.map((el) => (el as HTMLAnchorElement).href),
+    );
+    for (const href of links) {
+      const text = decodeURIComponent(href);
+      expect(text, "a WhatsApp template carried a referral").not.toContain(REFERRAL_NAME);
+      expect(text).not.toContain(REFERRAL_CONTACT);
+    }
+
+    await query("DELETE FROM AdminSession WHERE adminUserId IN (SELECT id FROM AdminUser WHERE email = ?)", [email]);
+    await query("DELETE FROM AdminUser WHERE email = ?", [email]);
   });
 
   test("private zones send noindex and no-store, and robots disallows them", async ({ request }) => {

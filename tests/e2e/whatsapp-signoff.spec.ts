@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeDb, query, resetRateLimits, SEED_SLUG, setPhase } from "./fixtures";
+import { backToBuilding, closeDb, openRoundDirect, query, resetRateLimits, SEED_SLUG, setPhase } from "./fixtures";
 
 /**
  * PORTAL-SPEC 5.11 and acceptance criterion 6. A client who replies on
@@ -104,4 +104,40 @@ test("it cannot be recorded twice, and the block is gone once agreed", async ({ 
 
   const invoices = await query("SELECT id FROM Invoice WHERE projectId = ?", [projectId]);
   expect(invoices).toHaveLength(1);
+});
+
+test("a delivery signed off on WhatsApp raises the same balance", async ({ page }) => {
+  // Step 6 deferred this half until the phase it acts on existed.
+  await backToBuilding(projectId);
+  await query("UPDATE Agreement SET agreedAt = NOW(3), agreedByName = 'Arjun Sundaram', agreedMethod = 'PORTAL' WHERE projectId = ?", [projectId]);
+  await openRoundDirect(projectId);
+  await signIn(page);
+
+  await page.goto(`/admin/projects/${projectId}`);
+  await page.getByText(/they signed off on whatsapp instead/i).click();
+  await page.getByLabel(/who said it/i).fill("Arjun Sundaram");
+  await page.getByLabel(/the day they said it/i).fill("2026-09-06");
+  await page.getByLabel(/paste what they sent/i).fill("looks good, we are happy with it");
+  await page.getByRole("button", { name: /record their yes/i }).click();
+
+  await expect(page.getByText(/recorded from whatsapp/i).first()).toBeVisible();
+
+  const events = await query<{ method: string; ip: string | null; rawNote: string }>(
+    "SELECT method, ip, rawNote FROM SignoffEvent WHERE projectId = ? AND kind = 'DELIVERY'",
+    [projectId],
+  );
+  expect(events).toHaveLength(1);
+  expect(events[0].method).toBe("WHATSAPP");
+  expect(events[0].ip).toBeNull();
+  expect(events[0].rawNote).toContain("happy with it");
+
+  const invoices = await query<{ totalPaise: string }>(
+    "SELECT totalPaise FROM Invoice WHERE projectId = ? AND kind = 'BALANCE'",
+    [projectId],
+  );
+  expect(invoices).toHaveLength(1);
+  expect(BigInt(invoices[0].totalPaise as never)).toBe(26000000n);
+
+  expect(await query("SELECT id FROM Day30 WHERE projectId = ?", [projectId])).toHaveLength(1);
+  await expect(page.getByText(/they signed off on whatsapp instead/i)).toHaveCount(0);
 });

@@ -66,6 +66,36 @@ Three defects the tests found, and the fix in each case:
 
 Deferred: none from this step. The `modules/intake/versions/v1.ts` split named in §11 is still not done; the intake moved to `src/modules/intake/` in this step but keeps its flat layout, and the split lands with the second document version, since a versions folder holding one version is ceremony until there are two.
 
+## Step 8, the review loop: done
+
+8 Sep 2026, AI-assisted.
+
+Built: `review_round`, `testimonial`, `referral` and `day30`, which completes every table in PORTAL-SPEC section 4. Admin marks the finished work ready, which opens a round and needs a link to it. The client sees what they agreed to with each how-to-check line, the link, one box for what is off and one button to sign off. Saying what is off needs no code, returns the project to building and invoices nothing. Signing off asks for a fresh code and, in one transaction, writes the sign-off event, closes the round, sets `delivered_at`, raises the balance invoice and opens the day-30 row thirty days out. Then the thank-you page, once, with an optional quote and an optional referral, and a Skip that is recorded like an answer.
+
+Also here: the delivery half of the WhatsApp recording path that step 6 deferred, so criterion 6 now passes for both kinds; the `ready for review` message, which is the last of PORTAL-SPEC section 7 apart from day 30; and the `in_review` and `delivered` states on the client project page, the second showing the retainer's named person and response time or the handover document.
+
+Verified: 56 unit tests and 63 end to end, on desktop and a phone. Acceptance criteria now passing: 2, 5, 6 for both kinds, 16, 24, 25 and 26. A manual pass at 375 px on the review page confirmed one action above the fold.
+
+Three defects found and fixed:
+
+- **A sign-off could happen twice.** See the entry below; it was serious enough to be its own commit before any of this was built.
+- **The thank-you page threw away what the client typed.** React resets an uncontrolled form once a server action returns, so tripping the referral check erased the testimonial they had just written, moments after signing off. Every other form in the codebase echoes its values back; this one did not. It does now.
+- **Two admin cards shared a heading**, so the mark-ready card and the kickoff card both read "the one thing that moves this on". The first is now "When the work is finished".
+
+Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
+
+## Fixing a sign-off that could happen twice: done
+
+8 Sep 2026, AI-assisted. Found while designing step 8, and committed on its own before it.
+
+`agree()` read the project, checked the phase and then wrote, with nothing holding the row in between. Two callers could both pass the check on their own snapshot and both write a sign-off event and an invoice. In the portal the one-time code's single-use check hid this by accident; the WhatsApp recording path from step 6 had no such guard, so two fast submits of that form could raise two advance invoices. Criteria 1, 2 and 6 all depended on something that was not there.
+
+`transition()` now writes the phase conditionally on it still being what the caller read, throws when it matches no row, and is called first inside each sign-off transaction. The loser rolls back before writing anything and is told the thing is already agreed or already delivered, which is true from where it stands. Side effects branch on the transition's declared effects, so the table in `phase.ts` is load-bearing rather than a comment. ADR 0011.
+
+This also closes the CLAUDE.md section 11 rule that every phase change goes through one function: the six places that wrote `project.phase` themselves now call `transition()`, and the kickoff moved out of a route file into `modules/projects`.
+
+Verified: `tests/signoff-concurrency.test.ts` runs two sign-offs in parallel and asserts exactly one event and one invoice. It fails against the previous implementation.
+
 ## Step 7, weekly updates, the booking button and the WhatsApp links: done
 
 8 Sep 2026, AI-assisted.
@@ -92,7 +122,7 @@ Built: the agreement kind, in full. A block on the project page, shown only whil
 
 Verified: 3 end to end tests, on desktop and a phone. The recorded yes raises the same advance for the same amount; a date in the future or before the project existed is refused and writes nothing; the block disappears once the phase moves on, so it cannot be recorded twice. Acceptance criterion 6 now passes for the agreement kind.
 
-Deferred, and why: the delivery kind. PORTAL-SPEC step 6 asks for both, but a delivery sign-off needs a project in `in_review`, which needs the review loop from step 8. Recording one now would mean inventing a phase transition ahead of the step that owns it. The recording action is written so the delivery kind is a second call to the same shape, and step 8 takes it.
+Deferred, and why: the delivery kind. PORTAL-SPEC step 6 asks for both, but a delivery sign-off needs a project in `in_review`, which needs the review loop from step 8. Recording one now would mean inventing a phase transition ahead of the step that owns it. The recording action is written so the delivery kind is a second call to the same shape, and step 8 takes it. **Landed in step 8**, as a second action behind the same component with a `kind` prop, exactly as promised.
 
 ## Client onboarding, and the sign-off person: done
 
@@ -117,7 +147,7 @@ The front half was built on 5 September under a brief that predated the architec
 | Difference | Fold into |
 |---|---|
 | ~~No `src/modules/`.~~ Auth, intake, agreements, invoices, events, serializers, settings, notifications and the phase machine now live in `src/modules/`. `files.ts`, `storage.ts`, `whatsapp.ts`, `money.ts`, `dates.ts` and `logger.ts` stay in `src/lib/`, which is right: they have no domain knowledge. | Done in step 5. |
-| Some route files and server actions still import `db` directly, against the "no route imports prisma" rule. The agreement path goes through its module; the admin project pages and the intake routes read through `db`. | Each area at its next change: intake and files at their next behaviour change, admin project pages in step 11 with the needs-attention block. |
+| Some route files and server actions still import `db` directly, against the "no route imports prisma" rule. The agreement, review and project paths go through their modules; the admin project pages and the intake routes still read through `db`. The kickoff write left its route in step 8. | Each area at its next change: intake and files at their next behaviour change, admin project pages in step 11 with the needs-attention block. |
 | ~~No phase machine and no `project.phase`.~~ | Done in step 5. |
 | ~~No `activity_event`, no dispatcher, no notifications module.~~ | Done in step 5. |
 | ~~No serializers module.~~ Note against §2 rule 2: the fields landed in the schema commit and the leak test one commit later, the same afternoon, not in the same commit. | Done in step 5. |

@@ -54,6 +54,18 @@ describe("phase machine, PORTAL-SPEC 5.2 and ADR 0005", () => {
     expect(balance[0].event).toBe("delivery_signed_off");
   });
 
+  it("attaches the delivery side effects to the delivery transition and nowhere else", () => {
+    const delivery = TRANSITIONS.find((t) => t.event === "delivery_signed_off");
+    expect(delivery?.effects.sort()).toEqual(["after_delivery", "issue_balance_invoice", "open_day30"]);
+
+    // Criterion 2's negative half, at the table: neither of these costs a client
+    // anything, so neither may carry an effect.
+    for (const event of ["marked_ready", "changes_requested"] as const) {
+      expect(TRANSITIONS.find((t) => t.event === event)?.effects).toEqual([]);
+    }
+    expect(TRANSITIONS.filter((t) => t.effects.includes("open_day30"))).toHaveLength(1);
+  });
+
   it("can be cancelled from every phase before delivery, and none after", () => {
     for (const from of ALL_PHASES) {
       const allowed = can(from, "cancelled");

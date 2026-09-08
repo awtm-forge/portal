@@ -29,6 +29,36 @@ describe("append-only evidence", () => {
     await expect(db.invoice.update({ where: { id: "x" }, data: { totalPaise: 1n } })).rejects.toThrow(AppendOnly);
   });
 
+  it("keeps every review round: it can be answered, never removed", async () => {
+    // A round is written to once, when the client answers it.
+    await expect(
+      db.reviewRound.update({ where: { id: "no-such-round" }, data: { clientNote: "the label is wrong" } }),
+    ).rejects.not.toThrow(AppendOnly);
+    await expect(db.reviewRound.delete({ where: { id: "x" } })).rejects.toThrow(AppendOnly);
+    await expect(db.reviewRound.deleteMany({ where: { projectId: "x" } })).rejects.toThrow(AppendOnly);
+  });
+
+  it("refuses to remove a testimonial or a day 30 record", async () => {
+    await expect(db.testimonial.delete({ where: { id: "x" } })).rejects.toThrow(AppendOnly);
+    await expect(db.day30.delete({ where: { id: "x" } })).rejects.toThrow(AppendOnly);
+  });
+
+  it("allows a referral to be deleted, which is the one deliberate exception", async () => {
+    // It holds a third party's name and contact and that person never
+    // consented to being stored, so it can be removed on request. Reaches the
+    // database and fails on the missing row, not on the guard.
+    await expect(db.referral.delete({ where: { id: "no-such-referral" } })).rejects.not.toThrow(AppendOnly);
+  });
+
+  it("guards models that actually exist, so a rename cannot disarm them", async () => {
+    // The guard's sets are string literals. If a model were renamed they would
+    // silently stop protecting anything, which is what happened to ReviewRound
+    // for three steps before the table existed.
+    for (const model of ["signoffEvent", "agreementNote", "invoice", "reviewRound", "testimonial", "day30"] as const) {
+      expect(db[model], `${model} is named in the guard but not in the schema`).toBeDefined();
+    }
+  });
+
   it("allows marking an invoice paid, which is the one thing that moves", async () => {
     // Reaches the database and fails on the missing row, not on the guard.
     await expect(

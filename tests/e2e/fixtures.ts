@@ -89,3 +89,41 @@ export async function agreementSecrets(projectId: string): Promise<{ costPaise: 
 export async function setPhase(projectId: string, phase: string): Promise<void> {
   await query("UPDATE Project SET phase = ? WHERE id = ?", [phase, projectId]);
 }
+
+/**
+ * Puts the seed project back to the start of the review loop, clearing
+ * everything the loop writes.
+ *
+ * These fixtures use the raw driver, so the append-only guard in src/lib/db.ts
+ * does not apply to them. That is deliberate and does not weaken criterion 16,
+ * which is about code paths inside the system: tests/append-only.test.ts proves
+ * the guard, and nothing in src/ can reach these statements.
+ */
+export async function backToBuilding(projectId: string): Promise<void> {
+  // A review presupposes an agreed agreement, and another spec file may have
+  // un-agreed this one. Establish the precondition rather than depend on the
+  // order the files happen to run in.
+  await query(
+    "UPDATE Agreement SET agreedAt = COALESCE(agreedAt, NOW(3)), agreedByName = COALESCE(agreedByName, 'Arjun Sundaram'), agreedMethod = COALESCE(agreedMethod, 'PORTAL'), sentAt = COALESCE(sentAt, NOW(3)) WHERE projectId = ?",
+    [projectId],
+  );
+  await query("DELETE FROM Referral WHERE projectId = ?", [projectId]);
+  await query("DELETE FROM Testimonial WHERE projectId = ?", [projectId]);
+  await query("DELETE FROM Day30 WHERE projectId = ?", [projectId]);
+  await query("DELETE FROM ReviewRound WHERE projectId = ?", [projectId]);
+  await query("DELETE FROM Invoice WHERE projectId = ? AND kind = 'BALANCE'", [projectId]);
+  await query("DELETE FROM SignoffEvent WHERE projectId = ? AND kind = 'DELIVERY'", [projectId]);
+  await query("UPDATE Project SET deliveredAt = NULL, thanksSeenAt = NULL WHERE id = ?", [projectId]);
+  await setPhase(projectId, "BUILDING");
+}
+
+/** Opens a round directly, for tests that start from the client's side. */
+export async function openRoundDirect(projectId: string, url = "https://staging.example/finished"): Promise<void> {
+  const rows = await query<{ n: number | null }>("SELECT MAX(roundNumber) AS n FROM ReviewRound WHERE projectId = ?", [projectId]);
+  const next = Number(rows[0]?.n ?? 0) + 1;
+  await query(
+    "INSERT INTO ReviewRound (id, projectId, roundNumber, sentAt, finishedWorkUrl, outcome) VALUES (?, ?, ?, NOW(3), ?, 'OPEN')",
+    [`r${Date.now()}${next}`, projectId, next, url],
+  );
+  await setPhase(projectId, "IN_REVIEW");
+}

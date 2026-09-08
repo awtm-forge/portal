@@ -12,7 +12,12 @@ import { isoDate } from "@/lib/dates";
 import { Phase } from "@/generated/prisma/enums";
 import { RecordWhatsapp } from "./whatsapp/RecordWhatsapp";
 import { markKickoffAction } from "./updates/actions";
-import { agreementReadyMessage, waLink } from "@/lib/whatsapp";
+import { agreementReadyMessage, readyForReviewMessage, waLink } from "@/lib/whatsapp";
+import { deliverableCount, roundsForProject } from "@/modules/review";
+import { referralsForAdmin, testimonialsForAdmin } from "@/modules/day30";
+import { testimonialToAdminView } from "@/modules/serializers";
+import { MarkReady } from "./review/MarkReady";
+import { forgetReferralAction } from "./review/actions";
 import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
@@ -25,13 +30,19 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
     include: { client: true, intake: { include: { documentUploadedBy: { select: { name: true } } } }, agreement: true },
   });
   if (!project) notFound();
-  const [invoices, signoffs, noteCount, updates] = await Promise.all([
+  const [invoices, signoffs, noteCount, updates, rounds, testimonialRows, referrals] = await Promise.all([
     db.invoice.findMany({ where: { projectId: id }, orderBy: { issuedAt: "asc" } }),
     db.signoffEvent.findMany({ where: { projectId: id }, orderBy: { occurredAt: "asc" } }),
     db.agreementNote.count({ where: { projectId: id } }),
     db.update.findMany({ where: { projectId: id }, orderBy: { weekNumber: "desc" }, take: 4 }),
+    roundsForProject(id),
+    testimonialsForAdmin(id),
+    referralsForAdmin(id),
   ]);
   const agreement = project.agreement ? agreementToAdminView(project.agreement) : null;
+  const testimonials = testimonialRows.map(testimonialToAdminView);
+  const openRound = rounds.find((r) => r.outcome === "OPEN") ?? null;
+  const latestStaging = updates.find((u) => u.stagingUrl)?.stagingUrl ?? "";
   const c = project.client;
   const intake = project.intake;
   const doc = intake ? parseDocumentLoose(intake.document) : null;
@@ -113,11 +124,106 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             </div>
           )}
 
+          {project.phase === Phase.BUILDING && agreement?.isAgreed && (
+            <MarkReady projectId={project.id} suggestedUrl={latestStaging} />
+          )}
+
+          {rounds.length > 0 && (
+            <div className={`a-card${openRound ? " ember" : ""}`}>
+              <div className="between">
+                <span className={`k${openRound ? " ember" : ""}`}>Review rounds</span>
+                {openRound && agreement && (
+                  <a
+                    className="a-btn ghost"
+                    href={waLink(c.contactPhone, readyForReviewMessage({
+                      contactName: c.contactName.trim().split(/\s+/)[0] || c.contactName,
+                      projectName: project.name,
+                      deliverableCount: deliverableCount(project.agreement?.deliverables),
+                      link: openRound.finishedWorkUrl,
+                    }))}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Tell them on WhatsApp
+                  </a>
+                )}
+              </div>
+              <div className="stack">
+                {rounds.map((r) => (
+                  <div className="row" key={r.id}>
+                    <div className="between" style={{ alignItems: "baseline" }}>
+                      <span className="lbl">Round {r.roundNumber}, sent {dayMonth(r.sentAt)}</span>
+                      <span className="tag" style={{ color: r.outcome === "OPEN" ? "var(--ember)" : "var(--muted)" }}>
+                        {r.outcome === "OPEN" ? "with the client" : r.outcome === "ACCEPTED" ? "signed off" : "changes requested"}
+                      </span>
+                    </div>
+                    {r.clientNote && <p style={{ margin: 0, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{r.clientNote}</p>}
+                    <a className="mono-sm" href={r.finishedWorkUrl} target="_blank" rel="noopener">{r.finishedWorkUrl}</a>
+                  </div>
+                ))}
+              </div>
+              <p className="help">Every round is kept. Nothing here edits or removes one.</p>
+            </div>
+          )}
+
+          {project.phase === Phase.IN_REVIEW && (
+            <RecordWhatsapp
+              projectId={project.id}
+              suggestedName={project.signoffPersonName}
+              today={isoDate(new Date())}
+              kind="DELIVERY"
+            />
+          )}
+
+          {testimonials.length > 0 && (
+            <div className="a-card">
+              <span className="k">What they said</span>
+              <div className="stack">
+                {testimonials.map((t) => (
+                  <div className="row" key={t.id}>
+                    <div className="between" style={{ alignItems: "baseline" }}>
+                      <span className="lbl">{t.momentLabel}, {t.createdAt}</span>
+                      <span className="tag" style={{ color: t.status === "APPROVED" ? "var(--muted)" : "var(--ember)" }}>
+                        {t.status === "APPROVED" ? "approved" : "draft, not for use"}
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{t.text}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="help">A draft is theirs, not ours. It appears nowhere outside this page until they approve it at day 30.</p>
+            </div>
+          )}
+
+          {referrals.length > 0 && (
+            <div className="a-card">
+              <span className="k">Someone they named</span>
+              <div className="stack">
+                {referrals.map((r) => (
+                  <div className="between" key={r.id} style={{ padding: "11px 0", borderBottom: "1px solid var(--rule-soft)" }}>
+                    <span className="stack" style={{ gap: 3 }}>
+                      <span style={{ fontSize: 14.5 }}>{r.name}</span>
+                      <span className="mono-sm">{r.contact}</span>
+                    </span>
+                    <form action={forgetReferralAction}>
+                      <input type="hidden" name="referralId" value={r.id} />
+                      <button className="link-mono" type="submit" style={{ padding: 0, fontSize: "10.5px" }}>Forget them</button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+              <p className="help" style={{ lineHeight: 1.65 }}>
+                Shown here and nowhere else: not on any client page, not in an export, not in a WhatsApp message. This is the one record in the system that can be deleted, because it holds someone else&rsquo;s details and they never agreed to be here.
+              </p>
+            </div>
+          )}
+
           {project.phase === Phase.AGREEMENT_SENT && (
             <RecordWhatsapp
               projectId={project.id}
               suggestedName={project.signoffPersonName}
               today={isoDate(new Date())}
+              kind="AGREEMENT"
             />
           )}
 

@@ -53,3 +53,22 @@ What it cost: a migration that copied every existing project's approver across
 before dropping the client columns, and the questionnaire's proposed-change
 prompt moving to the project too. What it buys: a second project for the same
 client does not silently inherit the wrong approver.
+
+## Q5. The referral is one field in the brief and two columns in the schema
+
+Decided while building, 8 Sep 2026. Taking two fields, name and contact, rather than one.
+
+CLAUDE.md 5.1 describes "a referral field, their name and how to reach them" as one box; PORTAL-SPEC 4 has never had the table at all. Two inputs, both required if either is filled, because parsing "Priya, 98860 11234" back into a name and a number later is worse than asking now, and because a name with no way to reach them is a third party's details stored for no purpose.
+
+Say the word if you would rather it were one box and we will join them.
+
+## Q6. Rate limits are shared across the three kinds of code
+
+Open, 8 Sep 2026. Not changed.
+
+The limit is eight code requests per project per ten minutes, counted across login, agreement and delivery together. A client who fumbled a login earlier in the session could, in theory, hit it on the sign-off screen, which is the highest-stakes moment in the journey.
+
+- **Leave it.** One counter, easy to reason about, and the copy already tells them to message Rahul. In practice eight requests in ten minutes is a lot of fumbling.
+- **Count each purpose separately.** A sign-off is never blocked by an earlier login attempt. Three counters instead of one, and a small widening of what an attacker can ask for.
+
+Leaving it, and noting it here because it is foreseeable rather than unlikely.

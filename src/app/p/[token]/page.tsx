@@ -136,6 +136,48 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           </Card>
         )}
 
+        {phase === Phase.IN_REVIEW && (
+          <Card loud>
+            <p className="k ember">Now</p>
+            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Ready for you to check</span>
+            <p className="c-sub">
+              The work is finished. Have a look at it against what you agreed to, and either tell us what is off or sign it off. Nothing is invoiced until you are happy.
+            </p>
+            <Link className="btn-full" href={`/p/${token}/review`} style={{ marginTop: 4 }}>Check the work</Link>
+          </Card>
+        )}
+
+        {(phase === Phase.DELIVERED || phase === Phase.CLOSED) && (
+          <Card>
+            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>
+              Delivered on {dayMonthYear(project.deliveredAt)}
+            </span>
+            {project.afterDelivery === "RETAINER" ? (
+              <div className="stack" style={{ gap: 6 }}>
+                <p className="c-sub">
+                  {project.retainerNamedPerson
+                    ? `${project.retainerNamedPerson} is your person from here.`
+                    : "We run it monthly from here."}
+                  {project.retainerResponseTime ? ` You will hear back within ${project.retainerResponseTime}.` : ""}
+                </p>
+                {project.retainerTier && <p className="help">{project.retainerTier}</p>}
+              </div>
+            ) : project.afterDelivery === "HANDOVER" ? (
+              <div className="stack" style={{ gap: 8 }}>
+                <p className="c-sub">Everything is documented and every access is yours.</p>
+                {project.handoverDocUrl && (
+                  <a className="btn-full ghost" href={project.handoverDocUrl} target="_blank" rel="noopener">Open the handover document</a>
+                )}
+              </div>
+            ) : (
+              <p className="c-sub">{agreement?.afterDeliveryOffer || "Rahul will confirm what happens from here."}</p>
+            )}
+            {!project.thanksSeenAt && (
+              <Link className="btn-full ghost" href={`/p/${token}/thanks`}>Say how it went, if you would like to</Link>
+            )}
+          </Card>
+        )}
+
         {/* Below the fold, collapsed: the record so far. */}
         {updates.length > 1 && (
           <Collapsed summary={`Earlier weeks, ${updates.length - 1}`}>

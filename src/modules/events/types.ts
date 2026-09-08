@@ -16,6 +16,7 @@ export type EventType =
   | "review.changes_requested"
   | "delivery.signed_off"
   | "thanks.sent"
+  | "referral.forgotten"
   | "day30.approved"
   | "enquiry.received";
 
