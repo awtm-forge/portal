@@ -12,7 +12,9 @@ import type {
   CompanyModel,
   InvoiceModel,
   ProjectModel,
+  ReviewRoundModel,
   SignoffEventModel,
+  TestimonialModel,
   UpdateModel,
 } from "@/generated/prisma/models";
 import { dayMonthYear, isoDate } from "@/lib/dates";
@@ -249,5 +251,68 @@ export function updateToClientView(u: UpdateModel): UpdateClientView {
     needByDate: u.needByDate ? dayMonthYear(u.needByDate) : null,
     risks: u.risks.trim() ? u.risks : "None this week.",
     stagingUrl: u.stagingUrl,
+  };
+}
+
+export type ReviewRoundClientView = {
+  id: string;
+  roundNumber: number;
+  sentAt: string;
+  finishedWorkUrl: string;
+  clientNote: string | null;
+  respondedAt: string | null;
+  outcome: "OPEN" | "CHANGES_REQUESTED" | "ACCEPTED";
+  outcomeLabel: string;
+};
+
+const OUTCOME_LABEL: Record<string, string> = {
+  OPEN: "With you to check",
+  CHANGES_REQUESTED: "You said something was off",
+  ACCEPTED: "Signed off",
+};
+
+/** A review round has no private half: the client wrote most of it. */
+export function reviewRoundToClientView(r: ReviewRoundModel): ReviewRoundClientView {
+  return {
+    id: r.id,
+    roundNumber: r.roundNumber,
+    sentAt: dayMonthYear(r.sentAt),
+    finishedWorkUrl: r.finishedWorkUrl,
+    clientNote: r.clientNote,
+    respondedAt: r.respondedAt ? dayMonthYear(r.respondedAt) : null,
+    outcome: r.outcome,
+    outcomeLabel: OUTCOME_LABEL[r.outcome] ?? r.outcome,
+  };
+}
+
+export type TestimonialAdminView = {
+  id: string;
+  moment: "DELIVERY" | "DAY30";
+  momentLabel: string;
+  text: string;
+  status: "DRAFT" | "APPROVED";
+  useName: boolean;
+  useLogo: boolean;
+  createdAt: string;
+  approvedAt: string | null;
+};
+
+/**
+ * Admin only, deliberately. There is no client or print view for a testimonial
+ * or a referral, and that absence is what enforces acceptance criteria 25 and
+ * 26: a leak would need someone to write a new function, not forget an
+ * omission (ADR 0009).
+ */
+export function testimonialToAdminView(t: TestimonialModel): TestimonialAdminView {
+  return {
+    id: t.id,
+    moment: t.moment,
+    momentLabel: t.moment === "DELIVERY" ? "On delivery" : "At day 30",
+    text: t.text,
+    status: t.status,
+    useName: t.useName,
+    useLogo: t.useLogo,
+    createdAt: dayMonthYear(t.createdAt),
+    approvedAt: t.approvedAt ? dayMonthYear(t.approvedAt) : null,
   };
 }

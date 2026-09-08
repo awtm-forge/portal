@@ -64,3 +64,18 @@ export function invoiceIssuedMessage(input: {
     "Nothing needs doing on the page, it is there so you always have a copy.",
   ].join("\n");
 }
+
+export function readyForReviewMessage(input: {
+  contactName: string;
+  projectName: string;
+  deliverableCount: number;
+  link: string;
+}): string {
+  const things = input.deliverableCount === 1 ? "one thing" : `${input.deliverableCount} things`;
+  return [
+    `Hi ${input.contactName}, ${input.projectName} is finished and ready for you to check.`,
+    input.link,
+    `There are ${things} to look at, each with a line on how to check it yourself. Take your time.`,
+    "If anything is off, say so on the page and we keep working. Nothing is invoiced until you are happy.",
+  ].join("\n");
+}

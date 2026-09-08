@@ -26,7 +26,11 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
  * new screen cannot get around it by writing its own query.
  */
 const NO_WRITE_BACK = new Set(["SignoffEvent", "AgreementNote"]);
-const NO_DELETE = new Set(["SignoffEvent", "AgreementNote", "Invoice", "ReviewRound"]);
+const NO_DELETE = new Set(["SignoffEvent", "AgreementNote", "Invoice", "ReviewRound", "Testimonial", "Day30"]);
+// Referral is deliberately absent from both sets. It holds a third party's
+// name and contact, and that person never consented to being stored, so admin
+// can remove it. The no-delete rule covers evidence, not other people's
+// details (CLAUDE.md 5.1).
 const MUTATIONS = new Set(["update", "updateMany", "upsert", "delete", "deleteMany"]);
 
 /** An issued invoice keeps its number and its amounts. Only payment moves. */

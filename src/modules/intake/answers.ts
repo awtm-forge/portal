@@ -1,7 +1,7 @@
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { emit } from "@/modules/events";
-import { can, next } from "@/modules/projects/phase";
+import { can, transition } from "@/modules/projects/phase";
 import { parseDocumentLoose, type Question } from "@/modules/intake/document";
 import { SIGNOFF_EMAIL_KEY, SIGNOFF_NAME_KEY } from "@/modules/intake/import";
 
@@ -170,7 +170,7 @@ export async function submitIntake(intakeId: string): Promise<SaveResult> {
     // PORTAL-SPEC 5.2: submitting is what moves the project out of intake.
     // Changing an answer later does not move it again.
     if (firstSubmission && row.project.phase === Phase.INTAKE && can(row.project.phase, "intake_submitted")) {
-      await tx.project.update({ where: { id: row.projectId }, data: { phase: next(row.project.phase, "intake_submitted").to } });
+      await transition(tx, row.project, "intake_submitted");
     }
     return {
       ok: true as const,

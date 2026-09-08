@@ -11,6 +11,8 @@
  * them, so that this file stays readable next to the spec.
  */
 import { Phase } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
+import { db } from "@/lib/db";
 
 export type PhaseEvent =
   | "intake_submitted"
@@ -85,6 +87,47 @@ export function can(from: Phase, event: PhaseEvent): boolean {
 export function next(from: Phase, event: PhaseEvent): Transition {
   const t = find(from, event);
   if (!t) throw new IllegalTransition(from, event);
+  return t;
+}
+
+type Writer = Prisma.TransactionClient | typeof db;
+
+/** Someone else moved the project first. The caller's transaction must roll back. */
+export class PhaseRaced extends Error {
+  constructor(readonly from: Phase, readonly event: PhaseEvent) {
+    super(`This project is no longer in ${from}. Someone moved it while you were working.`);
+    this.name = "PhaseRaced";
+  }
+}
+
+/**
+ * The one way a project's phase changes. Nothing else writes the column: a
+ * screen that wants to move a project calls this, and an illegal move throws
+ * rather than quietly doing nothing (CLAUDE.md section 11, ADR 0005).
+ *
+ * The write is conditional on the phase still being what the caller read, and
+ * that is what makes it a lock as well as a rule. Reading the project, checking
+ * its phase and then writing leaves a window: two transactions can both pass
+ * the check on their own snapshot and both go on to write. Called first inside
+ * a sign-off transaction, this closes that window, because the loser's update
+ * matches no row and it throws before writing anything. Without it, two fast
+ * submits of the WhatsApp recording form produce two sign-off events and two
+ * invoices, which criteria 1 and 6 forbid.
+ *
+ * Pass the transaction client when the move is part of a larger write, so the
+ * phase and its side effects commit together or not at all.
+ */
+export async function transition(
+  tx: Writer,
+  project: { id: string; phase: Phase },
+  event: PhaseEvent,
+): Promise<Transition> {
+  const t = next(project.phase, event);
+  const moved = await tx.project.updateMany({
+    where: { id: project.id, phase: t.from },
+    data: { phase: t.to },
+  });
+  if (moved.count !== 1) throw new PhaseRaced(t.from, event);
   return t;
 }
 

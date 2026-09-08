@@ -4,8 +4,8 @@
 //
 // Timestamps are stored UTC and rendered in Asia/Kolkata. Every _paise column
 // is BigInt: money is an integer in paise, never a float (ADR 0004).
-// Still to come, in the steps that own them: update, review_round, day30,
-// testimonial, referral.
+// Still to come, in the step that owns it: nothing. Every table in
+// PORTAL-SPEC section 4 now exists.
 
 generator client {
   provider = "prisma-client"
@@ -100,6 +100,9 @@ model Project {
   retainerResponseTime     String?
   handoverDocUrl           String?
   deliveredAt              DateTime?
+  /// Set when the client sends or skips the thank-you page, so a decline is
+  /// distinguishable from never having got there.
+  thanksSeenAt             DateTime?
   cancelledAt              DateTime?
   cancelReason             String?         @db.VarChar(500)
   createdAt                DateTime        @default(now())
@@ -110,6 +113,10 @@ model Project {
   invoices                 Invoice[]
   activityEvents           ActivityEvent[]
   updates                  Update[]
+  reviewRounds             ReviewRound[]
+  testimonials             Testimonial[]
+  referrals                Referral[]
+  day30                    Day30?
   sessions                 ClientSession[]
   oneTimeCodes             OneTimeCode[]
   files                    IntakeFile[]
@@ -391,6 +398,93 @@ model Update {
 
   @@unique([projectId, weekNumber])
   @@index([projectId, sentAt])
+}
+
+enum ReviewOutcome {
+  OPEN
+  CHANGES_REQUESTED
+  ACCEPTED
+}
+
+/// One round of the review loop (PORTAL-SPEC 5.5). Rounds are unlimited and
+/// every one is kept: no delete path exists. A round is written to once after
+/// creation, when the client answers, and is finished from then on.
+model ReviewRound {
+  id              String        @id @default(cuid())
+  projectId       String
+  project         Project       @relation(fields: [projectId], references: [id])
+  roundNumber     Int
+  sentAt          DateTime      @default(now())
+  /// Where the client can see the finished work: a live site, a staging link
+  /// or a folder. Required, because a review only happens when the work is
+  /// complete, so there is always something to look at.
+  finishedWorkUrl String        @db.VarChar(500)
+  clientNote      String?       @db.Text
+  respondedAt     DateTime?
+  outcome         ReviewOutcome @default(OPEN)
+
+  @@unique([projectId, roundNumber])
+  @@index([projectId, sentAt])
+}
+
+enum TestimonialMoment {
+  DELIVERY
+  DAY30
+}
+
+enum TestimonialStatus {
+  DRAFT
+  APPROVED
+}
+
+/// The client's own words. Drafted at delivery, approved at day 30. Only an
+/// approved one may appear anywhere outside admin (CLAUDE.md 5.1).
+model Testimonial {
+  id             String            @id @default(cuid())
+  projectId      String
+  project        Project           @relation(fields: [projectId], references: [id])
+  moment         TestimonialMoment
+  text           String            @db.Text
+  /// Asked at day 30, not at delivery, so both start false.
+  useName        Boolean           @default(false)
+  useLogo        Boolean           @default(false)
+  status         TestimonialStatus @default(DRAFT)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  approvedAt     DateTime?
+  approvedMethod SignoffMethod?
+
+  @@unique([projectId, moment])
+}
+
+/// Someone the client named. This holds a third party's details and that
+/// person never consented to being stored, so unlike every other record here
+/// admin can delete it. It is shown only in admin, never on a client route,
+/// in an export or in a WhatsApp message.
+model Referral {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  name      String
+  contact   String
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+/// Created by the delivery sign-off, thirty days out. Step 10 fills it.
+model Day30 {
+  id                     String    @id @default(cuid())
+  projectId              String    @unique
+  project                Project   @relation(fields: [projectId], references: [id])
+  unlocksAt              DateTime
+  openedAt               DateTime?
+  metricAfterValue       String?
+  metricAfterSubmittedAt DateTime?
+  /// ADMIN ONLY.
+  frictionNotes          String    @db.Text
+
+  @@index([unlocksAt])
 }
 
 /// Append-only. Every meaningful change. Payload passes through the client

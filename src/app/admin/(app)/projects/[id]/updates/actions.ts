@@ -2,12 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { Phase } from "@/generated/prisma/enums";
 import { fromIsoDate } from "@/lib/dates";
-import { db } from "@/lib/db";
 import { requireAdmin } from "@/modules/auth/admin";
-import { emit } from "@/modules/events";
-import { next } from "@/modules/projects/phase";
+import { markKickoffDone } from "@/modules/projects";
 import { saveDraft, send, UpdateSent } from "@/modules/updates";
 import "@/modules/notifications/register";
 
@@ -61,18 +58,9 @@ export async function saveUpdateAction(_prev: UpdateState, formData: FormData): 
   return { ok: "Saved as a draft. The client cannot see it yet.", values };
 }
 
-/** PORTAL-SPEC 5.2: agreed to building, when Rahul says the kickoff happened. */
 export async function markKickoffAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
-  const project = await db.project.findUnique({ where: { id: projectId } });
-  if (!project) redirect("/admin");
-  if (project.phase === Phase.AGREED) {
-    await db.project.update({
-      where: { id: projectId },
-      data: { phase: next(project.phase, "kickoff_done").to },
-    });
-    await emit({ type: "project.kickoff", projectId, actor: "team", payload: { projectName: project.name } });
-  }
+  await markKickoffDone(projectId);
   redirect(`/admin/projects/${projectId}`);
 }

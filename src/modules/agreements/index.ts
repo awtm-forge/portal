@@ -10,7 +10,7 @@ import type { AgreementModel } from "@/generated/prisma/models";
 import { db } from "@/lib/db";
 import { emit } from "@/modules/events";
 import { issueAdvance, issuingContext } from "@/modules/invoices";
-import { next } from "@/modules/projects/phase";
+import { PhaseRaced, transition } from "@/modules/projects/phase";
 import { agreementToClientView } from "@/modules/serializers";
 
 export class AgreementFrozen extends Error {
@@ -78,7 +78,7 @@ export async function send(projectId: string): Promise<SendResult> {
     const resent = project.agreement.sentAt !== null;
     const version = resent ? project.agreement.version + 1 : project.agreement.version;
     await tx.agreement.update({ where: { projectId }, data: { sentAt: new Date(), version } });
-    await tx.project.update({ where: { id: projectId }, data: { phase: next(project.phase, "agreement_sent").to } });
+    await transition(tx, project, "agreement_sent");
     return { ok: true, version } as const;
   });
 }
@@ -87,10 +87,10 @@ export async function send(projectId: string): Promise<SendResult> {
 export async function overrideIntakeGate(projectId: string, adminId: string): Promise<boolean> {
   const project = await db.project.findUnique({ where: { id: projectId }, include: { intake: true } });
   if (!project?.intake || project.phase !== Phase.INTAKE) return false;
-  await db.$transaction([
-    db.intake.update({ where: { id: project.intake.id }, data: { overriddenAt: new Date(), overriddenById: adminId } }),
-    db.project.update({ where: { id: projectId }, data: { phase: next(project.phase, "intake_overridden").to } }),
-  ]);
+  await db.$transaction(async (tx) => {
+    await tx.intake.update({ where: { id: project.intake!.id }, data: { overriddenAt: new Date(), overriddenById: adminId } });
+    await transition(tx, project, "intake_overridden");
+  });
   await emit({ type: "intake.overridden", projectId, actor: adminId, payload: {} });
   return true;
 }
@@ -116,13 +116,18 @@ export async function agree(args: {
   const ctx = await issuingContext();
   const at = args.at ?? new Date();
 
+  // A caller that lost the phase race is, from its own point of view, acting
+  // on a project that has moved on. Report it the same way, rather than
+  // letting a stack trace reach whoever clicked twice.
   const result = await db.$transaction(async (tx) => {
     const project = await tx.project.findUnique({ where: { id: args.projectId }, include: { agreement: true } });
     if (!project?.agreement) return { ok: false, reason: "no_agreement" } as const;
     if (project.agreement.agreedAt) return { ok: false, reason: "already_agreed" } as const;
     if (project.phase !== Phase.AGREEMENT_SENT) return { ok: false, reason: "wrong_phase" } as const;
 
-    const transition = next(project.phase, "agreement_agreed");
+    // First, so the conditional phase write is the mutual exclusion token for
+    // everything below it. See transition() in modules/projects/phase.
+    const t = await transition(tx, project, "agreement_agreed");
 
     await tx.signoffEvent.create({
       data: {
@@ -141,8 +146,9 @@ export async function agree(args: {
       where: { projectId: project.id },
       data: { agreedAt: at, agreedByName: args.actorName.slice(0, 120), agreedMethod: args.method },
     });
-    await tx.project.update({ where: { id: project.id }, data: { phase: transition.to } });
-
+    if (!t.effects.includes("issue_advance_invoice")) {
+      throw new Error("the agreement transition no longer raises the advance");
+    }
     const invoice = await issueAdvance(tx, {
       projectId: project.id,
       projectName: project.name,
@@ -153,6 +159,9 @@ export async function agree(args: {
       at,
     });
     return { ok: true, invoiceNumber: invoice.number, view: agreementToClientView(project.agreement) } as const;
+  }).catch((error) => {
+    if (error instanceof PhaseRaced) return { ok: false, reason: "already_agreed" } as const;
+    throw error;
   });
 
   if (!result.ok) return result;
@@ -189,7 +198,7 @@ export async function addClientNote(projectId: string, text: string): Promise<No
     await tx.agreementNote.create({
       data: { projectId, agreementVersion: project.agreement.version, text: trimmed, enteredBy: "client" },
     });
-    await tx.project.update({ where: { id: projectId }, data: { phase: next(project.phase, "agreement_note").to } });
+    await transition(tx, project, "agreement_note");
     return { ok: true, version: project.agreement.version } as const;
   });
   if (!result.ok) return result;
