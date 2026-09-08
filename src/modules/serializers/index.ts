@@ -303,6 +303,37 @@ export type TestimonialAdminView = {
  * 26: a leak would need someone to write a new function, not forget an
  * omission (ADR 0009).
  */
+export type Day30ClientView = {
+  unlocksAt: string;
+  isUnlocked: boolean;
+  answered: boolean;
+  metricName: string | null;
+  metricBaseline: string | null;
+  metricBaselineCapturedAt: string | null;
+  metricAfter: string | null;
+};
+
+/**
+ * The day-30 page. It carries the metric the agreement named and what the
+ * client has said since, and nothing about friction notes, which are marked
+ * ADMIN ONLY in the schema and have no field here to land in.
+ */
+export function day30ToClientView(
+  row: { unlocksAt: Date; metricAfterValue: string | null; metricAfterSubmittedAt: Date | null },
+  project: { metricName: string | null; metricBaselineValue: string | null; metricBaselineCapturedAt: Date | null },
+  now: Date = new Date(),
+): Day30ClientView {
+  return {
+    unlocksAt: dayMonthYear(row.unlocksAt),
+    isUnlocked: row.unlocksAt.getTime() <= now.getTime(),
+    answered: row.metricAfterSubmittedAt !== null,
+    metricName: project.metricName,
+    metricBaseline: project.metricBaselineValue,
+    metricBaselineCapturedAt: project.metricBaselineCapturedAt ? dayMonthYear(project.metricBaselineCapturedAt) : null,
+    metricAfter: row.metricAfterValue,
+  };
+}
+
 export function testimonialToAdminView(t: TestimonialModel): TestimonialAdminView {
   return {
     id: t.id,

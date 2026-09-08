@@ -12,15 +12,16 @@ import { isoDate } from "@/lib/dates";
 import { Phase } from "@/generated/prisma/enums";
 import { RecordWhatsapp } from "./whatsapp/RecordWhatsapp";
 import { markKickoffAction } from "./updates/actions";
-import { agreementReadyMessage, invoiceIssuedMessage, readyForReviewMessage, waLink } from "@/lib/whatsapp";
+import { agreementReadyMessage, day30Message, invoiceIssuedMessage, readyForReviewMessage, waLink } from "@/lib/whatsapp";
 import { deliverableCount, roundsForProject } from "@/modules/review";
-import { referralsForAdmin, testimonialsForAdmin } from "@/modules/day30";
+import { forProject as day30For, isUnlocked as day30Unlocked, referralsForAdmin, testimonialsForAdmin } from "@/modules/day30";
 import { testimonialToAdminView } from "@/modules/serializers";
 import { MarkReady } from "./review/MarkReady";
 import { MarkPaid, RaiseOther } from "./invoices/InvoiceControls";
 import { forProject } from "@/modules/invoices";
 import { company } from "@/modules/settings";
 import { forgetReferralAction } from "./review/actions";
+import { approveTestimonialAction, closeProjectAction, saveFrictionNotesAction } from "./day30/actions";
 import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
@@ -34,7 +35,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
   });
   if (!project) notFound();
   const co = await company();
-  const [invoices, signoffs, noteCount, updates, rounds, testimonialRows, referrals] = await Promise.all([
+  const [invoices, signoffs, noteCount, updates, rounds, testimonialRows, referrals, day30] = await Promise.all([
     forProject(id),
     db.signoffEvent.findMany({ where: { projectId: id }, orderBy: { occurredAt: "asc" } }),
     db.agreementNote.count({ where: { projectId: id } }),
@@ -42,6 +43,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
     roundsForProject(id),
     testimonialsForAdmin(id),
     referralsForAdmin(id),
+    day30For(id),
   ]);
   const agreement = project.agreement ? agreementToAdminView(project.agreement) : null;
   const testimonials = testimonialRows.map(testimonialToAdminView);
@@ -179,6 +181,56 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             />
           )}
 
+          {day30 && (
+            <div className="a-card">
+              <span className="k">Day 30</span>
+              <p className="c-sub" style={{ fontSize: 14 }}>
+                {day30.metricAfterSubmittedAt
+                  ? `Answered on ${dayMonth(day30.metricAfterSubmittedAt)}.`
+                  : day30Unlocked(day30)
+                    ? `Open since ${dayMonth(day30.unlocksAt)}. ${day30.openedAt ? `Seen on ${dayMonth(day30.openedAt)}, not answered.` : "Not opened yet."}`
+                    : `Opens on ${dayMonth(day30.unlocksAt)}.`}
+              </p>
+
+              {project.metricName && (
+                <p className="help">
+                  {project.metricName}: {project.metricBaselineValue ?? "no baseline"} at the start
+                  {day30.metricAfterValue ? `, ${day30.metricAfterValue} now` : ", nothing back yet"}.
+                </p>
+              )}
+
+              {day30Unlocked(day30) && !day30.metricAfterSubmittedAt && (
+                <a
+                  className="mono-sm"
+                  href={waLink(c.contactPhone, day30Message({
+                    contactName: c.contactName.trim().split(/\s+/)[0] || c.contactName,
+                    projectName: project.name,
+                    metricName: project.metricName,
+                  }))}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Nudge them on WhatsApp
+                </a>
+              )}
+
+              <form action={saveFrictionNotesAction} className="stack" style={{ gap: 8, paddingTop: 10, borderTop: "1px solid var(--rule-soft)" }}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <span className="lbl">Friction notes, never shown to the client</span>
+                <textarea className="a-fld" name="frictionNotes" rows={3} defaultValue={day30.frictionNotes} placeholder="What was harder than it should have been" />
+                <div><button className="a-btn ghost" type="submit">Save the notes</button></div>
+              </form>
+
+              {project.phase === Phase.DELIVERED && (
+                <form action={closeProjectAction} style={{ paddingTop: 8, borderTop: "1px solid var(--rule-soft)" }}>
+                  <input type="hidden" name="projectId" value={project.id} />
+                  <button className="link-mono" type="submit" style={{ padding: 0 }}>Close this project</button>
+                  <p className="help" style={{ paddingTop: 4 }}>The record stays readable at the same link. Nothing else changes.</p>
+                </form>
+              )}
+            </div>
+          )}
+
           {testimonials.length > 0 && (
             <div className="a-card">
               <span className="k">What they said</span>
@@ -192,6 +244,13 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
                       </span>
                     </div>
                     <p style={{ margin: 0, fontSize: 14.5, whiteSpace: "pre-wrap" }}>{t.text}</p>
+                    {t.status !== "APPROVED" && (
+                      <form action={approveTestimonialAction} style={{ paddingTop: 6 }}>
+                        <input type="hidden" name="projectId" value={project.id} />
+                        <input type="hidden" name="moment" value={t.moment} />
+                        <button className="link-mono" type="submit" style={{ padding: 0 }}>They said yes on WhatsApp, approve it</button>
+                      </form>
+                    )}
                   </div>
                 ))}
               </div>

@@ -127,3 +127,21 @@ export async function openRoundDirect(projectId: string, url = "https://staging.
   );
   await setPhase(projectId, "IN_REVIEW");
 }
+
+/**
+ * Puts a project in the delivered state with its day-30 row already open,
+ * without waiting a month. The unlock is a comparison made on read
+ * (criterion 10), so moving the date is the whole of it: there is no job to
+ * trigger and nothing to fake.
+ */
+export async function day30Open(projectId: string, opts: { unlocked?: boolean } = {}): Promise<void> {
+  const unlocked = opts.unlocked ?? true;
+  await query("UPDATE Project SET deliveredAt = COALESCE(deliveredAt, NOW(3)) WHERE id = ?", [projectId]);
+  await setPhase(projectId, "DELIVERED");
+  await query("DELETE FROM Day30 WHERE projectId = ?", [projectId]);
+  await query(
+    `INSERT INTO Day30 (id, projectId, unlocksAt, frictionNotes)
+     VALUES (?, ?, DATE_ADD(NOW(3), INTERVAL ? DAY), '')`,
+    [`d30${Date.now()}${Math.random().toString(36).slice(2, 6)}`, projectId, unlocked ? -1 : 30],
+  );
+}

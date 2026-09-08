@@ -92,3 +92,16 @@ Open, 8 Sep 2026. Not blocking, and now visible in admin.
 CLAUDE.md 5 seeds the company row with a name, a city, a prefix and an advance percentage, and no bank details. PORTAL-SPEC 6.7 says the printed invoice carries them. The document hides the "How to pay" block when there is nothing to show rather than printing empty labels, so the invoice is still valid, but it tells the client nothing about where to send the money.
 
 Fill in account name, bank, account number and IFSC, or a UPI id, at `/admin/settings`. Until one of those exists the admin invoice list says so. Nothing to decide, only something to do, and it belongs to you rather than to the build because it is our own detail and not a credential.
+
+## Q9. The day-30 box shows the client a draft testimonial, which criterion 26 forbids
+
+Decided while building, 9 Sep 2026. Taking the prefill, and narrowing the criterion.
+
+Acceptance criterion 26 says a testimonial with `status = draft` never appears outside `/admin/`. CLAUDE.md 5.1 says the day-30 draft is prefilled from the delivery quote "so the client edits rather than starts again". Both cannot be true: the delivery quote is a draft until day 30, and the day-30 box is a client page.
+
+- **Prefill, and narrow the criterion.** A draft appears in exactly one place outside admin: the day-30 box of the project it belongs to, shown to the signed-in client who wrote it. Showing someone their own words back is not what criterion 26 guards against, which is a quote being used before its author approved it.
+- **Do not prefill.** Criterion 26 stays literal, and a client who wrote a good line on delivery day types it again a month later, or more likely does not.
+
+Taking the first, because CLAUDE.md 5.1 is a decision of yours that postdates the criterion, and 5.1 wins under CLAUDE.md 1. The code enforces it narrowly: `draftTextForClient` returns the text and nothing else, no status, no dates, no method, and there is still no client serializer for a testimonial. A draft belonging to any other project cannot reach any client page, and there is a test for exactly that.
+
+Worth rewording criterion 26 in PORTAL-SPEC to say what it means: an unapproved quote is never used anywhere it could be read as an endorsement.

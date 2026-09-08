@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 9 September 2026, after step 9.
+route; last checked against the code on 9 September 2026, after step 10.
 
 Zones and their rules are in `ARCHITECTURE.md`. This host is entirely private
 (ADR 0012): every route sends `X-Robots-Tag: noindex, nofollow`,
@@ -42,6 +42,7 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 | `/p/[token]/review` (changes) | server action | link and session, no code | Writes the note on the open round and returns the phase to `building`. Creates no invoice (criterion 2). |
 | `/p/[token]/review` (sign off) | server action | link, session, and a fresh `delivery` code | One transaction: `signoff_event` kind delivery, round accepted, `delivered_at`, the balance invoice, the day-30 row. Redirects once to `/thanks` (criteria 2, 5, 6). |
 | `/p/[token]/thanks` | GET, server action | link and session | 404 before the delivery sign-off, renders after (criterion 24). Two optional fields and Send, plus Skip; both record that they saw it. |
+| `/p/[token]/day30` | GET, server action | the project's link and session | 404 before `day30.unlocks_at`, renders after it. The unlock is a comparison made on read, so nothing is scheduled and nothing can fail to fire (criterion 10). The metric line from the project, one field, the quote prefilled from the delivery draft, two permission switches, one button. Both fields optional. Answering approves the quote, records the number, and cannot happen twice. First view stamps `opened_at`. |
 
 ## Printable, dynamic, unindexed
 
@@ -81,10 +82,12 @@ prints a one-time setup link and never a password.
 | `/admin/settings` | GET, server action | admin | Our own details: company, bank, invoice prefix, GSTIN, booking URL, default advance percentage. The prefix refuses to change once invoices carry it. Nothing here belongs to a client. |
 | `/admin/projects/[id]/updates` | GET, server action | admin | The weekly update. A draft until sent, frozen after. `?week=N` opens a particular week. The WhatsApp message is built from the same fields. |
 | `/admin/projects/[id]` (mark kickoff) | server action | admin | PORTAL-SPEC 5.2, `agreed` to `building`. Offered only while the phase is `agreed`. |
+| `/admin/projects/[id]` (friction notes) | server action | admin | ADMIN ONLY in the schema, and no client view has a field for it. |
+| `/admin/projects/[id]` (approve a testimonial) | server action | admin | For a quote they approved on WhatsApp. Records `approved_method = whatsapp`, so a tap and a message never become indistinguishable (PORTAL-SPEC 5.11). |
+| `/admin/projects/[id]` (close) | server action | admin | PORTAL-SPEC 5.2, `delivered` to `closed`, by hand. The record stays readable at the same link. |
 | `/admin/projects/[id]` (mark paid) | server action | admin | The only thing that moves on an issued invoice, and the guard in `lib/db` allows only the four payment fields. The date must read, must not be in the future, and must not be before the invoice was raised. Conditional on the invoice still being issued, so two admins at once record one payment (criterion 16). |
 | `/admin/projects/[id]` (raise an extra) | server action | admin | `kind=other` only, and the only invoice an admin can raise by hand. The advance and the balance follow a sign-off and nothing else: no route reaches `issueAdvance` or `issueBalance` (criterion 3). |
 
 ## Not built yet
 
-Day 30 and the needs-attention block. Each arrives in its step; see
-`BUILD-LOG.md`.
+The needs-attention block, which arrives in step 11. See `BUILD-LOG.md`.

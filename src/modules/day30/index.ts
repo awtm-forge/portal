@@ -3,12 +3,13 @@
  * referral (docs/ARCHITECTURE.md folder layout, CLAUDE.md 5.1).
  *
  * Step 8 uses `open`, called inside the delivery transaction, and the two
- * write functions the thank-you page needs. Step 10 fills in the unlock, the
- * metric and testimonial approval.
+ * write functions the thank-you page needs. Step 10 added the unlock, the
+ * metric and the client's own approval of their quote.
  */
 import { SignoffMethod, TestimonialMoment, TestimonialStatus } from "@/generated/prisma/enums";
 import type { Day30Model, ReferralModel, TestimonialModel } from "@/generated/prisma/models";
 import { addDays } from "@/lib/dates";
+import { emit } from "@/modules/events";
 import { db } from "@/lib/db";
 import type { Tx } from "@/modules/invoices";
 
@@ -86,4 +87,120 @@ export function allReferralsForAdmin() {
  */
 export async function deleteReferral(id: string): Promise<void> {
   await db.referral.delete({ where: { id } });
+}
+
+/* -------------------------------------------------------------------------
+ * The day-30 page itself (PORTAL-SPEC 6.5, criterion 10).
+ * ---------------------------------------------------------------------- */
+
+export function forProject(projectId: string) {
+  return db.day30.findUnique({ where: { projectId } });
+}
+
+/**
+ * Criterion 10: unlocking is a comparison made when the page is read, not a
+ * job that runs. Nothing has to be scheduled, nothing can fail to fire, and a
+ * process that was asleep for a month wakes up with the right answer.
+ */
+export function isUnlocked(day30: { unlocksAt: Date }, now: Date = new Date()): boolean {
+  return day30.unlocksAt.getTime() <= now.getTime();
+}
+
+/** First view stamps the row, which is what the needs-attention block reads. */
+export async function markOpened(projectId: string): Promise<void> {
+  await db.day30.updateMany({
+    where: { projectId, openedAt: null },
+    data: { openedAt: new Date() },
+  });
+}
+
+/**
+ * The quote the client is editing, and nothing else about it.
+ *
+ * Criterion 26 says a draft testimonial never appears outside `/admin/`, and
+ * this is the one place it does: CLAUDE.md 5.1 asks for the day-30 box to be
+ * prefilled from what they wrote at delivery, so they edit rather than start
+ * again. Showing someone their own words back, on their own authenticated
+ * page, is not what that criterion is guarding against. Recorded in
+ * QUESTIONS.md Q9. Returning the text alone, rather than the row, is what
+ * keeps it from being anything more than that.
+ */
+export async function draftTextForClient(projectId: string): Promise<string> {
+  const rows = await db.testimonial.findMany({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+    select: { text: true, moment: true },
+  });
+  const day30 = rows.find((r) => r.moment === TestimonialMoment.DAY30);
+  return (day30 ?? rows.find((r) => r.moment === TestimonialMoment.DELIVERY))?.text ?? "";
+}
+
+export type Day30Result = { ok: true } | { ok: false; reason: "not_open" | "already_answered" };
+
+/**
+ * The whole page in one write: the number, and the quote with the two
+ * permissions. Both are optional, as they are on the thank-you page: a client
+ * who wants to give the number and not the quote should not be blocked, and
+ * one who wants to give neither has still answered.
+ *
+ * The quote is approved here rather than left as a draft, because the client
+ * approving it is exactly what this page is for.
+ */
+export async function submit(
+  projectId: string,
+  args: { metricAfter: string; quote: string; useName: boolean; useLogo: boolean },
+): Promise<Day30Result> {
+  const row = await db.day30.findUnique({ where: { projectId } });
+  if (!row || !isUnlocked(row)) return { ok: false, reason: "not_open" };
+  if (row.metricAfterSubmittedAt) return { ok: false, reason: "already_answered" };
+
+  const metricAfter = args.metricAfter.trim().slice(0, 200);
+  const quote = args.quote.trim().slice(0, 4000);
+
+  const moved = await db.day30.updateMany({
+    where: { projectId, metricAfterSubmittedAt: null },
+    data: {
+      metricAfterValue: metricAfter || null,
+      metricAfterSubmittedAt: new Date(),
+      openedAt: row.openedAt ?? new Date(),
+    },
+  });
+  if (moved.count !== 1) return { ok: false, reason: "already_answered" };
+
+  if (quote) {
+    await db.testimonial.upsert({
+      where: { projectId_moment: { projectId, moment: TestimonialMoment.DAY30 } },
+      create: {
+        projectId,
+        moment: TestimonialMoment.DAY30,
+        text: quote,
+        useName: args.useName,
+        useLogo: args.useLogo,
+        status: TestimonialStatus.APPROVED,
+        approvedAt: new Date(),
+        approvedMethod: SignoffMethod.PORTAL,
+      },
+      update: {
+        text: quote,
+        useName: args.useName,
+        useLogo: args.useLogo,
+        status: TestimonialStatus.APPROVED,
+        approvedAt: new Date(),
+        approvedMethod: SignoffMethod.PORTAL,
+      },
+    });
+  }
+
+  await emit({
+    type: "day30.approved",
+    projectId,
+    actor: "client",
+    payload: { gaveNumber: Boolean(metricAfter), gaveQuote: Boolean(quote) },
+  });
+  return { ok: true };
+}
+
+/** ADMIN ONLY. What went wrong that the client did not say out loud. */
+export async function setFrictionNotes(projectId: string, notes: string): Promise<void> {
+  await db.day30.updateMany({ where: { projectId }, data: { frictionNotes: notes.trim().slice(0, 4000) } });
 }

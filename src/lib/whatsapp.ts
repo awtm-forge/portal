@@ -79,3 +79,24 @@ export function readyForReviewMessage(input: {
     "If anything is off, say so on the page and we keep working. Nothing is invoiced until you are happy.",
   ].join("\n");
 }
+
+/**
+ * PORTAL-SPEC section 7, the last of the templates. One minute, one number.
+ * No link in it: only a hash of theirs is stored, so like the questionnaire
+ * nudge this points at the link they already have.
+ */
+export function day30Message(input: {
+  contactName: string;
+  projectName: string;
+  metricName: string | null;
+}): string {
+  const ask = input.metricName
+    ? `One question: ${input.metricName.toLowerCase()}, where is it now?`
+    : "One question: what changed?";
+  return [
+    `Hi ${input.contactName}, it is a month since we delivered ${input.projectName}.`,
+    `Your project page has a day 30 box on it now. ${ask}`,
+    "There is a line you wrote on the day, waiting for you to change or leave as it is. Same link as before.",
+    "Under a minute, and then we leave you alone.",
+  ].join("\n");
+}

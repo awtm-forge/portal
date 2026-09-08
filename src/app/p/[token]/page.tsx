@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { intakeProgress } from "@/modules/intake/progress";
+import { forProject as day30For, isUnlocked as day30Unlocked } from "@/modules/day30";
 import { invoiceToClientView, updateToClientView } from "@/modules/serializers";
 import { sentForProject } from "@/modules/updates";
 import { company } from "@/modules/settings";
@@ -31,12 +32,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
     );
   }
 
-  const [agreement, invoices, updateRows, c] = await Promise.all([
+  const [agreement, invoices, updateRows, c, day30] = await Promise.all([
     db.agreement.findUnique({ where: { projectId: project.id } }),
     db.invoice.findMany({ where: { projectId: project.id }, orderBy: { issuedAt: "asc" } }),
     sentForProject(project.id),
     company(),
+    day30For(project.id),
   ]);
+  // The one thing to do, when the month is up and they have not answered.
+  const day30Due = day30 !== null && day30Unlocked(day30) && day30.metricAfterSubmittedAt === null;
   const updates = updateRows.map(updateToClientView);
   const latest = updates[0] ?? null;
   const intake = project.intake;
@@ -147,6 +151,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           </Card>
         )}
 
+        {day30Due && (
+          <Card>
+            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>One month in. Two things, under a minute.</span>
+            <p className="c-sub">One number and one line, and then we leave you alone.</p>
+            <Link className="btn-full" href={`/p/${token}/day30`}>Open it</Link>
+          </Card>
+        )}
+
         {(phase === Phase.DELIVERED || phase === Phase.CLOSED) && (
           <Card>
             <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>
@@ -172,7 +184,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
             ) : (
               <p className="c-sub">{agreement?.afterDeliveryOffer || "Rahul will confirm what happens from here."}</p>
             )}
-            {!project.thanksSeenAt && (
+            {!project.thanksSeenAt && !day30Due && (
               <Link className="btn-full ghost" href={`/p/${token}/thanks`}>Say how it went, if you would like to</Link>
             )}
           </Card>

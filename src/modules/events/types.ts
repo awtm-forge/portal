@@ -3,6 +3,7 @@ export type EventType =
   | "project.created"
   | "project.link_emailed"
   | "project.cancelled"
+  | "project.closed"
   | "intake.submitted"
   | "intake.overridden"
   | "agreement.sent"

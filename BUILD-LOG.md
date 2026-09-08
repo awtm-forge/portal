@@ -84,6 +84,29 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## Step 10, day 30: done
+
+9 Sep 2026, AI-assisted.
+
+Built: `/p/[token]/day30`, per PORTAL-SPEC 6.5. It is a 404 before `unlocks_at` and renders after it, and the lock is a comparison made when the page is read rather than a job that runs, which is criterion 10 exactly: nothing is scheduled, nothing can fail to fire, and a process that was asleep for a month wakes up with the right answer. The metric line the agreement named, one field for what it is now, the quote in an editable box prefilled from what they wrote on delivery day, two permission switches both off by default, one button. No referral section: that was asked once on the thank-you page, and asking twice would be pestering.
+
+Both fields are optional, as they are on the thank-you page. Someone willing to give the number but not a quote should not be stopped at the door, and answering nothing is still answering. Submitting approves the quote, because the client approving it is what this page is for, and records `approved_method = portal`. It cannot happen twice: the write is conditional on `metric_after_submitted_at` still being null, so two presses record one answer and one event.
+
+The client project page gains the unlocked state from PORTAL-SPEC 6.1, "One month in. Two things, under a minute", and while it is showing, the thank-you nudge steps aside so there is still exactly one thing to do.
+
+Admin: the day-30 card with what has happened and what came back, friction notes marked never shown to the client, approving a quote they said yes to on WhatsApp with the method recorded, and the day-30 WhatsApp nudge, which is the last template in PORTAL-SPEC section 7. Also `delivered` to `closed`, by hand, which PORTAL-SPEC 5.2 has always described and nothing implemented.
+
+Verified: 99 unit tests and 97 end to end, on desktop and a phone. Criterion 10 now passes.
+
+Two defects found and fixed, both in my own tests:
+
+- **A test raced the redirect.** It clicked the button and immediately navigated, so the page load beat the server action. Worse than flaky: the assertion that followed would have passed against a form that silently did nothing. It now waits for the project page first, which proves the answer landed.
+- **The spec leaned on what ran before it**, exactly as the invoices spec did in step 9: one test inserted a quote and the next assumed the box would be empty. Testimonials are cleared in `beforeEach` now, so no test inherits another's state.
+
+Deferred: none.
+
+Needs Rahul: QUESTIONS.md Q9. Criterion 26 says a draft testimonial never appears outside `/admin/`, and CLAUDE.md 5.1 asks for the day-30 box to be prefilled from the delivery draft. Both cannot be true. I took the prefill, because 5.1 is a decision of yours that postdates the criterion, and narrowed the criterion to what it is guarding against: a quote being used before its author approved it. The code enforces the narrowing tightly, and there is a test that a draft from any other project cannot reach the box.
+
 ## Ready to deploy: healthz, a seed that is safe in production, a runbook that is true: done
 
 9 Sep 2026, AI-assisted. Rahul asked to go live, which is the credential boundary in CLAUDE.md section 6.
