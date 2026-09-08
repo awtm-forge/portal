@@ -109,6 +109,7 @@ model Project {
   signoffEvents            SignoffEvent[]
   invoices                 Invoice[]
   activityEvents           ActivityEvent[]
+  updates                  Update[]
   sessions                 ClientSession[]
   oneTimeCodes             OneTimeCode[]
   files                    IntakeFile[]
@@ -369,6 +370,27 @@ model InvoiceSequence {
   lastSeq Int    @default(0)
 
   @@id([prefix, fy])
+}
+
+/// The weekly written update. A draft until sentAt is set; after that it has
+/// been read by the client and the module refuses to change it.
+model Update {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id])
+  weekNumber  Int
+  moved       String    @db.Text
+  nextUp      String    @db.Text
+  needFromYou String    @db.Text
+  needByDate  DateTime?
+  risks       String    @db.Text
+  stagingUrl  String?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([projectId, weekNumber])
+  @@index([projectId, sentAt])
 }
 
 /// Append-only. Every meaningful change. Payload passes through the client

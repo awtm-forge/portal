@@ -23,3 +23,44 @@ export function questionnaireNudgeMessage(input: { contactName: string; openSect
     "If it is easier, say it out loud on a call and we will type it in.",
   ].join("\n");
 }
+
+export function agreementReadyMessage(input: { contactName: string; projectName: string }): string {
+  return [
+    `Hi ${input.contactName}, your agreement for ${input.projectName} is ready to read.`,
+    "It is on your project page, the same link as before. One page: what we are building, what it costs, when it lands, and how you will check it.",
+    "If anything in it is wrong, say so on the page itself and we will change it. Nothing is invoiced until you agree.",
+  ].join("\n");
+}
+
+export function weeklyUpdateMessage(input: {
+  contactName: string;
+  weekNumber: number;
+  weekCount: number | null;
+  moved: string;
+  nextUp: string;
+  needFromYou: string;
+  needByDate: string;
+  risks: string;
+}): string {
+  const heading = input.weekCount ? `Week ${input.weekNumber} of ${input.weekCount}` : `Week ${input.weekNumber}`;
+  const lines = [`Hi ${input.contactName}, ${heading.toLowerCase()}.`, "", `Moved: ${input.moved}`, `Next: ${input.nextUp}`];
+  if (input.needFromYou.trim()) {
+    lines.push(`Need from you: ${input.needFromYou}${input.needByDate ? `, by ${input.needByDate}` : ""}`);
+  }
+  lines.push(`Risks: ${input.risks.trim() ? input.risks : "None this week."}`);
+  lines.push("", "It is all on your project page too.");
+  return lines.join("\n");
+}
+
+export function invoiceIssuedMessage(input: {
+  contactName: string;
+  number: string;
+  amount: string;
+  kindLabel: string;
+}): string {
+  return [
+    `Hi ${input.contactName}, invoice ${input.number} is on your project page.`,
+    `${input.kindLabel}, ${input.amount}. Bank details are on the invoice itself.`,
+    "Nothing needs doing on the page, it is there so you always have a copy.",
+  ].join("\n");
+}

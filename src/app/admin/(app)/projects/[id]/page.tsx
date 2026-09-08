@@ -11,6 +11,8 @@ import { agreementToAdminView, invoiceToClientView } from "@/modules/serializers
 import { isoDate } from "@/lib/dates";
 import { Phase } from "@/generated/prisma/enums";
 import { RecordWhatsapp } from "./whatsapp/RecordWhatsapp";
+import { markKickoffAction } from "./updates/actions";
+import { agreementReadyMessage, waLink } from "@/lib/whatsapp";
 import { signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
@@ -23,10 +25,11 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
     include: { client: true, intake: { include: { documentUploadedBy: { select: { name: true } } } }, agreement: true },
   });
   if (!project) notFound();
-  const [invoices, signoffs, noteCount] = await Promise.all([
+  const [invoices, signoffs, noteCount, updates] = await Promise.all([
     db.invoice.findMany({ where: { projectId: id }, orderBy: { issuedAt: "asc" } }),
     db.signoffEvent.findMany({ where: { projectId: id }, orderBy: { occurredAt: "asc" } }),
     db.agreementNote.count({ where: { projectId: id } }),
+    db.update.findMany({ where: { projectId: id }, orderBy: { weekNumber: "desc" }, take: 4 }),
   ]);
   const agreement = project.agreement ? agreementToAdminView(project.agreement) : null;
   const c = project.client;
@@ -62,8 +65,53 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <Link className="a-btn" href={`/admin/projects/${project.id}/agreement`}>{agreement ? (agreement.isAgreed ? "Read the agreement" : "Edit and send") : "Write the agreement"}</Link>
               {agreement?.sentAt && <a className="a-btn ghost" href={`/agreement/${project.id}/print`} target="_blank" rel="noopener">Print view</a>}
+              {project.phase === "AGREEMENT_SENT" && (
+                <a
+                  className="a-btn ghost"
+                  href={waLink(c.contactPhone, agreementReadyMessage({ contactName: c.contactName.trim().split(/\s+/)[0] || c.contactName, projectName: project.name }))}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Tell them on WhatsApp
+                </a>
+              )}
             </div>
           </div>
+
+          {project.phase === Phase.AGREED && (
+            <div className="a-card ember">
+              <span className="k ember">The one thing that moves this on</span>
+              <p className="c-sub" style={{ fontSize: 14 }}>
+                They have agreed and the advance is raised. Marking the kickoff done starts the build, and the weekly updates with it.
+              </p>
+              <form action={markKickoffAction}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <button className="a-btn" type="submit">Kickoff is done, start the build</button>
+              </form>
+            </div>
+          )}
+
+          {(project.phase === Phase.BUILDING || updates.length > 0) && (
+            <div className="a-card">
+              <div className="between">
+                <span className="k">Weekly updates</span>
+                <Link className="a-btn" href={`/admin/projects/${project.id}/updates`}>
+                  {updates.length === 0 ? "Write the first one" : "Write this week"}
+                </Link>
+              </div>
+              {updates.length === 0 && <p className="c-sub" style={{ fontSize: 14 }}>None yet. One a week, whether or not anything went wrong.</p>}
+              <div className="stack">
+                {updates.map((u) => (
+                  <div className="between" key={u.id} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
+                    <Link className="mono-sm" href={`/admin/projects/${project.id}/updates?week=${u.weekNumber}`} style={{ color: "var(--muted)" }}>
+                      Week {u.weekNumber}
+                    </Link>
+                    <span className="help">{u.sentAt ? `sent ${dayMonth(u.sentAt)}` : "draft, the client cannot see it"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {project.phase === Phase.AGREEMENT_SENT && (
             <RecordWhatsapp

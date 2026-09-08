@@ -8,6 +8,8 @@ export type EventType =
   | "agreement.sent"
   | "agreement.note"
   | "agreement.agreed"
+  | "update.sent"
+  | "project.kickoff"
   | "invoice.issued"
   | "invoice.paid"
   | "review.opened"

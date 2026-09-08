@@ -13,6 +13,7 @@ import type {
   InvoiceModel,
   ProjectModel,
   SignoffEventModel,
+  UpdateModel,
 } from "@/generated/prisma/models";
 import { dayMonthYear, isoDate } from "@/lib/dates";
 import { amountInWords, formatRupees, splitAdvance } from "@/lib/money";
@@ -221,5 +222,32 @@ export function signoffToClientView(s: SignoffEventModel): SignoffClientView {
     actorName: s.actorName,
     method: s.method,
     agreementVersion: s.agreementVersion,
+  };
+}
+
+export type UpdateClientView = {
+  id: string;
+  weekNumber: number;
+  sentAt: string;
+  moved: string;
+  nextUp: string;
+  needFromYou: string;
+  needByDate: string | null;
+  risks: string;
+  stagingUrl: string | null;
+};
+
+/** An update has no private half, so the client view is the whole row. */
+export function updateToClientView(u: UpdateModel): UpdateClientView {
+  return {
+    id: u.id,
+    weekNumber: u.weekNumber,
+    sentAt: dayMonthYear(u.sentAt),
+    moved: u.moved,
+    nextUp: u.nextUp,
+    needFromYou: u.needFromYou,
+    needByDate: u.needByDate ? dayMonthYear(u.needByDate) : null,
+    risks: u.risks.trim() ? u.risks : "None this week.",
+    stagingUrl: u.stagingUrl,
   };
 }

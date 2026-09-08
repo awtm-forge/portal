@@ -66,6 +66,24 @@ Three defects the tests found, and the fix in each case:
 
 Deferred: none from this step. The `modules/intake/versions/v1.ts` split named in §11 is still not done; the intake moved to `src/modules/intake/` in this step but keeps its flat layout, and the split lands with the second document version, since a versions folder holding one version is ceremony until there are two.
 
+## Step 7, weekly updates, the booking button and the WhatsApp links: done
+
+8 Sep 2026, AI-assisted.
+
+Built: the `update` table and its module. An update is a draft until it is sent, and frozen afterwards, because a client has read it by then and one that quietly changes is worth less than one that does not exist. The week to write is one after the last, or for the first update whichever week the calendar says the build is in, so a project that started three weeks ago opens on week four rather than week one.
+
+Admin gets the five fields, the same five every week, with the WhatsApp message built live from what is typed so the page and the message cannot disagree. Marking the kickoff done is the one action that moves a project from agreed to building, and it is the only loud thing on the project page while that is true.
+
+The client gets the current week in full under a "Week 4 of 8" line, with earlier weeks below it and collapsed. The Book a sync button appears only when a booking link is set, and is hidden rather than broken when it is not.
+
+Also in this step, because the booking link had nowhere to live: the settings screen. Company details, bank details, invoice prefix, GSTIN, booking URL and the default advance percentage. The prefix refuses to change once invoices carry it, since that would break a sequence a client has already seen.
+
+WhatsApp templates now written: questionnaire ready, the nudge, agreement ready, the weekly update, invoice issued. Ready for review and day 30 belong to steps 8 and 10.
+
+Verified: 8 end to end tests, on desktop and a phone, 43 in total. A draft is invisible to the client and a sent update has no edit control; the client sees the latest week with the counter and the earlier ones collapsed; the booking button hides itself; the kickoff action moves the phase and then disappears.
+
+Deferred: none.
+
 ## Step 6, the WhatsApp sign-off recording path: partial
 
 8 Sep 2026, AI-assisted.
@@ -103,7 +121,7 @@ The front half was built on 5 September under a brief that predated the architec
 | ~~No phase machine and no `project.phase`.~~ | Done in step 5. |
 | ~~No `activity_event`, no dispatcher, no notifications module.~~ | Done in step 5. |
 | ~~No serializers module.~~ Note against §2 rule 2: the fields landed in the schema commit and the leak test one commit later, the same afternoon, not in the same commit. | Done in step 5. |
-| ~~No `company` table.~~ The `setting` table exists but nothing reads it yet, and there is no settings screen. | Screen in step 11 or 12, wherever the booking URL and bank details are first needed. |
+| ~~No `company` table, and no settings screen.~~ Built in step 7, where the booking link first needed somewhere to live. The `setting` key-value table still exists and is still unread; it stays for the first setting that is not a company field. | Done in step 7. |
 | Intake validators moved to `src/modules/intake/` but are not split into `versions/v1.ts`. | With the second document version. A versions folder holding one version is ceremony. |
 | ~~The Prisma client is not wrapped to hide update and delete on evidence tables.~~ Guard is on the client itself, so a later screen cannot write its own query around it. | Done in step 5. |
 | ~~Unit tests only. No Playwright, no CI.~~ | Done in step 5. |

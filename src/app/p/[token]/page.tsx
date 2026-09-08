@@ -6,7 +6,10 @@ import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
 import { currentClientSession, projectByToken } from "@/modules/auth/client";
 import { intakeProgress } from "@/modules/intake/progress";
-import { invoiceToClientView } from "@/modules/serializers";
+import { invoiceToClientView, updateToClientView } from "@/modules/serializers";
+import { sentForProject } from "@/modules/updates";
+import { company } from "@/modules/settings";
+import { WeeklyUpdate } from "@/components/portal/WeeklyUpdate";
 import { CodeScreen } from "./CodeScreen";
 
 /**
@@ -28,10 +31,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
     );
   }
 
-  const [agreement, invoices] = await Promise.all([
+  const [agreement, invoices, updateRows, c] = await Promise.all([
     db.agreement.findUnique({ where: { projectId: project.id } }),
     db.invoice.findMany({ where: { projectId: project.id }, orderBy: { issuedAt: "asc" } }),
+    sentForProject(project.id),
+    company(),
   ]);
+  const updates = updateRows.map(updateToClientView);
+  const latest = updates[0] ?? null;
   const intake = project.intake;
   const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
   const phase = project.phase;
@@ -97,20 +104,52 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           </Card>
         )}
 
-        {(phase === Phase.AGREED || phase === Phase.BUILDING) && (
+        {phase === Phase.AGREED && (
           <Card>
-            <span className="sec-name" style={{ fontSize: 17 }}>
-              {phase === Phase.AGREED ? "Agreed, thank you. We start shortly." : "We are building it."}
-            </span>
-            <p className="c-sub">
-              {phase === Phase.AGREED
-                ? "Rahul will confirm the kickoff date with you, and the weekly updates start from there."
-                : "A written update lands here every week, whether or not anything went wrong."}
-            </p>
+            <span className="sec-name" style={{ fontSize: 17 }}>Agreed, thank you. We start shortly.</span>
+            <p className="c-sub">Rahul will confirm the kickoff date with you, and the weekly updates start from there.</p>
+          </Card>
+        )}
+
+        {phase === Phase.BUILDING && (
+          <Card loud={Boolean(latest)}>
+            {latest ? (
+              <>
+                <p className="k ember">
+                  {project.weekCount ? `Week ${latest.weekNumber} of ${project.weekCount}` : `Week ${latest.weekNumber}`}
+                </p>
+                <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Where your project is</span>
+                <p className="help">Sent {latest.sentAt}</p>
+                <WeeklyUpdate update={latest} full />
+              </>
+            ) : (
+              <>
+                <span className="sec-name" style={{ fontSize: 17 }}>We are building it.</span>
+                <p className="c-sub">A written update lands here every week, whether or not anything went wrong. The first one is on its way.</p>
+              </>
+            )}
+            {c.bookingUrl && (
+              <a className="btn-full ghost" href={c.bookingUrl} target="_blank" rel="noopener" style={{ marginTop: 4 }}>
+                Book a sync
+              </a>
+            )}
           </Card>
         )}
 
         {/* Below the fold, collapsed: the record so far. */}
+        {updates.length > 1 && (
+          <Collapsed summary={`Earlier weeks, ${updates.length - 1}`}>
+            <div className="stack">
+              {updates.slice(1).map((u) => (
+                <details key={u.id} className="pushback" style={{ borderTop: "none", paddingTop: 0, marginTop: 0 }}>
+                  <summary>Week {u.weekNumber}, {u.sentAt}</summary>
+                  <div style={{ paddingTop: 10 }}><WeeklyUpdate update={u} full /></div>
+                </details>
+              ))}
+            </div>
+          </Collapsed>
+        )}
+
         {intake?.submittedAt && phase !== Phase.INTAKE && (
           <Collapsed summary="What you told us">
             <Link className="btn-full ghost" href={`/p/${token}/intake`}>Read it back, and change anything</Link>

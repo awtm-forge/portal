@@ -116,8 +116,8 @@ erDiagram
   update {
     id id PK
     id project_id FK
-    int week_number
-    datetime sent_at
+    int week_number "unique per project"
+    datetime sent_at "null while a draft; set once, then frozen"
     text moved
     text next_up
     text need_from_you

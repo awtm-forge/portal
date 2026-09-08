@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 8 September 2026.
+route; last checked against the code on 8 September 2026, after step 7.
 
 Zones and their rules are in `ARCHITECTURE.md`. Everything outside the
 marketing zone sends `X-Robots-Tag: noindex, nofollow`, `Cache-Control:
@@ -24,7 +24,7 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 
 | Route | Method | Auth | Notes |
 |---|---|---|---|
-| `/p/[token]` | GET | link; a session shows the project | The one page whose content follows `project.phase`. Without a session it is the code screen. |
+| `/p/[token]` | GET | link; a session shows the project | The one page whose content follows `project.phase`. Without a session it is the code screen. While building it carries the current week in full, the week counter, and the Book a sync button when a booking link is set. |
 | `/p/[token]` (code) | server action | link | Requesting a `login` code, then verifying it. Ten minutes, five attempts, single use, then a thirty-day cookie (criterion 5). |
 | `/p/[token]/intake` | GET | link and session | The questionnaire, one section at a time. |
 | `/p/[token]/intake/api/[action]` | POST | link and session, same origin | `save`, `access`, `section-done`, `submit`, `upload`, `remove-file`. Submitting moves the phase to `agreement_draft` and notifies the team. |
@@ -66,6 +66,9 @@ prints a one-time setup link and never a password.
 | `/admin/projects/[id]/file/[fileId]` | GET | admin | An uploaded file or its thumbnail. |
 | `/admin/lib/[key]` | GET | admin | An image library picture. |
 | `/admin/library` | GET, server action | admin | Upload, replace, delete. A key named by any uploaded questionnaire cannot be deleted. |
+| `/admin/settings` | GET, server action | admin | Our own details: company, bank, invoice prefix, GSTIN, booking URL, default advance percentage. The prefix refuses to change once invoices carry it. Nothing here belongs to a client. |
+| `/admin/projects/[id]/updates` | GET, server action | admin | The weekly update. A draft until sent, frozen after. `?week=N` opens a particular week. The WhatsApp message is built from the same fields. |
+| `/admin/projects/[id]` (mark kickoff) | server action | admin | PORTAL-SPEC 5.2, `agreed` to `building`. Offered only while the phase is `agreed`. |
 
 ## Not built yet
 
