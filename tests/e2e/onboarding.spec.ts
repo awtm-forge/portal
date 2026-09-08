@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeDb, query, resetRateLimits } from "./fixtures";
+import { closeDb, freshLink, INTAKE_SLUG, query, resetRateLimits, SEED_SLUG } from "./fixtures";
 
 /**
  * Onboarding a client and handing over the link. The rule under test is
@@ -125,4 +125,33 @@ test("a client with no project says so, and offers to start one", async ({ page 
   await expect(page.getByText(/no project yet/i).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /start a project/i })).toBeVisible();
   await expect(page.getByText(/no password exists/i)).toBeVisible();
+});
+
+test("rotating the link kills the old one on the next request", async ({ request }) => {
+  // Acceptance criterion 9. Rotation is what you reach for when a link went to
+  // the wrong person, so the old one has to stop working, not merely stop
+  // being advertised.
+  const first = await freshLink(SEED_SLUG);
+  expect((await request.get(`/p/${first.token}`, { maxRedirects: 0 })).status()).toBe(200);
+
+  const second = await freshLink(SEED_SLUG);
+  expect(second.token).not.toBe(first.token);
+  expect((await request.get(`/p/${first.token}`, { maxRedirects: 0 })).status()).toBe(404);
+  expect((await request.get(`/p/${second.token}`, { maxRedirects: 0 })).status()).toBe(200);
+});
+
+test("an uploaded file cannot be reached by guessing its address", async ({ request }) => {
+  // INTAKE-SPEC 14.6. The id is a cuid, so guessing one is not the threat; the
+  // threat is a real id reaching someone who has no session for that project.
+  const { token, projectId } = await freshLink(SEED_SLUG);
+  const rows = await query<{ id: string }>("SELECT id FROM IntakeFile WHERE projectId = ? LIMIT 1", [projectId]);
+  const fileId = rows[0]?.id ?? "cmtsq9anb005mpvs4w4avnux6";
+
+  // No session at all.
+  expect((await request.get(`/p/${token}/file/${fileId}`, { maxRedirects: 0 })).status()).toBe(404);
+  // A real id under someone else's token, which is the case that matters.
+  const other = await freshLink(INTAKE_SLUG);
+  expect((await request.get(`/p/${other.token}/file/${fileId}`, { maxRedirects: 0 })).status()).toBe(404);
+  // And the admin route is no easier without a session.
+  expect((await request.get(`/admin/projects/${projectId}/file/${fileId}`, { maxRedirects: 0 })).status()).not.toBe(200);
 });

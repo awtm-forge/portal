@@ -19,3 +19,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-09 Ready to deploy: /healthz, demo data kept out of production, and a runbook that matches the code rather than the staging plan it was written for.
 - 2026-09-09 Step 10, day 30: the page that unlocks by arithmetic rather than a scheduled job, the number, the quote approved in the client's own hands, friction notes for us, and the last of the WhatsApp templates. Closing a project, which the spec described and nothing did.
 - 2026-09-09 Step 11, the needs-attention block worked out on read, the runbook, a request id on every response, cancelling a project, and the kickoff timestamp the eight-day rule needed.
+- 2026-09-09 The acceptance audit: all thirty-four criteria mapped to what covers them, five missing tests written, and five left that need a person rather than a test.

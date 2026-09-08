@@ -84,6 +84,26 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The acceptance audit: done, with five things left for a person
+
+9 Sep 2026, AI-assisted.
+
+CLAUDE.md section 10 says the job is finished when every criterion in PORTAL-SPEC section 10 and INTAKE-SPEC section 14 has a passing test or a recorded manual check with a date. Nobody had ever checked that claim against the tests, so I did, and wrote `docs/ACCEPTANCE.md`: all thirty-four, each with the test that covers it or an honest note about what is missing.
+
+The audit found six criteria with no test at all, and five of them were cheap enough to close on the spot:
+
+- **Criterion 9**, that rotating a link 404s the old one, had no test. It is the thing you reach for when a link went to the wrong person, so the old one has to stop working rather than just stop being advertised. Tested now.
+- **INTAKE 14.6**, that a file cannot be reached by guessing its address. The interesting case is not a guessed id, it is a real id under someone else's token, and that is what the test uses.
+- **INTAKE 14.7**, the agreement gate and the recorded override. **14.8**, an answer typed by the team keeping its mark. **14.11**, replacing a questionnaire keeping the answers whose questions survive, and hiding rather than losing the ones whose questions do not.
+
+Twenty-six of the thirty-four now have a passing test, up from twenty-one.
+
+Five are left, and every one needs a person rather than a test: that no log line can hold a client credential, one action above the fold at 375px on three pages, the print routes on A4, an answer surviving a new device, and the eight question types on a phone. None is a known defect. They are places where the guarantee rests on somebody having looked, and nobody wrote down when.
+
+Two more cannot pass or fail as written, and only Rahul can say how they should read: criterion 14, both themes, when there is one theme; and criterion 20, matching the marketing site, when the marketing site is not deployed.
+
+Verified: 117 unit tests and 111 end to end.
+
 ## Step 11, needs attention, the runbook and the request id: done
 
 9 Sep 2026, AI-assisted.
