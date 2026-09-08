@@ -46,5 +46,5 @@ const PRIVATE = {
 };
 
 export const config = {
-  matcher: ["/", "/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"],
+  matcher: ["/", "/healthz", "/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"],
 };

@@ -131,6 +131,14 @@ test.describe("the leak walk", () => {
     }
   });
 
+  test("healthz answers, and says only whether it is well", async ({ request }) => {
+    const response = await request.get("/healthz");
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ status: "ok" });
+    expect(response.headers()["cache-control"]).toContain("no-store");
+  });
+
   test("the root is a way into the portal, not the marketing site", async ({ request }) => {
     // ADR 0012: this host serves the portal and the admin. The marketing site
     // is kept in components/marketing and is not routed here.

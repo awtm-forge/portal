@@ -3,18 +3,22 @@
 One Node.js web app on Cloud Professional, deployed from GitHub. Hostinger builds
 on every push to the connected branch.
 
-## Branches
+Deploy `main`. The two-branch staging plan this file used to describe is
+finished: `front-half` was merged long ago and is twenty commits behind, and
+the marketing-site-first deploy it existed for no longer applies (ADR 0012).
+The branch is still on the remote and can be deleted whenever Rahul says so.
 
-- `main` holds step 1 only: the marketing site. Tag `step-1-marketing`. Deploy
-  this first and confirm the Node environment works before anything else.
-- `front-half` holds steps 2 to 4: schema, client login, admin, questionnaire.
-  Merge it into `main` after the step 1 deploy is confirmed and the database
-  and environment variables below exist.
+What is deployed: steps 1 to 9 of PORTAL-SPEC section 9. A project can be
+created, the client can fill the questionnaire, agree the agreement, receive
+weekly updates, check the delivery, sign it off and see both invoices. Two
+things are not built yet, and neither stops a launch: the day-30 page (step
+10), so a project delivered today reaches its unlock in thirty days and finds
+nothing there, and the needs-attention block on the projects list (step 11).
 
 ## hPanel settings, once
 
 Websites, Add website, Node.js web app, Import Git repository, connect the
-`zekst` GitHub account, pick `zekst/awtmforge`.
+`zekst` GitHub account, pick `awtm-forge/portal`.
 
 | Setting | Value |
 |---|---|
@@ -40,12 +44,15 @@ fails to transpile against the WASM fallback. The build script passes
 `--webpack` for the same reason.
 
 The build script runs `prisma generate`, then `prisma migrate deploy` when
-`DATABASE_URL` is set (skipped when it is not, so step 1 builds without a
-database), then `next build`.
+`DATABASE_URL` is set, then `next build`. Migrations run on every deploy and
+are additive, so a deploy never drops a column out from under a running
+process. With `DATABASE_URL` unset the migration step is skipped rather than
+failing, which is how the very first build can succeed before the database
+exists.
 
 ## Environment variables
 
-Set these in hPanel, never in the repo. None are needed for step 1.
+Set these in hPanel, never in the repo. Every one of them is needed.
 
 | Name | Used for |
 |---|---|
@@ -60,11 +67,16 @@ Set these in hPanel, never in the repo. None are needed for step 1.
 | `SMTP_PASS` | that mailbox's password |
 | `SMTP_FROM` | `awtm forge <hello@awtmforge.com>` |
 | `TEAM_NOTIFY_EMAIL` | where team notifications go: intake submitted, agreed, delivered, and every enquiry |
-| `TZ` | `Asia/Kolkata` |
+| `TZ` | `Asia/Kolkata`. All dates, the financial year boundary and invoice dates are computed here. |
+| `NODE_ENV` | `production`. Hostinger sets this itself; confirm it, because the seed uses it to keep demo projects out. |
+
+Do not set `MAIL_TRANSPORT`. It exists so the tests can write mail to the log
+instead of sending it, and setting it in production would silently stop every
+one-time code from being delivered.
 
 Without `SMTP_HOST` the app refuses to send codes in production.
 
-## After the front-half deploy, over SSH
+## First run, over SSH
 
 Hostinger Cloud plans include SSH. From the app directory:
 
@@ -83,14 +95,25 @@ it again replaces the link, which is also how a forgotten password is reset.
 Two accounts is the limit. The email is what you sign in with; the name is what
 the admin pages show.
 
-Then seed the image library with the six logo directions:
+Then seed the company row and the six logo directions the questionnaire
+refers to:
 
 ```bash
 npm run db:seed
 ```
 
-The seed also creates a sample project, Kavya Appliances, and prints its
-client link. Delete that project before real use, or keep it as a demo.
+With `NODE_ENV=production` this seeds the company row and the image library
+and nothing else. It says so on the last line. The two demo projects are
+development data: they use fictional clients and they print a client link,
+which is a bearer credential, and there is no delete-project path by design,
+so a demo project seeded here would stay for good. If you want one anyway,
+`npm run db:seed -- --demo`, and know what you are choosing.
+
+Then open `/admin/settings` and fill in the bank details. Without them a
+printed invoice has no account number on it, and the admin invoice list will
+tell you so on every project. The invoice prefix is `AWTM` and refuses to
+change once invoices carry it. Leave GSTIN empty until you register: see
+`QUESTIONS.md` Q7, because the tax rate is not decided.
 
 ## Checks
 
@@ -105,11 +128,18 @@ client link. Delete that project before real use, or keep it as a demo.
    `https://dashboard.awtmforge.com/p/anything` is 404. If either is 200,
    `ADMIN_URL` is unset or does not match, and both zones are answering on
    both names.
-5. Uploads survive a redeploy: put a marker file in `UPLOAD_DIR`, push a
+5. `curl -s https://portal.awtmforge.com/healthz` is `{"status":"ok"}`. It is
+   200 only when the database answers, so it is the first thing to check when
+   something looks wrong. Point Hostinger's monitor at it.
+6. A real one-time code arrives. Open a project link on a phone, ask for the
+   code, and confirm it reaches the sign-off address. This is the one check
+   that proves SMTP, and nothing else does.
+7. Uploads survive a redeploy: put a marker file in `UPLOAD_DIR`, push a
    trivial commit, confirm the marker is still there. If it is not, uploads
    need a different home and the build stops to say so.
-6. Stop MySQL from hPanel and load `/`. The way-in page still renders: it
-   reads nothing.
+8. Stop MySQL from hPanel and load `/`. The way-in page still renders: it
+   reads nothing. `/healthz` goes 503 while it is down, which is correct.
+   Start MySQL again.
 
 ## Known and accepted
 
@@ -124,4 +154,33 @@ client link. Delete that project before real use, or keep it as a demo.
   the link already sent.
 - HEIC uploads are refused with a message asking for a JPG (INTAKE-SPEC 16).
 - The app process is stopped by Hostinger when idle and restarted on the next
-  request, so the first visit after a quiet spell takes a few seconds.
+  request, so the first visit after a quiet spell takes a few seconds. Nothing
+  lives in process memory, so this costs latency and nothing else.
+- Day 30 and the needs-attention block are not built. See the top of this file.
+
+## Backups
+
+Hostinger's own backups cover the account. Take our own of the database as
+well, because a bad migration is not what those are for. Nightly, over SSH or
+as a cron entry in hPanel:
+
+```bash
+mysqldump --single-transaction --routines --no-tablespaces -u USER -p DBNAME | gzip > ~/backups/awtm-$(date +%F).sql.gz
+```
+
+`--single-transaction` so the dump is consistent without locking the site.
+Keep thirty days, and delete anything older:
+
+```bash
+find ~/backups -name 'awtm-*.sql.gz' -mtime +30 -delete
+```
+
+The uploads directory needs the same treatment and is not in the dump:
+
+```bash
+tar czf ~/backups/uploads-$(date +%F).tar.gz -C /home/zekst awtm-uploads
+```
+
+A restore has to be tested once before it is worth anything. Step 11 puts that
+in `docs/RUNBOOK.md`; until then, do it by hand into a scratch database and
+write down what you did.

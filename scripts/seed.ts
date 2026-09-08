@@ -1,7 +1,17 @@
-// Seeds the development database: the six library images, one client, one
-// project with its questionnaire and a few answers. Prints the client link,
-// which is fine only because this is a development database.
-//   npm run db:seed
+// Seeds a database.
+//
+// Two halves. The company row and the six library images are what any
+// database needs, production included: the invoice prefix, the advance
+// percentage and the logo directions the questionnaire refers to.
+//
+// The demo projects are development only. They carry fictional clients and
+// they print a client link, which is a bearer credential (PORTAL-SPEC 5.9),
+// so they are skipped when NODE_ENV is production unless --demo says
+// otherwise. There is no delete-project path by design, so a demo project
+// seeded into production would stay there.
+//
+//   npm run db:seed            company and library, plus demo outside production
+//   npm run db:seed -- --demo  demo projects as well, wherever you are
 import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -231,10 +241,17 @@ async function seedBuildingProject() {
 }
 
 async function main() {
+  const demo = process.argv.includes("--demo") || process.env.NODE_ENV !== "production";
+
   await seedCompany();
   await seedLibrary();
-  await seedProject();
-  await seedBuildingProject();
+
+  if (demo) {
+    await seedProject();
+    await seedBuildingProject();
+  } else {
+    console.log("demo projects skipped: NODE_ENV is production. Pass --demo to seed them anyway.");
+  }
   await db.$disconnect();
 }
 

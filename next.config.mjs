@@ -11,7 +11,7 @@
 // zone rather than as one catch-all, because a catch-all would also put
 // no-store on Next's content-hashed static assets, which are safe to cache
 // forever. These are the zones PORTAL-SPEC criterion 18 names, plus "/".
-const privateZones = ["/", "/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"];
+const privateZones = ["/", "/healthz", "/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"];
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {

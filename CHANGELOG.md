@@ -16,3 +16,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-08 Moved `phoneDigits` out of `crypto.ts`, so a client component no longer drags `node:crypto` into the browser bundle and the webpack build Hostinger needs succeeds.
 - 2026-09-08 Step 9, the money made visible: the printable invoice with its total in words and a GST block that waits for a GSTIN, mark paid with the date rules, and the one invoice an admin may raise by hand.
 - 2026-09-09 The marketing site leaves the root and this host serves the portal only (ADR 0012), and the client portal and the team admin answer on two hostnames from one app (ADR 0013).
+- 2026-09-09 Ready to deploy: /healthz, demo data kept out of production, and a runbook that matches the code rather than the staging plan it was written for.

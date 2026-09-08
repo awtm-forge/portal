@@ -84,6 +84,26 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## Ready to deploy: healthz, a seed that is safe in production, a runbook that is true: done
+
+9 Sep 2026, AI-assisted. Rahul asked to go live, which is the credential boundary in CLAUDE.md section 6.
+
+Built: `/healthz`, which answers 200 only when the database answers and says nothing else. No version, no environment, no error text: it is reachable without signing in, and the detail belongs in the log.
+
+Three things were wrong for a production deploy, and none would have shown up in a test:
+
+- **`npm run db:seed` would have put two fictional projects into production**, with fictional clients, and printed a client link to the deploy log. A link is a bearer credential (PORTAL-SPEC 5.9), and there is no delete-project path by design, so both would have stayed for good. The company row and the image library are what production actually needs; the demo projects now need `--demo`, or a `NODE_ENV` that is not production.
+- **`DEPLOY.md` still described a two-branch staging plan** where `main` held the marketing site alone and `front-half` was merged after. `front-half` was merged long ago and is twenty commits behind, and the marketing site is not routed any more. Anyone following that file would have deployed the wrong thing first.
+- **It also pointed at `zekst/awtmforge`**, which now redirects, and it had no backup section at all, though CLAUDE.md section 6 requires the nightly `mysqldump` note. That is written now, with the uploads directory beside it, because the dump does not include it.
+
+Also added to the checks: a `/healthz` curl, and a real one-time code delivered to a real address, which is the only check that proves SMTP.
+
+Verified: 85 unit tests, 79 end to end, the webpack build.
+
+Deferred: steps 10 and 11 are not built, and `DEPLOY.md` now says so at the top rather than leaving it to be discovered. A project delivered today reaches its day-30 unlock in thirty days and finds nothing there. That is the deadline on step 10.
+
+Needs Rahul: bank details at `/admin/settings` before the first invoice is printed, and Q7 on the GST rate before registering.
+
 ## The marketing site leaves the root, and the two portals get two hostnames: done
 
 9 Sep 2026, AI-assisted. Two decisions from Rahul, both outside the step order.
