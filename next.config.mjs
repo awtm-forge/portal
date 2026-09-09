@@ -13,9 +13,19 @@
 // forever. These are the zones PORTAL-SPEC criterion 18 names, plus "/".
 const privateZones = ["/", "/healthz", "/p/:path*", "/admin/:path*", "/invoice/:path*", "/agreement/:path*", "/api/:path*"];
 
+// The commit this build came from, baked in at build time so /healthz can say
+// which version is actually running. Found out the hard way that "the panel
+// says Completed" and "the fix is live" are different claims.
+import { execSync } from "node:child_process";
+let buildCommit = "unknown";
+try {
+  buildCommit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+} catch {}
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  env: { BUILD_COMMIT: buildCommit },
   async headers() {
     return privateZones.map((source) => ({
       source,

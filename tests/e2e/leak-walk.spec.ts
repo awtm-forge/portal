@@ -133,11 +133,13 @@ test.describe("the leak walk", () => {
     }
   });
 
-  test("healthz answers, and says only whether it is well", async ({ request }) => {
+  test("healthz answers, and says which build this is", async ({ request }) => {
     const response = await request.get("/healthz");
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toEqual({ status: "ok" });
+    expect(body.status).toBe("ok");
+    expect(body.commit).toMatch(/^[0-9a-f]{7,}$|^unknown$/);
+    expect(typeof body.claimed).toBe("boolean");
     expect(response.headers()["cache-control"]).toContain("no-store");
   });
 

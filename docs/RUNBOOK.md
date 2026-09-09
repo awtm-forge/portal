@@ -107,10 +107,16 @@ URL, default advance percentage. Fill in the bank details before the first
 invoice is printed, or it goes out with no account number on it. The prefix
 refuses to change once invoices carry it.
 
-**Add an admin.** Over SSH, `npm run admin:create -- <email> "<name>"`. It
-prints a one-time setup link, valid 48 hours, used once, and never a password.
-Running it again replaces the link, which is also the password reset. Two
-accounts is the limit.
+**Add the other admin, or reset a password.** Settings, The team, Add the
+other admin. Enter their email and name and it shows a one-time setup link,
+once, valid 48 hours. Send it on WhatsApp; they choose their own password when
+they open it. Entering an existing address reissues that person's link, which
+is the password reset for either of you. Two accounts is the limit. The
+`admin:create` script does the same over SSH on a host that will run one.
+
+**The very first admin** on a fresh deployment, when nobody can sign in yet:
+`/admin/first-run`, gated on `SETUP_KEY`. It disappears once anyone has a
+password.
 
 ## When something looks wrong
 

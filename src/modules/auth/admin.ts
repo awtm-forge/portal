@@ -169,3 +169,50 @@ export async function createFirstAdmin(args: {
   logger.info("first admin created", { email });
   return { ok: true, token };
 }
+
+/* -------------------------------------------------------------------------
+ * The second account, made by the first. PORTAL-SPEC 6.6 allows two admins
+ * and no self-registration. On a host that will not run a script this is the
+ * only way the second person ever gets in, and it is also the password reset
+ * for either of them: running it for an existing address reissues the link.
+ * ---------------------------------------------------------------------- */
+
+export type InviteResult =
+  | { ok: true; token: string; email: string }
+  | { ok: false; reason: "invalid" | "limit" };
+
+export async function listAdmins() {
+  return db.adminUser.findMany({
+    orderBy: { createdAt: "asc" },
+    select: { id: true, email: true, name: true, passwordHash: true, setupExpiresAt: true },
+  });
+}
+
+export async function inviteAdmin(args: { email: string; name: string }): Promise<InviteResult> {
+  const email = args.email.trim().toLowerCase();
+  const name = args.name.trim();
+  if (!email.includes("@") || email.length > 200 || !name || name.length > 120) {
+    return { ok: false, reason: "invalid" };
+  }
+  const others = await db.adminUser.count({ where: { NOT: { email } } });
+  if (others >= 2) return { ok: false, reason: "limit" };
+
+  const token = randomToken();
+  await db.adminUser.upsert({
+    where: { email },
+    create: {
+      email,
+      name,
+      setupTokenHash: hashToken(token),
+      setupExpiresAt: new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000),
+    },
+    update: {
+      name,
+      setupTokenHash: hashToken(token),
+      setupExpiresAt: new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000),
+      setupLinkUsedAt: null,
+    },
+  });
+  logger.info("admin invited", { email });
+  return { ok: true, token, email };
+}
