@@ -66,7 +66,7 @@ Set these in hPanel, never in the repo. Every one of them is needed.
 | `SMTP_USER` | `hello@awtmforge.com` |
 | `SMTP_PASS` | that mailbox's password |
 | `SMTP_FROM` | `awtm forge <hello@awtmforge.com>` |
-| `TEAM_NOTIFY_EMAIL` | `rahul@awtmforge.com`. Where team notifications go: intake submitted, agreed, changes requested, delivered, day 30 approved, and every enquiry. One address, not a list. |
+| `TEAM_NOTIFY_EMAIL` | `hello@awtmforge.com`, the team inbox, so both founders see them. Where team notifications go: intake submitted, agreed, changes requested, delivered, day 30 approved, and every enquiry. One address, not a list. |
 | `TZ` | `Asia/Kolkata`. All dates, the financial year boundary and invoice dates are computed here. |
 | `NODE_ENV` | `production`. Hostinger sets this itself; confirm it, because the seed uses it to keep demo projects out. |
 
@@ -74,7 +74,11 @@ Do not set `MAIL_TRANSPORT`. It exists so the tests can write mail to the log
 instead of sending it, and setting it in production would silently stop every
 one-time code from being delivered.
 
-Without `SMTP_HOST` the app refuses to send codes in production.
+Without `SMTP_HOST` the app refuses to send codes in production, on purpose,
+rather than failing quietly. The consequence is absolute: no client can get
+past the code screen, so no client can sign in at all. Set the five `SMTP_*`
+variables before the first project link is sent, and run check 6 below with a
+real address before trusting it.
 
 ## First run, over SSH
 
