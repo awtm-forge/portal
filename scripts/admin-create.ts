@@ -12,13 +12,26 @@ import { adminBase } from "../src/lib/hosts";
 const SETUP_HOURS = 48;
 
 async function main() {
-  const [email, name] = process.argv.slice(2);
+  // Arguments first, environment second. Hostinger's panel can run an npm
+  // script but not pass arguments to it, and the panel is the only way in on
+  // a host where SSH has no Node on the PATH. Setting two variables there and
+  // pressing run has to work, or a fresh deploy has no way to make its first
+  // account.
+  const [argEmail, argName] = process.argv.slice(2);
+  const email = argEmail || process.env.ADMIN_EMAIL;
+  const name = argName || process.env.ADMIN_NAME;
   if (!email || !name) {
     console.error('usage: npm run admin:create -- <email> "<name>"');
+    console.error("   or: set ADMIN_EMAIL and ADMIN_NAME and run it with no arguments");
     process.exit(2);
   }
 
-  const u = new URL(process.env.DATABASE_URL ?? "");
+  if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_URL is not set in this shell. Run it from the panel, which has");
+    console.error("the app's own environment, or prefix it with the value from hPanel.");
+    process.exit(2);
+  }
+  const u = new URL(process.env.DATABASE_URL);
   const db = new PrismaClient({
     adapter: new PrismaMariaDb({
       host: u.hostname,

@@ -108,6 +108,18 @@ From that directory:
 npm run admin:create -- rahul@awtmforge.com "Rahul"
 ```
 
+If SSH is fighting you, hPanel's Node.js application page has a **Run NPM
+script** control that runs in the app's own environment, with `DATABASE_URL`
+already set. It cannot pass arguments, so set two variables on that same page
+and run `admin:create` with none:
+
+| Name | Value |
+|---|---|
+| `ADMIN_EMAIL` | `rahul@awtmforge.com` |
+| `ADMIN_NAME` | `Rahul` |
+
+Delete both once the account exists. They are not secret, they are just clutter.
+
 ```bash
 npm run admin:create -- ayushphiks@gmail.com "Ayush"
 ```
