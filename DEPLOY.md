@@ -74,6 +74,11 @@ Do not set `MAIL_TRANSPORT`. It exists so the tests can write mail to the log
 instead of sending it, and setting it in production would silently stop every
 one-time code from being delivered.
 
+A value saved in hPanel reaches the app only on the next deploy. After adding
+or changing one, press Redeploy on the Deployments page, or push a commit, and
+wait for the deploy to finish. `/healthz` reports `"mail":"smtp"` once the
+SMTP values are live, and its `commit` field says which build answered.
+
 Without `SMTP_HOST` the app refuses to send codes in production, on purpose,
 rather than failing quietly. The consequence is absolute: no client can get
 past the code screen, so no client can sign in at all. Set the five `SMTP_*`
