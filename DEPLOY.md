@@ -78,7 +78,13 @@ Without `SMTP_HOST` the app refuses to send codes in production.
 
 ## First run, over SSH
 
-Hostinger Cloud plans include SSH. From the app directory:
+**Nobody can sign in until this is done.** The production database is not the
+one on anyone's laptop: an account created locally does not exist here. Until
+`admin:create` has run on the server, `/admin/login` renders and refuses every
+password, because there is no account to match.
+
+Hostinger Cloud plans include SSH, and hPanel has a browser terminal that does
+the same job. From the app directory:
 
 ```bash
 npm run admin:create -- rahul@awtmforge.com "Rahul"
@@ -88,8 +94,14 @@ npm run admin:create -- rahul@awtmforge.com "Rahul"
 npm run admin:create -- ayushphiks@gmail.com "Ayush"
 ```
 
-Each prints a one-time setup link. Open it within 48 hours and choose your own
-password, at least twelve characters. The command never generates or prints a
+Each prints a one-time setup link, built from `ADMIN_URL` when that is set and
+from `APP_URL` when it is not, so it always points at the host the admin
+actually answers on. Open it within 48 hours and choose your own password, at
+least twelve characters. Setting the password signs you straight in; there is
+no second login screen.
+
+If the link it prints starts with `http://localhost`, then neither `APP_URL`
+nor `ADMIN_URL` is set on the server. Fix that first, or the link is useless. The command never generates or prints a
 password, and no password is ever typed into a terminal or a message. Running
 it again replaces the link, which is also how a forgotten password is reset.
 Two accounts is the limit. The email is what you sign in with; the name is what

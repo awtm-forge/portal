@@ -134,3 +134,19 @@ The one-thing-to-do rule is not what changed. It is about attention, not width: 
 What changed is that 480px stopped being the width of the page and became the measure of its prose. The shell spans the window, the measure grows with the viewport, and repeated controls spread out when there is room: the questionnaire's option lists go four across at 1440 and the page lost five hundred pixels of height. The questionnaire gets a wider measure than the rest, because it is a form and a form wants more room than an article.
 
 Two lines in the specs are now out of step and are yours to reword: CLAUDE.md 2 item 9, and criterion 13. Both should say "at any width" rather than naming a phone. Criterion 20, which compares the portal to a marketing site that is no longer deployed, was already waiting for the same treatment.
+
+## Q12. The questionnaire comes before the project, not after it
+
+Asked by Rahul on 9 Sep 2026: "questionnaire should not be followed by project. Once client is created questionnaire can be sent."
+
+Today a questionnaire hangs off a project, so to send one you must first invent a project: a name and a type of work, at the moment in the relationship when you know least. PORTAL-SPEC section 4 puts `intake` on `project` and the client link on `project` too, so this is a departure from the spec, not a gap in it.
+
+The questionnaire itself argues for the change. Its five sections are Your business, What is going wrong, What it should look like, Who decides, and Access. Every one is about the business, not about a piece of work. It is discovery, and discovery happens before there is a project to name.
+
+- **Move the questionnaire and the link to the client.** One client, one questionnaire, one link that never expires, and projects appear on that link as they start. Matches how the work is actually sold, and matches what the portal footer already promises: "This page is yours and the link does not expire." Costs the most: the link and the session are keyed to a project today, so this touches the sixteen files that resolve a token, the twenty-one routes under `/p/`, the sign-off flows, and every end to end spec.
+- **Create the project silently when the questionnaire is sent.** Small, a day. The project gets a placeholder name until it is renamed. Rejected: the templates drop the project name straight into a sentence, so the client receives "Thank you for trusting us with solution", which Rahul saw happen on 9 September with exactly this shortcut. It would ship that permanently.
+- **Leave it.** Rejected: it is the friction he asked to remove.
+
+Taking the first. The second is faster and produces a worse product for a client to read, which is the wrong trade for a feature whose whole purpose is the client's first impression.
+
+What it changes that needs deciding as it is built, recorded here as it is met: what `/p/[token]` shows a client whose questionnaire is done and whose project has not started, and whether a second project for the same client asks the questionnaire again. Taking: it shows "we are writing your agreement" with no action, and no, it is asked once per client.

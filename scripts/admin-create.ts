@@ -7,6 +7,7 @@ import "dotenv/config";
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { adminBase } from "../src/lib/hosts";
 
 const SETUP_HOURS = 48;
 
@@ -47,7 +48,10 @@ async function main() {
   });
   await db.$disconnect();
 
-  const base = (process.env.APP_URL ?? "http://localhost:3200").replace(/\/$/, "");
+  // The admin host, not APP_URL. Once the two hosts are split (ADR 0013),
+  // APP_URL is where clients land and it answers 404 for /admin by design, so
+  // a setup link built from it would be dead on arrival.
+  const base = adminBase();
   console.log("");
   console.log(`Admin ${lower} is ready. Open this link within ${SETUP_HOURS} hours and choose a password:`);
   console.log("");
