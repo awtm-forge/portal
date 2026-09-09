@@ -20,7 +20,7 @@ the team host with a 404, and sends the bare team host to `/admin`. When
 |---|---|---|---|
 | `/` | GET | none | Says the project page opens from the emailed link and offers a quiet team sign-in. Reads nothing, so it renders with the database stopped. On the team host it redirects to `/admin`. |
 | `/robots.txt` | GET | none | `Disallow: /`. Generated from `src/app/robots.ts`. |
-| `/healthz` | GET | none | `{"status":"ok"}` when the database answers, 503 and `degraded` when it does not. Says nothing else: it is reachable without signing in, so the failure detail goes to the log. |
+| `/healthz` | GET | none | `{"status":"ok","commit","claimed","mail","mailVars"}` when the database answers, 503 and `degraded` when it does not. `commit` is the short hash of the running build, `claimed` whether anyone can sign in, `mail` one of `smtp`, `log`, `none`, and `mailVars` which of the six mail variables the process sees, by name only: set, empty, missing, and any key with SMTP in it that is not one of them. No values and no error text: it is reachable without signing in, so the failure detail goes to the log. |
 | `/api/enquiry` | POST | none, same origin only | `{name, business, problem, budget, adSpend, contact}` as JSON. Rate limited to five an hour per IP. Writes `enquiry` and emits `enquiry.received`, which emails the team. Answers 503 rather than pretending when the database is down. Nothing posts to it while the marketing site is unrouted; it is kept for when the site returns on its own host. |
 
 ## Client portal, dynamic, unindexed

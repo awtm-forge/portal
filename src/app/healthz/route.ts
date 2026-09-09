@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { mailMode } from "@/lib/mail";
+import { mailMode, mailVars } from "@/lib/mail";
 import { activatedAdminCount } from "@/modules/auth/admin";
 import { requestLogger, safeError } from "@/lib/logger";
 
@@ -9,9 +9,10 @@ import { requestLogger, safeError } from "@/lib/logger";
  * looks wrong. It answers 200 only if the database answers, because a node
  * that is up with no database serves nothing anyone wants.
  *
- * It says whether it is well, which build it is, and whether anyone can sign
- * in yet. No environment, no error text: a health endpoint is reachable
- * without signing in, and the failure detail belongs in the log.
+ * It says whether it is well, which build it is, whether anyone can sign in
+ * yet, and which mail variables it can see, by name. No values, no error
+ * text: a health endpoint is reachable without signing in, and the failure
+ * detail belongs in the log.
  */
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,13 @@ export async function GET() {
     // would have saved an afternoon of guessing on 9 September.
     const claimed = (await activatedAdminCount()) > 0;
     return NextResponse.json(
-      { status: "ok", commit: process.env.BUILD_COMMIT ?? "unknown", claimed, mail: mailMode() },
+      {
+        status: "ok",
+        commit: process.env.BUILD_COMMIT ?? "unknown",
+        claimed,
+        mail: mailMode(),
+        mailVars: mailVars(),
+      },
       { headers: NO_STORE },
     );
   } catch (error) {

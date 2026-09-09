@@ -27,6 +27,32 @@ export function mailMode(): "smtp" | "log" | "none" {
   return "log";
 }
 
+const MAIL_VARS = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM", "TEAM_NOTIFY_EMAIL"] as const;
+
+/**
+ * Which mail variables the process can see, by name only, for /healthz. On
+ * 10 September all six were saved in hPanel and the redeployed app still
+ * answered "none". This says whether each name is set, saved empty, or not
+ * there at all, and lists any key with SMTP in it that is not one of the six,
+ * in quotes, so a trailing space shows. Never a value, never a length.
+ */
+export function mailVars(): { set: string[]; empty: string[]; missing: string[]; strays: string[] } {
+  const set: string[] = [];
+  const empty: string[] = [];
+  const missing: string[] = [];
+  for (const name of MAIL_VARS) {
+    const value = process.env[name];
+    if (value === undefined) missing.push(name);
+    else if (value.trim() === "") empty.push(name);
+    else set.push(name);
+  }
+  const known = new Set<string>(MAIL_VARS);
+  const strays = Object.keys(process.env)
+    .filter((key) => key.toUpperCase().includes("SMTP") && !known.has(key))
+    .map((key) => JSON.stringify(key));
+  return { set, empty, missing, strays };
+}
+
 /**
  * Development and the test runs. The whole message goes to the log, body and
  * all, because the wording is the thing worth checking and there is no inbox
