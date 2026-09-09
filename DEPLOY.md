@@ -78,6 +78,29 @@ Without `SMTP_HOST` the app refuses to send codes in production.
 
 ## First run, over SSH
 
+### If the server will not run a script
+
+Hostinger's Node deploy ships a pruned build: no dev dependencies and, on this
+account, no `scripts/` directory, so `npm run admin:create` may not run there
+at all, over SSH or from the panel. When that is the case, use the first-run
+page instead (ADR 0014):
+
+1. Set `SETUP_KEY` in hPanel to any long random string, and restart the app.
+2. Open `https://dashboard.awtmforge.com/admin/first-run`.
+3. Give your email, your name and that key. It makes the one account and takes
+   you to the screen where you choose a password.
+4. Delete `SETUP_KEY` afterwards.
+
+The page only exists while there are no admin accounts. The moment one exists
+it is a 404, on that deployment, for good. With no `SETUP_KEY` set it refuses
+rather than letting whoever finds it claim the system.
+
+That leaves `db:seed` unrun, so the company row and the image library are
+missing: the invoice prefix, the advance percentage and the six logo
+directions the questionnaire refers to. Settings has fields for the first two.
+
+### Over SSH, when the server will run a script
+
 **Nobody can sign in until this is done.** The production database is not the
 one on anyone's laptop: an account created locally does not exist here. Until
 `admin:create` has run on the server, `/admin/login` renders and refuses every

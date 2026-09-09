@@ -2,7 +2,8 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { hashToken, randomToken } from "@/lib/crypto";
+import { hashToken, randomToken, safeEqualHex } from "@/lib/crypto";
+import { logger } from "@/lib/logger";
 import { allow, clientIp } from "@/lib/rate-limit";
 
 const COOKIE = "awtm_admin";
@@ -73,4 +74,87 @@ export async function adminLogout(): Promise<void> {
   const raw = jar.get(COOKIE)?.value;
   if (raw) await db.adminSession.deleteMany({ where: { tokenHash: hashToken(raw) } });
   jar.delete(COOKIE);
+}
+
+/* -------------------------------------------------------------------------
+ * First run (ADR 0014).
+ *
+ * Some hosts give you no way to run a script beside the app. Hostinger's
+ * Node deploy is one: it ships a pruned build with no dev dependencies and no
+ * `scripts/` directory, so `npm run admin:create` cannot run there at all,
+ * over SSH or from the panel. Without this, a fresh deploy is a working
+ * application that nobody can ever sign in to.
+ * ---------------------------------------------------------------------- */
+
+export function adminCount(): Promise<number> {
+  return db.adminUser.count();
+}
+
+export type FirstRunResult =
+  | { ok: true; token: string }
+  | { ok: false; reason: "not_first_run" | "no_key_configured" | "bad_key" | "rate_limited" | "invalid" };
+
+const SETUP_HOURS = 48;
+
+/** The very first account takes a known id, so the primary key is the lock. */
+const FIRST_ADMIN_ID = "first-admin";
+
+/**
+ * Makes the first admin account, and only ever the first.
+ *
+ * Three things have to be true, and each closes a different hole: no admin
+ * may exist yet, so this cannot be used to add an account later or to take
+ * over a live system; `SETUP_KEY` must be set, so the window between a deploy
+ * finishing and someone claiming it is not open to whoever finds the URL
+ * first; and the key must match, compared on its hash in constant time so the
+ * answer cannot be felt out a character at a time.
+ *
+ * It sets no password. It issues the same one-time setup link the script
+ * issues, and the person chooses their own secret on the existing screen, so
+ * there is still exactly one place a password is ever set.
+ */
+export async function createFirstAdmin(args: {
+  email: string;
+  name: string;
+  key: string;
+  headers: Headers;
+}): Promise<FirstRunResult> {
+  const ip = clientIp(args.headers);
+  if (!(await allow(`first-run:ip:${ip}`, 5, 60 * 60))) return { ok: false, reason: "rate_limited" };
+
+  const expected = process.env.SETUP_KEY?.trim();
+  if (!expected) return { ok: false, reason: "no_key_configured" };
+  if (!safeEqualHex(hashToken(expected), hashToken(args.key))) return { ok: false, reason: "bad_key" };
+
+  const email = args.email.trim().toLowerCase();
+  const name = args.name.trim();
+  if (!email.includes("@") || email.length > 200 || !name || name.length > 120) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  // Counted after the key check, so a wrong key never learns whether the
+  // system is claimed. Counted inside the same call that creates, so two
+  // requests at once cannot both pass it.
+  if ((await adminCount()) > 0) return { ok: false, reason: "not_first_run" };
+
+  const token = randomToken();
+  try {
+    await db.adminUser.create({
+      data: {
+        // A fixed id, so the primary key is what decides. The count above is
+        // a cheap early-out, not the guard: two requests arriving together
+        // both passed it and both created an account, with different emails
+        // so no constraint caught them. Now the second one loses on the key.
+        id: FIRST_ADMIN_ID,
+        email,
+        name,
+        setupTokenHash: hashToken(token),
+        setupExpiresAt: new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000),
+      },
+    });
+  } catch {
+    return { ok: false, reason: "not_first_run" };
+  }
+  logger.info("first admin created", { email });
+  return { ok: true, token };
 }

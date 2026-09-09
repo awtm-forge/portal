@@ -6,20 +6,23 @@ import { db } from "@/lib/db";
  * Returns true when the call is allowed.
  */
 export async function allow(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-  const now = new Date();
-  const windowStartCutoff = new Date(now.getTime() - windowSeconds * 1000);
-  const row = await db.rateLimit.findUnique({ where: { key } });
-  if (!row || row.windowStart < windowStartCutoff) {
-    await db.rateLimit.upsert({
-      where: { key },
-      create: { key, count: 1, windowStart: now },
-      update: { count: 1, windowStart: now },
-    });
-    return true;
-  }
-  if (row.count >= limit) return false;
-  await db.rateLimit.update({ where: { key }, data: { count: { increment: 1 } } });
-  return true;
+  // One statement, because a read followed by a write is a race: two requests
+  // from the same address arriving together both found no row and both tried
+  // to create one, and the loser threw a duplicate key error instead of being
+  // rate limited. A double click was a 500. Same trick as the invoice
+  // sequence in modules/invoices: let MySQL do the deciding.
+  const cutoff = new Date(Date.now() - windowSeconds * 1000);
+  await db.$executeRaw`
+    INSERT INTO RateLimit (\`key\`, count, windowStart) VALUES (${key}, 1, NOW(3))
+    ON DUPLICATE KEY UPDATE
+      count = IF(windowStart < ${cutoff}, 1, count + 1),
+      windowStart = IF(windowStart < ${cutoff}, NOW(3), windowStart)`;
+
+  const rows = await db.$queryRaw<{ count: number }[]>`
+    SELECT count FROM RateLimit WHERE \`key\` = ${key}`;
+  const count = rows[0]?.count;
+  if (typeof count !== "number") return true;
+  return count <= limit;
 }
 
 export function clientIp(headers: Headers): string {

@@ -84,6 +84,23 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## A first-run page, because the host cannot run a script: done
+
+9 Sep 2026, AI-assisted. Rahul tried to sign in to the live site and could not.
+
+The cause was not a bug in the app. There was simply no admin account on that server, and every route to making one failed in turn. `npm run admin:create` over SSH: `tsx: command not found`, because the deployed directory holds production dependencies only. After fixing that, the app directory could not be found at all: a search of the whole home turned up exactly one `node_modules` and it was the npx cache. Hostinger builds under `hbuilds/` and runs a pruned bundle, and the `package.json` that does sit there has nothing installed beside it. The panel's script runner cannot pass arguments, so `admin:create` learned to read `ADMIN_EMAIL` and `ADMIN_NAME` from the environment, which helps only if the panel can run it at all.
+
+The pattern is that this host does not reliably give us a shell next to the application, and a deployment plan whose first step is "run a command on the server" is not one it can carry out. So `/admin/first-run` makes the first account and only ever the first: it is a 404 once one exists, it refuses without a `SETUP_KEY` set, and it sets no password, handing over to the screen that already does that. ADR 0014.
+
+Two real defects came out of testing it, and neither was in the new code:
+
+- **The rate limiter threw instead of counting.** `allow()` read the row and then wrote it, so two requests from one address arriving together both found nothing and both tried to insert; the loser got a duplicate key error out of the limiter. A double click on any rate limited action was a 500, not a refusal. It is one `INSERT ... ON DUPLICATE KEY UPDATE` now, the same technique the invoice sequence uses, and `tests/rate-limit.test.ts` runs eight calls at once to prove it counts.
+- **First run itself had the same shape of race.** Counting the admins and then creating one let two simultaneous requests both pass the count and both create an account, with different emails so no constraint caught it. The first account takes a fixed primary key now, so the database decides and the second request loses.
+
+Verified: 134 unit tests and 133 end to end, plus the webpack build. Eight of the unit tests are the first-run route alone, which is proportionate for the one route in the system that can create an administrator.
+
+Deferred: none.
+
 ## The client portal on a desktop: done
 
 9 Sep 2026, AI-assisted. Rahul: "this would mainly be a web, people will be using it on the web only."
