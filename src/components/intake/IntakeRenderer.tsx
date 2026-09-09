@@ -101,6 +101,19 @@ export function IntakeRenderer(p: RendererProps) {
     }
   }
 
+  /**
+   * Back one section. Nothing is saved or unsaved by it: answers save as they
+   * are typed, and a section already marked done stays done. The previous
+   * section's title is tappable too, but nobody found that on 10 September,
+   * so the way back is now written down under the button.
+   */
+  function goBack() {
+    if (open === 0) return;
+    setMessage(null);
+    setOpen(open - 1);
+    requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
   async function finishAndSend() {
     setMessage(null);
     const missing = requiredMissing(p.doc, answers);
@@ -211,6 +224,9 @@ export function IntakeRenderer(p: RendererProps) {
                     <button className="btn-full ghost" type="button" onClick={saveAndCarryOn} disabled={status.kind === "saving"}>Save. The client sends it.</button>
                   )}
                   {i === sections.length - 1 && p.mode === "client" && <p className="help" style={{ textAlign: "center" }}>You can still change any answer after sending.</p>}
+                  {i > 0 && (
+                    <button className="backlink" type="button" onClick={goBack} disabled={status.kind === "saving"}><span aria-hidden="true">←</span> Back</button>
+                  )}
                 </div>
               )}
             </div>

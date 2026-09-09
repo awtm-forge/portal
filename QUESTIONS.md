@@ -157,3 +157,15 @@ Four things decided while building, none of which the specs answer:
 - The questionnaire is asked once per client. A second project starts past the gate.
 - The login code goes to the client's contact email, because there may be no project and no sign-off person yet. The two sign-off codes still go to the project's sign-off person.
 - A client's page shows their newest live project, and when none is live, the newest there was. The first cut hid a closed project, which broke "closed: the record, read-only" in PORTAL-SPEC 6.1, and the day-30 test caught it.
+
+## Q13. The way back a section on the questionnaire
+
+Asked by Ayush on 10 Sep 2026, filling the questionnaire on production: "in client portal there is no going back to backward page."
+
+INTAKE-SPEC section 11 says one section is open at a time and one button sits at the bottom of it, "Save and carry on". The way back was there, tapping the title of a finished section reopens it, and nothing on the page said so. A client who carried on one section too early had no move they could see.
+
+- **A quiet Back under the button, on every section after the first.** The same weight as Skip on the thank-you page and "Something is off" on the agreement: a text control, not a filled button, so criterion 13 still counts one primary action (Q10). Costs one line per section and a small style. Nothing is saved or unsaved by it; answers save as they are typed and a finished section stays finished.
+- **Make the titles look tappable, with a "Change" tag on finished sections.** Rejected: the spec fixes the collapsed state at three words, done, now and later, and a tag on the record is a hint where the action should be a word.
+- **Leave it.** Rejected: it was found by the second person to fill one in.
+
+Taking the first. Built the same day, with an end to end test at both widths. The titles stay tappable as well.

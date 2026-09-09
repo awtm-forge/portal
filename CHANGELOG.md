@@ -25,3 +25,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-09 The client portal works on a desktop: the shell spans the window, the measure grows with it, option lists spread out, and the questionnaire lost five hundred pixels of height. The layout rules are tested at both widths now.
 - 2026-09-09 A first-run page that makes the first admin account from a browser, because the host will not run a script beside the app. Found and fixed a rate limiter that threw a 500 on a double click.
 - 2026-09-10 The questionnaire comes before the project: the link, the sessions and the questionnaire belong to the client, saving a client shows their link, sending the questionnaire emails it, and a project goes on the link they already have (ADR 0015).
+- 2026-09-10 A quiet Back under the button on every questionnaire section after the first, because the way to an earlier section was tapping its title and nothing said so.
