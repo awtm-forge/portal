@@ -8,11 +8,12 @@ import { db } from "../src/lib/db";
 async function main() {
   const slug = process.argv[2] ?? "kavya-appliances-store";
   const token = randomBytes(32).toString("base64url");
-  const project = await db.project.update({
-    where: { slug },
+  const project = await db.project.findUniqueOrThrow({ where: { slug } });
+  await db.client.update({
+    where: { id: project.clientId },
     data: { accessTokenHash: createHash("sha256").update(token).digest("hex") },
   });
-  await db.clientSession.deleteMany({ where: { projectId: project.id } });
+  await db.clientSession.deleteMany({ where: { clientId: project.clientId } });
   await db.rateLimit.deleteMany({});
   console.log(`${(process.env.APP_URL ?? "http://localhost:3200").replace(/\/$/, "")}/p/${token}`);
   await db.$disconnect();

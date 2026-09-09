@@ -10,6 +10,7 @@ import { DAYS, needsAttention } from "@/modules/projects/attention";
  */
 const SLUG = "attention-test";
 let projectId = "";
+let clientId = "";
 
 async function anAdmin(): Promise<string> {
   const existing = await db.adminUser.findFirst({ orderBy: { createdAt: "asc" } });
@@ -23,7 +24,7 @@ async function anAdmin(): Promise<string> {
 async function anIntake(submitted = false) {
   await db.intake.create({
     data: {
-      projectId,
+      clientId,
       document: {},
       answers: {},
       accessGranted: {},
@@ -37,7 +38,7 @@ async function anIntake(submitted = false) {
 
 async function freshProject(phase: string): Promise<string> {
   const client = await db.client.create({
-    data: { businessName: "Attention Test", contactName: "T", contactPhone: "+910000000000", contactEmail: "t@example.test" },
+    data: { businessName: "Attention Test", contactName: "T", contactPhone: "+910000000000", contactEmail: "t@example.test", accessTokenHash: `test-${Math.random().toString(36).slice(2)}` },
   });
   const project = await db.project.create({
     data: {
@@ -47,18 +48,20 @@ async function freshProject(phase: string): Promise<string> {
       typeOfWork: "STORE",
       signoffPersonName: "T",
       signoffPersonEmail: "t@example.test",
-      accessTokenHash: `test-${Math.random().toString(36).slice(2)}`,
     },
   });
   await db.$executeRawUnsafe(`UPDATE Project SET phase = ? WHERE id = ?`, phase, project.id);
+  clientId = client.id;
   return project.id;
 }
 
 async function clearUp() {
   const where = `projectId IN (SELECT id FROM Project WHERE slug LIKE '${SLUG}-%')`;
-  for (const table of ["Testimonial", "Referral", "Day30", "ActivityEvent", "ReviewRound", "Invoice", "Agreement", "Update", "Intake"]) {
+  for (const table of ["Testimonial", "Referral", "Day30", "ActivityEvent", "ReviewRound", "Invoice", "Agreement", "Update"]) {
     await db.$executeRawUnsafe(`DELETE FROM \`${table}\` WHERE ${where}`);
   }
+  // The questionnaire is the client's (ADR 0015), so it goes by client.
+  await db.$executeRaw`DELETE FROM Intake WHERE clientId IN (SELECT id FROM Client WHERE businessName = 'Attention Test')`;
   await db.$executeRaw`DELETE FROM Project WHERE slug LIKE ${`${SLUG}-%`}`;
   await db.$executeRaw`DELETE FROM Client WHERE businessName = 'Attention Test'`;
 }
@@ -66,7 +69,14 @@ async function clearUp() {
 /** Only what this test made. The seed project is not ours to assert about. */
 async function mine() {
   const all = await needsAttention();
-  return all.filter((a) => a.projectId === projectId);
+  return all.filter((a) => a.projectId === projectId || (a.projectId === null && a.clientId === clientId));
+}
+
+/** The questionnaire is counted from when it was sent, not from the project. */
+async function ageQuestionnaire(days: number) {
+  await db.$executeRawUnsafe(
+    `UPDATE Intake SET documentUploadedAt = DATE_SUB(NOW(3), INTERVAL ? DAY) WHERE clientId = ?`, days, clientId,
+  );
 }
 
 async function age(days: number) {
@@ -86,10 +96,10 @@ describe("a questionnaire nobody filled in", () => {
     projectId = await freshProject("INTAKE");
     await anIntake();
 
-    await age(DAYS.intakeUnsubmitted - 1);
+    await ageQuestionnaire(DAYS.intakeUnsubmitted - 1);
     expect(await mine()).toHaveLength(0);
 
-    await age(DAYS.intakeUnsubmitted);
+    await ageQuestionnaire(DAYS.intakeUnsubmitted);
     const [item] = await mine();
     expect(item.reason).toBe("intake_unsubmitted");
     expect(item.line).toContain("still open");

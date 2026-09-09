@@ -29,7 +29,9 @@ export type Reason =
   | "day30_unopened";
 
 export type Attention = {
-  projectId: string;
+  /** Null for a client who has no project yet: the link goes to the client. */
+  projectId: string | null;
+  clientId: string;
   projectName: string;
   businessName: string;
   reason: Reason;
@@ -65,7 +67,6 @@ export async function needsAttention(now: Date = new Date()): Promise<Attention[
     where: { phase: { in: [...LIVE_PHASES] } },
     include: {
       client: { select: { businessName: true } },
-      intake: { select: { submittedAt: true } },
       agreement: { select: { sentAt: true, agreedAt: true } },
       updates: { where: { sentAt: { not: null } }, orderBy: { sentAt: "desc" }, take: 1, select: { sentAt: true } },
       reviewRounds: { where: { outcome: "OPEN" }, orderBy: { sentAt: "desc" }, take: 1, select: { sentAt: true } },
@@ -76,14 +77,32 @@ export async function needsAttention(now: Date = new Date()): Promise<Attention[
 
   const out: Attention[] = [];
   const add = (p: (typeof projects)[number], reason: Reason, days: number, line: string) => {
-    out.push({ projectId: p.id, projectName: p.name, businessName: p.client.businessName, reason, days, line });
+    out.push({ projectId: p.id, clientId: p.clientId, projectName: p.name, businessName: p.client.businessName, reason, days, line });
   };
 
-  for (const p of projects) {
-    if (p.phase === Phase.INTAKE && p.intake && !p.intake.submittedAt) {
-      const d = daysSince(p.createdAt, now);
-      if (d >= DAYS.intakeUnsubmitted) add(p, "intake_unsubmitted", d, `Questionnaire still open after ${d} days.`);
+  // The questionnaire belongs to the client and is usually answered before
+  // any project exists, so this one is counted from the questionnaire itself,
+  // whether or not a project is waiting on it.
+  const openQuestionnaires = await db.intake.findMany({
+    where: { submittedAt: null, overriddenAt: null },
+    include: { client: { select: { id: true, businessName: true, contactName: true } } },
+  });
+  for (const q of openQuestionnaires) {
+    const d = daysSince(q.documentUploadedAt, now);
+    if (d >= DAYS.intakeUnsubmitted) {
+      out.push({
+        projectId: null,
+        clientId: q.client.id,
+        projectName: `${q.client.businessName}, questionnaire`,
+        businessName: q.client.contactName,
+        reason: "intake_unsubmitted",
+        days: d,
+        line: `Questionnaire still open after ${d} days.`,
+      });
     }
+  }
+
+  for (const p of projects) {
 
     if (p.phase === Phase.AGREEMENT_SENT && p.agreement?.sentAt && !p.agreement.agreedAt) {
       const d = daysSince(p.agreement.sentAt, now);

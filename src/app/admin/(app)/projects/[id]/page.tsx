@@ -49,7 +49,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
   const openRound = rounds.find((r) => r.outcome === "OPEN") ?? null;
   const latestStaging = updates.find((u) => u.stagingUrl)?.stagingUrl ?? "";
   const c = project.client;
-  const intake = project.intake;
+  const intake = project.client.intake;
   const doc = intake ? parseDocumentLoose(intake.document) : null;
   const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
   const answers = intake && intake.answers && typeof intake.answers === "object" ? (intake.answers as Record<string, { entered_by?: string }>) : {};
@@ -389,7 +389,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             {!intake && (
               <>
                 <p className="c-sub" style={{ fontSize: 14 }}>Not uploaded yet. The client sees &ldquo;nothing to do yet&rdquo; until it is.</p>
-                <div><Link className="a-btn" href={`/admin/projects/${project.id}/intake/upload`}>Upload questionnaire</Link></div>
+                <div><Link className="a-btn" href={`/admin/clients/${project.client.id}/intake/upload`}>Upload questionnaire</Link></div>
               </>
             )}
             {intake && doc && (
@@ -400,9 +400,9 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
                   <div className="between" style={{ padding: "9px 0" }}><span>Answers so far</span><span className="mono-sm">{byClient} by the client, {byTeam} by the team</span></div>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <Link className="a-btn" href={`/admin/projects/${project.id}/intake`}>What they told us</Link>
-                  <Link className="a-btn ghost" href={`/admin/projects/${project.id}/intake/upload`}>Replace the document</Link>
-                  <a className="a-btn ghost" href={`/admin/projects/${project.id}/intake/answers.json`}>Download answers JSON</a>
+                  <Link className="a-btn" href={`/admin/clients/${project.client.id}/intake`}>What they told us</Link>
+                  <Link className="a-btn ghost" href={`/admin/clients/${project.client.id}/intake/upload`}>Replace the document</Link>
+                  <a className="a-btn ghost" href={`/admin/clients/${project.client.id}/intake/answers.json`}>Download answers JSON</a>
                 </div>
                 <p className="help" style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 12, lineHeight: 1.65 }}>Replacing after answers exist keeps every answer. Answers whose keys are gone are hidden, not deleted. There is no way to edit a question here. Change it in conversation and upload again.</p>
               </>
@@ -423,22 +423,15 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
         <div className="aside">
           <div className="a-card">
             <span className="k">The client link</span>
-            <div className="a-fld mono" style={{ color: "var(--muted)" }}>awtmforge.com/p/…</div>
             <p className="help" style={{ lineHeight: 1.6 }}>
-              Only a hash is stored, so the link itself can only be shown just after it is made. Created {dayMonth(project.tokenCreatedAt)}
-              {project.tokenRotatedAt ? `, rotated ${dayMonth(project.tokenRotatedAt)}` : ""}.
+              One link per client, and this project is on it. Created {dayMonth(project.client.tokenCreatedAt)}
+              {project.client.tokenRotatedAt ? `, rotated ${dayMonth(project.client.tokenRotatedAt)}` : ""}.
+              {project.client.linkEmailedAt ? ` Emailed to ${project.client.contactEmail} on ${dayMonth(project.client.linkEmailedAt)}.` : " Not emailed yet."}
             </p>
-            {project.linkEmailError ? (
-              <p className="help" style={{ color: "var(--ember)" }}>The link email to {project.signoffPersonEmail} did not go out.</p>
-            ) : (
-              <p className="help">
-                {project.linkEmailedAt ? `Emailed to ${project.signoffPersonEmail} on ${dayMonth(project.linkEmailedAt)}.` : "Not emailed yet."}
-              </p>
-            )}
-            <div><Link className="a-btn ghost" href={`/admin/projects/${project.id}/link`}>Send them the link</Link></div>
+            <div><Link className="a-btn ghost" href={`/admin/clients/${project.client.id}/link`}>The link, and how to send it</Link></div>
           </div>
 
-          <div className={`a-card${project.proposedSignoffEmail ? " ember" : ""}`}>
+          <div className={`a-card${project.client.proposedSignoffEmail ? " ember" : ""}`}>
             <span className="k">Who signs off, on this project</span>
             <form action={updateSignoffAction} className="stack" style={{ gap: 10 }}>
               <input type="hidden" name="projectId" value={project.id} />
@@ -447,11 +440,12 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
               <div><button className="a-btn ghost" type="submit">Save</button></div>
             </form>
             <p className="help">Per project, not per client: a business can have a different approver for a brand job than for a store rebuild.</p>
-            {project.proposedSignoffEmail && (
+            {project.client.proposedSignoffEmail && (
               <form action={signoffDecisionAction} className="stack" style={{ gap: 8, borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>
                 <input type="hidden" name="projectId" value={project.id} />
-                <span className="k ember">The client typed a different sign-off</span>
-                <p className="mono-sm" style={{ margin: 0, color: "var(--ink)" }}>{project.proposedSignoffName ? `${project.proposedSignoffName}, ` : ""}{project.proposedSignoffEmail}</p>
+                <input type="hidden" name="clientId" value={project.client.id} />
+                <span className="k ember">The client typed a different sign-off on the questionnaire</span>
+                <p className="mono-sm" style={{ margin: 0, color: "var(--ink)" }}>{project.client.proposedSignoffName ? `${project.client.proposedSignoffName}, ` : ""}{project.client.proposedSignoffEmail}</p>
                 <p className="help">Codes keep going to the address above until you switch it.</p>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="a-btn" name="decision" value="use" type="submit">Use the new one</button>

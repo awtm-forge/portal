@@ -6,7 +6,8 @@ import { CodePurpose } from "@/generated/prisma/enums";
 import { SignoffMethod } from "@/generated/prisma/enums";
 import { clientIp } from "@/lib/rate-limit";
 import { addClientNote, agree } from "@/modules/agreements";
-import { currentClientSession, projectByToken, requestCode, verifyCode } from "@/modules/auth/client";
+import { requestCode, verifyCode } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import "@/modules/notifications/register";
 
 export type AgreeState = {
@@ -18,9 +19,7 @@ export type AgreeState = {
 };
 
 async function loadOrLeave(token: string) {
-  const project = await projectByToken(token);
-  if (!project) redirect("/p/not-found");
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { project } = await projectScope(token);
   return project;
 }
 
@@ -30,8 +29,8 @@ async function loadOrLeave(token: string) {
  */
 export async function startAgreeAction(_prev: AgreeState, formData: FormData): Promise<AgreeState> {
   const token = String(formData.get("token") ?? "");
-  const project = await loadOrLeave(token);
-  const result = await requestCode(project, CodePurpose.AGREEMENT, await headers());
+  const { client, project } = await projectScope(token);
+  const result = await requestCode({ client, project }, CodePurpose.AGREEMENT, await headers());
   if (!result.ok) {
     return {
       step: "idle",
@@ -47,10 +46,10 @@ export async function confirmAgreeAction(prev: AgreeState, formData: FormData): 
   const token = String(formData.get("token") ?? "");
   const code = String(formData.get("code") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  const project = await loadOrLeave(token);
+  const { client, project } = await projectScope(token);
   const head = await headers();
 
-  const verified = await verifyCode(project, CodePurpose.AGREEMENT, code, head);
+  const verified = await verifyCode({ client, project }, CodePurpose.AGREEMENT, code, head);
   if (!verified.ok) {
     switch (verified.reason) {
       case "wrong":

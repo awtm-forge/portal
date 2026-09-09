@@ -1,8 +1,8 @@
 # Sequences
 
-Drafted 7 Sep 2026. The four interactions where ordering matters. Each diagram is the contract the tests check; if the code does it in a different order, the code is wrong.
+Drafted 7 Sep 2026, diagram 1 redrawn 10 Sep 2026. The four interactions where ordering matters. Each diagram is the contract the tests check; if the code does it in a different order, the code is wrong.
 
-## 1. First visit: link and one-time code
+## 1. First visit: link and one-time code (the link is the client's, ADR 0015)
 
 ```mermaid
 sequenceDiagram
@@ -16,31 +16,31 @@ sequenceDiagram
   C->>App: GET /p/{token}
   App->>Auth: resolve(token)
   Auth->>Auth: hash token, constant-time compare
-  Auth->>DB: find project by access_token_hash
-  DB-->>Auth: project or nothing
-  alt no project
+  Auth->>DB: find client by access_token_hash
+  DB-->>Auth: client or nothing
+  alt no client
     App-->>C: 404, no hint that the route exists
   else no valid client_session cookie
     Auth->>DB: rate-limit check per token and IP
     Auth->>DB: insert one_time_code (hash, purpose login, expires 10 min, attempts 0)
-    Auth->>Mail: send code to client.signoff_person_email
+    Auth->>Mail: send code to client.contact_email
     App-->>C: "We sent a code to the address on file"
     C->>App: POST code
     App->>Auth: verify(token, code)
     Auth->>DB: load latest unused code, attempts < 5, not expired
     alt code matches
       Auth->>DB: mark used_at, insert client_session (30 days), write activity_event
-      App-->>C: Set-Cookie httpOnly secure sameSite=lax, redirect to project page
+      App-->>C: Set-Cookie httpOnly secure sameSite=lax, redirect to the client's page
     else wrong
       Auth->>DB: attempts + 1
       App-->>C: "That code did not match", attempts left
     end
   else valid session
-    App-->>C: project page for the current phase
+    App-->>C: the questionnaire until a project exists, then the live project for its phase
   end
 ```
 
-Rules made visible here: the token is never stored, only its hash; a wrong token and a missing project look identical from outside; the code is single use and dies after five attempts or ten minutes; a valid session lets the client view, never sign.
+Rules made visible here: the token is never stored, only its hash; a wrong token and a missing client look identical from outside; the code is single use and dies after five attempts or ten minutes; a valid session lets the client view, never sign.
 
 ## 2. Agreement sign-off, advance invoice, notification
 

@@ -288,3 +288,19 @@ needs-attention rule counts silence during `building` from here: measuring
 from the agreement would blame us for a gap that was theirs, and there was no
 other record of when building started. Additive, one migration,
 `20260908205855_kickoff_at`.
+
+## Changed on 10 September 2026: the questionnaire before the project
+
+`client` now carries `access_token_hash`, `token_created_at`,
+`token_rotated_at`, `link_emailed_at`, `link_email_error`, and the proposed
+sign-off person; `project` no longer does. `intake`, `intake_file` and
+`client_session` key on `client_id`. `one_time_code` keys on `client_id` and
+keeps an optional `project_id`, set only for the two sign-off purposes, which
+belong to a piece of work. ADR 0015, QUESTIONS.md Q12.
+
+Migration `20260909190826_questionnaire_on_client` adds the client's columns,
+backfills each from that client's earliest project, backfills every keyed row
+from its project's client, and only then drops the project's columns. A client
+that never had a project gets a hash nobody holds the other half of; their
+link exists the moment an admin rotates it.
+

@@ -1,8 +1,8 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { roundsForProject } from "@/modules/review";
 import { agreementToClientView, reviewRoundToClientView } from "@/modules/serializers";
 import { ReviewControls } from "./ReviewControls";
@@ -13,9 +13,7 @@ import { ReviewControls } from "./ReviewControls";
  */
 export default async function ReviewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const project = await projectByToken(token);
-  if (!project) notFound();
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { client, project } = await projectScope(token);
 
   const agreement = await db.agreement.findUnique({ where: { projectId: project.id } });
   if (!agreement?.agreedAt) redirect(`/p/${token}`);
@@ -27,7 +25,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
   const open = project.phase === Phase.IN_REVIEW && current !== null;
 
   return (
-    <ClientShell businessName={project.client.businessName}>
+    <ClientShell businessName={client.businessName}>
       <div style={{ padding: "24px 20px 18px" }} className="stack">
         <p className="k">{open ? "Ready for you to check" : "The review"}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>{project.name}</h1>

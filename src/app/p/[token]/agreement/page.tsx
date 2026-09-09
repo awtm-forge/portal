@@ -1,18 +1,16 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { AgreementDocument } from "@/components/portal/AgreementDocument";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { agreementToClientView } from "@/modules/serializers";
 import { AgreeControls } from "./AgreeControls";
 
 export default async function ClientAgreementPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const project = await projectByToken(token);
-  if (!project) notFound();
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { client, project } = await projectScope(token);
 
   const agreement = await db.agreement.findUnique({ where: { projectId: project.id } });
   // Nothing to read until it has been sent at least once.
@@ -21,8 +19,8 @@ export default async function ClientAgreementPage({ params }: { params: Promise<
   const open = project.phase === Phase.AGREEMENT_SENT;
 
   return (
-    <ClientShell businessName={project.client.businessName}>
-      <AgreementDocument view={view} projectName={project.name} businessName={project.client.businessName} />
+    <ClientShell businessName={client.businessName}>
+      <AgreementDocument view={view} projectName={project.name} businessName={client.businessName} />
 
       {open && <AgreeControls token={token} signoffPersonName={project.signoffPersonName} />}
 

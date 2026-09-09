@@ -18,29 +18,35 @@ agreed to be here.
 
 ## Actions
 
-**Add a client.** Clients, then Add a client. A client exists before a project
-does, so they can be added on the discovery call. Editable afterwards.
+**Add a client.** Clients, then Add a client. Saving them mints their link and
+shows it once on the handover screen. Nothing is emailed and no project exists
+yet: the questionnaire comes first (Q12).
 
-**Start a project.** Open the client, then Start a project. Ask for the sign-off
-person here: they are the one the six-digit code reaches, and they can differ
-from the day-to-day contact. Creating it mints the client link, emails it, and
-records that it went. If the email fails the project is still created and the
-handover screen says so with a retry.
+**Send the questionnaire.** On the client, Send the questionnaire, and paste
+or choose the JSON document. The first time, this also emails the client their
+link. If the email fails, the questionnaire is still on their page and the
+link screen says so with a retry.
 
-**The client link.** Shown once, on the handover screen, and never again: only
-its hash is stored. The screen holds it for fifteen minutes and then it is
-gone. Losing it is not a problem, rotating is.
+**Start a project.** On the client, once the questionnaire is in, Start a
+project. Ask for the sign-off person here: they are the one the two sign-off
+codes reach, and the client's own answer on the questionnaire is offered
+first. The project goes on the link the client already has. If their link
+never went out, starting the first project sends it.
+
+**The client link.** One per client, for good. Shown once, on the handover
+screen, and never again: only its hash is stored. The screen holds it for
+fifteen minutes and then it is gone. Losing it is not a problem, rotating is.
 
 **Rotate the link.** Project page, Rotate. The old link stops working on the
 next request. Use it when a link went to the wrong person, or when nobody can
 find theirs. It emails the new one.
 
-**Upload the questionnaire.** Project, Questionnaire, Upload. A JSON document
-per INTAKE-SPEC. Every failing rule is reported at once and nothing is saved,
-so a bad file changes nothing. Replacing a document keeps the answers that
-still have a question to belong to.
+**Replace the questionnaire.** Client, Replace the document. Every failing
+rule is reported at once and nothing is saved, so a bad file changes nothing.
+Replacing keeps the answers that still have a question to belong to, and
+emails nobody.
 
-**Type answers from a call.** Project, Questionnaire, Fill. Each answer is
+**Type answers from a call.** Client, Type answers from a call. Each answer is
 marked as entered by the team, and that mark is permanent and visible.
 
 **Override an unsubmitted questionnaire.** On the agreement editor, when you

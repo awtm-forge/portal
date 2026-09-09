@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { draftTextForClient, forProject, isUnlocked, markOpened } from "@/modules/day30";
 import { day30ToClientView } from "@/modules/serializers";
 import { Day30Form } from "./Day30Form";
@@ -18,9 +18,7 @@ import { Day30Form } from "./Day30Form";
  */
 export default async function Day30Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const project = await projectByToken(token);
-  if (!project) notFound();
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { client, project } = await projectScope(token);
 
   const row = await forProject(project.id);
   if (!row || !isUnlocked(row)) notFound();
@@ -30,7 +28,7 @@ export default async function Day30Page({ params }: { params: Promise<{ token: s
   const draft = view.answered ? "" : await draftTextForClient(project.id);
 
   return (
-    <ClientShell businessName={project.client.businessName}>
+    <ClientShell businessName={client.businessName}>
       <div style={{ padding: "38px 20px 20px" }} className="stack">
         <p className="k ember">One month on</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>Two things, under a minute.</h1>

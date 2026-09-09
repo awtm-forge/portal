@@ -185,7 +185,7 @@ test("an answer survives closing the tab and opening the link on another device"
   // Saving happens on its own; wait for it rather than assuming a delay.
   await expect
     .poll(async () => {
-      const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE projectId = ?", [own.projectId]);
+      const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE clientId = ?", [own.clientId]);
       // The driver parses a JSON column, so stringify it back to search it.
       return JSON.stringify(rows[0]?.answers ?? "");
     }, { timeout: 10000 })
@@ -228,7 +228,7 @@ test("an answer survives closing the tab and opening the link on another device"
   await restore.blur();
   await expect
     .poll(async () => {
-      const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE projectId = ?", [own.projectId]);
+      const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE clientId = ?", [own.clientId]);
       return JSON.stringify(rows[0]?.answers ?? "");
     }, { timeout: 10000 })
     .not.toContain(typed);

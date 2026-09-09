@@ -20,9 +20,9 @@ export default async function AgreementEditorPage({ params }: { params: Promise<
   const notes = await notesForAdmin(id);
   const c = await company();
   const view = project.agreement ? agreementToAdminView(project.agreement) : null;
-  const answers = project.intake ? readAnswers(project.intake.answers) : {};
+  const answers = project.client.intake ? readAnswers(project.client.intake.answers) : {};
   const suggestedMetric = typeof answers.mk_metric_now?.value === "string" ? answers.mk_metric_now.value : "";
-  const intakeSubmitted = Boolean(project.intake?.submittedAt) || Boolean(project.intake?.overriddenAt);
+  const intakeSubmitted = Boolean(project.client.intake?.submittedAt) || Boolean(project.client.intake?.overriddenAt);
 
   return (
     <AdminShell active="projects" adminName={admin.name}>
@@ -50,8 +50,8 @@ export default async function AgreementEditorPage({ params }: { params: Promise<
         </div>
       )}
 
-      {project.intake?.overriddenAt && (
-        <p className="help">Questionnaire gate overridden by {project.intake.overriddenById} on {dayMonthTime(project.intake.overriddenAt)}.</p>
+      {project.client.intake?.overriddenAt && (
+        <p className="help">Questionnaire gate overridden by {project.client.intake.overriddenById} on {dayMonthTime(project.client.intake.overriddenAt)}.</p>
       )}
 
       {notes.length > 0 && (

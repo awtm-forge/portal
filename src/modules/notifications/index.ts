@@ -87,18 +87,17 @@ export async function sendLinkEmail(args: {
   to: string;
   contactName: string;
   businessName: string;
-  projectName: string;
   link: string;
 }): Promise<void> {
   const firstName = args.contactName.trim().split(/\s+/)[0] || args.contactName;
   const body = [
     `Hello ${firstName},`,
     "",
-    `Thank you for trusting us with ${args.projectName}. Here is your page.`,
+    "Thank you for talking to us. Here is your page.",
     "",
     args.link,
     "",
-    "Everything to do with your project will be on it: the questionnaire first, then the agreement you read before anything starts, a written update every week, and your invoices. It is one link, it is yours, and it does not expire. Keep it wherever you keep things.",
+    "Everything we do together will be on it: the questionnaire first, then the agreement you read before anything starts, a written update every week, and your invoices. It is one link, it is yours, and it does not expire. Keep it wherever you keep things.",
     "",
     "The first thing on it is a questionnaire. About ten minutes, mostly about what is going wrong in your own words. Do not tidy your answers up for us, the messy version is the useful one, and I do not know is a real answer to any of it. It saves as you type, so you can start it in a queue somewhere and finish it later.",
     "",
@@ -111,7 +110,7 @@ export async function sendLinkEmail(args: {
     "Rahul",
     "awtm forge",
   ].join("\n");
-  await sendPlain(args.to, `Your project page, ${args.businessName}`, body);
+  await sendPlain(args.to, `Your awtm forge page, ${args.businessName}`, body);
 }
 
 /** Import for the side effect of registering subscribers. */

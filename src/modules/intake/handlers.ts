@@ -4,17 +4,17 @@ import { MAX_FILE_BYTES, processUpload, REASON_TEXT, svgThumb } from "@/lib/file
 import { fail, json, sameOrigin } from "@/lib/http";
 import { markSectionDone, readAnswers, saveAccess, saveAnswer, setFileList, submitIntake } from "@/modules/intake/answers";
 import { parseDocumentLoose } from "@/modules/intake/document";
-import { readStored, removeStored, writeProjectFile } from "@/lib/storage";
+import { readStored, removeStored, writeClientFile } from "@/lib/storage";
 
-export type IntakeActor = { projectId: string; enteredBy: "client" | "team"; canSubmit: boolean };
+export type IntakeActor = { clientId: string; enteredBy: "client" | "team"; canSubmit: boolean };
 
 const ACTIONS = new Set(["save", "access", "section-done", "submit", "upload", "remove-file"]);
 
-/** One dispatcher serves both bases: /p/[token]/intake/api and /admin/projects/[id]/intake/api. */
+/** One dispatcher serves both bases: /p/[token]/intake/api and /admin/clients/[id]/intake/api. */
 export async function handleIntakeAction(request: Request, action: string, actor: IntakeActor): Promise<NextResponse> {
   if (!sameOrigin(request)) return fail("Cross-site request refused.", 403);
   if (!ACTIONS.has(action)) return fail("No such action.", 404);
-  const intake = await db.intake.findUnique({ where: { projectId: actor.projectId } });
+  const intake = await db.intake.findUnique({ where: { clientId: actor.clientId } });
   if (!intake) return fail("No questionnaire yet.", 404);
 
   if (action === "upload") return handleUpload(request, intake.id, actor);
@@ -44,7 +44,7 @@ export async function handleIntakeAction(request: Request, action: string, actor
     case "remove-file": {
       const fileId = String(body.fileId ?? "");
       const file = await db.intakeFile.findUnique({ where: { id: fileId } });
-      if (!file || file.projectId !== actor.projectId) return fail("No such file.", 404);
+      if (!file || file.clientId !== actor.clientId) return fail("No such file.", 404);
       await db.intakeFile.delete({ where: { id: file.id } });
       await removeStored(file.storedPath);
       if (file.thumbPath) await removeStored(file.thumbPath);
@@ -76,12 +76,12 @@ async function handleUpload(request: Request, intakeId: string, actor: IntakeAct
     const buf = Buffer.from(await f.arrayBuffer());
     const r = await processUpload(buf);
     if (!r.ok) { refused.push({ name: f.name, message: REASON_TEXT[r.reason] }); continue; }
-    const storedPath = await writeProjectFile(actor.projectId, r.file.ext, r.file.data);
+    const storedPath = await writeClientFile(actor.clientId, r.file.ext, r.file.data);
     const thumb = r.file.kind === "svg" ? await svgThumb(r.file.data) : r.file.thumb;
-    const thumbPath = thumb ? await writeProjectFile(actor.projectId, "jpg", thumb) : null;
+    const thumbPath = thumb ? await writeClientFile(actor.clientId, "jpg", thumb) : null;
     const row = await db.intakeFile.create({
       data: {
-        projectId: actor.projectId,
+        clientId: actor.clientId,
         questionKey: key,
         storedPath,
         thumbPath,
@@ -103,9 +103,9 @@ function safeName(name: string): string {
 }
 
 /** GET a stored file for a viewer already known to be allowed. */
-export async function serveProjectFile(projectId: string, fileId: string, wantThumb: boolean): Promise<Response> {
+export async function serveClientFile(clientId: string, fileId: string, wantThumb: boolean): Promise<Response> {
   const file = await db.intakeFile.findUnique({ where: { id: fileId } });
-  if (!file || file.projectId !== projectId) return new Response("Not found", { status: 404 });
+  if (!file || file.clientId !== clientId) return new Response("Not found", { status: 404 });
   if (wantThumb) {
     if (!file.thumbPath) return new Response("Not found", { status: 404 });
     return bytes(await readStored(file.thumbPath), "image/jpeg", "thumb.jpg");

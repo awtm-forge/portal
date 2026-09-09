@@ -57,7 +57,7 @@ export function NewProjectForm({ client }: { client: ClientBrief }) {
 
         {state.message && <p className="help err">{state.message}</p>}
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button className="a-btn" type="submit" disabled={pending}>{pending ? "Creating" : "Create it and show me the link"}</button>
+          <button className="a-btn" type="submit" disabled={pending}>{pending ? "Creating" : "Start the project"}</button>
           <Link className="a-btn ghost" href={`/admin/clients/${client.id}`}>Cancel</Link>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { submit } from "@/modules/day30";
 import "@/modules/notifications/register";
 
@@ -17,9 +17,7 @@ export type Day30State = {
 
 export async function submitDay30Action(_prev: Day30State, formData: FormData): Promise<Day30State> {
   const token = String(formData.get("token") ?? "");
-  const project = await projectByToken(token);
-  if (!project) redirect("/p/not-found");
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { project } = await projectScope(token);
 
   const values = {
     metricAfter: String(formData.get("metricAfter") ?? ""),

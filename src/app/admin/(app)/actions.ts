@@ -3,14 +3,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { hashToken, randomToken } from "@/lib/crypto";
 import { db } from "@/lib/db";
-import { slugify } from "@/lib/format";
-import { requestLogger, safeError } from "@/lib/logger";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
-import { projectLink, rotateProjectToken } from "@/modules/auth/client";
-import { emit } from "@/modules/events";
-import { sendLinkEmail } from "@/modules/notifications";
+import { createClient, deliverLink, rotateLink } from "@/modules/clients";
+import { createProject } from "@/modules/projects";
 import "@/modules/notifications/register";
 
 export async function logoutAction(): Promise<void> {
@@ -19,14 +15,14 @@ export async function logoutAction(): Promise<void> {
 }
 
 /**
- * The client link is shown once, right after it is made, because only its hash
- * is stored. It rides a short-lived cookie from the action that made it to the
- * screen that shows it.
+ * The client link is shown once, right after it is made, because only its
+ * hash is stored. It rides a short-lived cookie from the action that made it
+ * to the screen that shows it.
  */
 const FLASH = "awtm_flash_link";
 
-export async function setFlashLink(projectId: string, token: string): Promise<void> {
-  (await cookies()).set(FLASH, `${projectId}:${token}`, {
+export async function setFlashLink(clientId: string, token: string): Promise<void> {
+  (await cookies()).set(FLASH, `${clientId}:${token}`, {
     httpOnly: true,
     secure: (process.env.APP_URL ?? "").startsWith("https://"),
     sameSite: "lax",
@@ -35,11 +31,11 @@ export async function setFlashLink(projectId: string, token: string): Promise<vo
   });
 }
 
-export async function takeFlashLink(projectId: string): Promise<string | null> {
+export async function takeFlashLink(clientId: string): Promise<string | null> {
   const raw = (await cookies()).get(FLASH)?.value;
   if (!raw) return null;
   const [id, token] = raw.split(":");
-  if (id !== projectId || !token) return null;
+  if (id !== clientId || !token) return null;
   return token;
 }
 
@@ -50,8 +46,9 @@ export async function clearFlashLink(): Promise<void> {
 const TYPES = ["STORE", "APP", "SAAS", "MARKETING", "BRAND"] as const;
 
 /* -------------------------------------------------------------------------
- * Clients. A client is its own record, so it can be added on the discovery
- * call before anyone knows what the project is.
+ * Clients. A client is its own record, made on the discovery call before
+ * anyone knows what the project is, and the link is theirs from that moment
+ * (ADR 0015). Nothing else happens when one is saved: no project, no email.
  * ---------------------------------------------------------------------- */
 
 const clientSchema = z.object({
@@ -73,19 +70,15 @@ export async function createClientAction(_prev: ClientFormState, formData: FormD
     return { message: `${first.path.join(".")}: ${first.message}`, values };
   }
   const d = parsed.data;
-  const client = await db.client.create({
-    data: {
-      businessName: d.businessName,
-      location: d.location || null,
-      contactName: d.contactName,
-      contactPhone: d.contactPhone,
-      contactEmail: d.contactEmail.toLowerCase(),
-    },
+  const { id, token } = await createClient({
+    businessName: d.businessName,
+    location: d.location || null,
+    contactName: d.contactName,
+    contactPhone: d.contactPhone,
+    contactEmail: d.contactEmail,
   });
-  if (String(formData.get("intent")) === "start_project") {
-    redirect(`/admin/clients/${client.id}/projects/new`);
-  }
-  redirect(`/admin/clients/${client.id}`);
+  await setFlashLink(id, token);
+  redirect(`/admin/clients/${id}/link`);
 }
 
 export async function updateClientAction(formData: FormData): Promise<void> {
@@ -108,9 +101,36 @@ export async function updateClientAction(formData: FormData): Promise<void> {
   redirect(`/admin/clients/${clientId}`);
 }
 
+/**
+ * Sends the link by email. Only a token this session still holds can be
+ * sent, because only its hash is stored: otherwise the link is rotated first,
+ * which is the honest way to get a new one.
+ */
+export async function resendLinkAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
+  const token = (await takeFlashLink(clientId)) ?? (await freshToken(clientId));
+  await deliverLink(clientId, token);
+  redirect(`/admin/clients/${clientId}/link`);
+}
+
+async function freshToken(clientId: string): Promise<string> {
+  const token = await rotateLink(clientId);
+  await setFlashLink(clientId, token);
+  return token;
+}
+
+export async function rotateLinkAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
+  if (!(await db.client.findUnique({ where: { id: clientId } }))) redirect("/admin/clients");
+  const token = await freshToken(clientId);
+  await deliverLink(clientId, token);
+  redirect(`/admin/clients/${clientId}/link`);
+}
+
 /* -------------------------------------------------------------------------
- * Projects. Creating one mints the link and emails it; the next screen is the
- * only place that link can ever be shown.
+ * Projects. Starting one puts it on the client's existing link.
  * ---------------------------------------------------------------------- */
 
 const newProjectSchema = z.object({
@@ -133,113 +153,50 @@ export async function createProjectAction(_prev: NewProjectState, formData: Form
     return { message: `${first.path.join(".")}: ${first.message}`, values };
   }
   const d = parsed.data;
+  const result = await createProject({
+    clientId: d.clientId,
+    name: d.projectName,
+    slug: d.slug,
+    typeOfWork: d.typeOfWork,
+    signoffPersonName: d.signoffPersonName,
+    signoffPersonEmail: d.signoffPersonEmail,
+  });
+  if ("error" in result) return { message: "That client no longer exists.", values };
+
+  // The client already has their link. If it never went out, this is the
+  // moment: the page now has something on it.
   const client = await db.client.findUnique({ where: { id: d.clientId } });
-  if (!client) return { message: "That client no longer exists.", values };
-
-  const baseSlug = slugify(d.slug || `${client.businessName} ${d.projectName}`) || "project";
-  let slug = baseSlug;
-  for (let i = 2; await db.project.findUnique({ where: { slug } }); i++) slug = `${baseSlug}-${i}`;
-
-  const token = randomToken();
-  const project = await db.project.create({
-    data: {
-      clientId: client.id,
-      name: d.projectName,
-      slug,
-      typeOfWork: d.typeOfWork,
-      signoffPersonName: d.signoffPersonName,
-      signoffPersonEmail: d.signoffPersonEmail.toLowerCase(),
-      accessTokenHash: hashToken(token),
-    },
-  });
-
-  await setFlashLink(project.id, token);
-  await emit({
-    type: "project.created",
-    projectId: project.id,
-    actor: "team",
-    payload: { projectName: project.name, businessName: client.businessName },
-  });
-  // CLAUDE.md 5.1: one link email on creation. A failure does not block
-  // creation; the handover screen says so and offers a retry.
-  await deliverLink(project.id, token);
-  redirect(`/admin/projects/${project.id}/link`);
-}
-
-/** Sends the project link to the sign-off person and records the outcome. */
-async function deliverLink(projectId: string, token: string): Promise<void> {
-  const project = await db.project.findUnique({ where: { id: projectId }, include: { client: true } });
-  if (!project) return;
-  try {
-    await sendLinkEmail({
-      to: project.signoffPersonEmail,
-      contactName: project.client.contactName,
-      businessName: project.client.businessName,
-      projectName: project.name,
-      link: projectLink(token),
-    });
-    await db.project.update({ where: { id: projectId }, data: { linkEmailedAt: new Date(), linkEmailError: null } });
-    await emit({ type: "project.link_emailed", projectId, actor: "system", payload: {} });
-  } catch (error) {
-    await requestLogger.error("link email failed", { projectId, error: safeError(error) });
-    await db.project.update({ where: { id: projectId }, data: { linkEmailError: safeError(error).slice(0, 300) } });
+  if (client && !client.linkEmailedAt) {
+    const token = (await takeFlashLink(client.id)) ?? (await freshToken(client.id));
+    await deliverLink(client.id, token);
   }
+  redirect(`/admin/projects/${result.id}`);
 }
 
 /**
- * Retry after a failed link email. Only a token this session still holds can
- * be sent, because only its hash is stored: otherwise the link is rotated,
- * which is the honest way to get a new one.
+ * INTAKE-SPEC: the client can propose a different approver on the
+ * questionnaire. Held on the client until a project exists, and offered when
+ * one is started; this is admin taking or declining it by hand.
  */
-export async function resendLinkAction(formData: FormData): Promise<void> {
-  await requireAdmin();
-  const projectId = String(formData.get("projectId") ?? "");
-  const token = (await takeFlashLink(projectId)) ?? (await freshToken(projectId));
-  await deliverLink(projectId, token);
-  redirect(`/admin/projects/${projectId}/link`);
-}
-
-async function freshToken(projectId: string): Promise<string> {
-  const token = await rotateProjectToken(projectId);
-  await setFlashLink(projectId, token);
-  return token;
-}
-
-export async function rotateLinkAction(formData: FormData): Promise<void> {
-  await requireAdmin();
-  const projectId = String(formData.get("projectId") ?? "");
-  if (!(await db.project.findUnique({ where: { id: projectId } }))) redirect("/admin");
-  const token = await freshToken(projectId);
-  await deliverLink(projectId, token);
-  redirect(`/admin/projects/${projectId}/link`);
-}
-
-/** INTAKE-SPEC: the client can propose a different approver; admin decides. */
 export async function signoffDecisionAction(formData: FormData): Promise<void> {
   await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
   const projectId = String(formData.get("projectId") ?? "");
   const decision = String(formData.get("decision") ?? "");
-  const project = await db.project.findUnique({ where: { id: projectId } });
-  if (!project) redirect("/admin");
+  const client = await db.client.findUnique({ where: { id: clientId } });
+  if (!client) redirect("/admin/clients");
 
-  if (decision === "use" && project.proposedSignoffEmail) {
+  if (decision === "use" && client.proposedSignoffEmail && projectId) {
     await db.project.update({
       where: { id: projectId },
-      data: {
-        signoffPersonEmail: project.proposedSignoffEmail,
-        signoffPersonName: project.proposedSignoffName ?? project.signoffPersonName,
-        proposedSignoffEmail: null,
-        proposedSignoffName: null,
-        proposedAt: null,
-      },
-    });
-  } else {
-    await db.project.update({
-      where: { id: projectId },
-      data: { proposedSignoffEmail: null, proposedSignoffName: null, proposedAt: null },
+      data: { signoffPersonEmail: client.proposedSignoffEmail, signoffPersonName: client.proposedSignoffName ?? undefined },
     });
   }
-  redirect(`/admin/projects/${projectId}`);
+  await db.client.update({
+    where: { id: clientId },
+    data: { proposedSignoffEmail: null, proposedSignoffName: null, proposedAt: null },
+  });
+  redirect(projectId ? `/admin/projects/${projectId}` : `/admin/clients/${clientId}`);
 }
 
 const signoffSchema = z.object({
@@ -254,10 +211,7 @@ export async function updateSignoffAction(formData: FormData): Promise<void> {
   if (parsed.success) {
     await db.project.update({
       where: { id: projectId },
-      data: {
-        signoffPersonName: parsed.data.signoffPersonName,
-        signoffPersonEmail: parsed.data.signoffPersonEmail.toLowerCase(),
-      },
+      data: { signoffPersonName: parsed.data.signoffPersonName, signoffPersonEmail: parsed.data.signoffPersonEmail.toLowerCase() },
     });
   }
   redirect(`/admin/projects/${projectId}`);

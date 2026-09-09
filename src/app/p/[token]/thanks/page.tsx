@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { dayMonthYear } from "@/lib/dates";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { ThanksForm } from "./ThanksForm";
 
 /**
@@ -13,15 +13,13 @@ import { ThanksForm } from "./ThanksForm";
  */
 export default async function ThanksPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const project = await projectByToken(token);
-  if (!project) notFound();
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { client, project } = await projectScope(token);
   if (!project.deliveredAt) notFound();
 
   const answered = project.thanksSeenAt !== null;
 
   return (
-    <ClientShell businessName={project.client.businessName}>
+    <ClientShell businessName={client.businessName}>
       <div style={{ padding: "38px 20px 20px" }} className="stack">
         <p className="k ember">Delivered {dayMonthYear(project.deliveredAt)}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>Thank you. It is delivered.</h1>

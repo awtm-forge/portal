@@ -7,12 +7,12 @@ import { readAnswers, readStringList } from "@/modules/intake/answers";
  * existing answer is kept. Keys that vanish are hidden, keys that come back
  * are unhidden. Nothing a client typed is ever discarded.
  */
-export async function upsertDocument(projectId: string, document: IntakeDocument, adminId: string): Promise<{ hidden: string[]; unhidden: string[] }> {
+export async function upsertDocument(clientId: string, document: IntakeDocument, adminId: string): Promise<{ hidden: string[]; unhidden: string[] }> {
   return db.$transaction(async (tx) => {
-    const existing = await tx.intake.findUnique({ where: { projectId } });
+    const existing = await tx.intake.findUnique({ where: { clientId } });
     if (!existing) {
       await tx.intake.create({
-        data: { projectId, document, documentUploadedById: adminId, hiddenQuestionKeys: [], sectionsDone: [], answers: {}, accessGranted: {} },
+        data: { clientId, document, documentUploadedById: adminId, hiddenQuestionKeys: [], sectionsDone: [], answers: {}, accessGranted: {} },
       });
       return { hidden: [], unhidden: [] };
     }

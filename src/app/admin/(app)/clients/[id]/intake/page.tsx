@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
-import { db } from "@/lib/db";
+import { withIntake } from "@/modules/clients";
 import { dayMonth, dayMonthTime } from "@/lib/format";
 import { readAnswers, readBoolMap, readStringList, type Answers } from "@/modules/intake/answers";
 import { parseDocumentLoose, type Question } from "@/modules/intake/document";
@@ -13,24 +13,24 @@ import { questionnaireNudgeMessage, waLink } from "@/lib/whatsapp";
 export default async function IntakeAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   const { id } = await params;
-  const project = await db.project.findUnique({ where: { id }, include: { client: true, intake: true } });
-  if (!project) notFound();
-  const intake = project.intake;
-  if (!intake) redirect(`/admin/projects/${id}`);
+  const client = await withIntake(id);
+  if (!client) notFound();
+  const intake = client.intake;
+  if (!intake) redirect(`/admin/clients/${id}`);
   const doc = parseDocumentLoose(intake.document);
-  if (!doc) redirect(`/admin/projects/${id}`);
+  if (!doc) redirect(`/admin/clients/${id}`);
   const answers = readAnswers(intake.answers);
   const access = readBoolMap(intake.accessGranted);
   const hiddenKeys = readStringList(intake.hiddenQuestionKeys);
   const progress = intakeProgress(intake.document, intake.answers, intake.sectionsDone);
-  const files = await fileInfoMap(project.id);
+  const files = await fileInfoMap(client.id);
   const openSections = progress.sections.filter((s) => !s.done).map((s) => s.title);
   const answeredIn = (keys: string[]) => keys.filter((k) => answers[k] !== undefined).length;
-  const c = project.client;
-  const fileBase = `/admin/projects/${id}/file`;
+  const c = client;
+  const fileBase = `/admin/clients/${id}/file`;
 
   return (
-    <AdminShell active="projects" adminName={admin.name}>
+    <AdminShell active="clients" adminName={admin.name}>
       <div className="between" style={{ alignItems: "flex-end" }}>
         <div className="stack" style={{ gap: 6 }}>
           <h1 className="a-title">What they told us</h1>
@@ -40,9 +40,9 @@ export default async function IntakeAdminPage({ params }: { params: Promise<{ id
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {!intake.submittedAt && <a className="a-btn" href={waLink(c.contactPhone, questionnaireNudgeMessage({ contactName: c.contactName.split(" ")[0] ?? c.contactName, openSections }))} target="_blank" rel="noopener">Nudge on WhatsApp</a>}
-          <Link className="a-btn ghost" href={`/admin/projects/${id}/intake/fill`}>Type their answers</Link>
-          <a className="a-btn ghost" href={`/admin/projects/${id}/intake/answers.json`}>Download JSON</a>
-          <Link className="a-btn ghost" href={`/admin/projects/${id}`}>Project</Link>
+          <Link className="a-btn ghost" href={`/admin/clients/${id}/intake/fill`}>Type their answers</Link>
+          <a className="a-btn ghost" href={`/admin/clients/${id}/intake/answers.json`}>Download JSON</a>
+          <Link className="a-btn ghost" href={`/admin/clients/${id}`}>Project</Link>
         </div>
       </div>
 
@@ -106,9 +106,9 @@ export default async function IntakeAdminPage({ params }: { params: Promise<{ id
           </div>
           <div className="a-card">
             <span className="k">Who decides</span>
-            <p style={{ margin: 0 }}>{project.signoffPersonName} signs off</p>
-            <p className="mono-sm" style={{ margin: 0 }}>{project.signoffPersonEmail}</p>
-            {project.proposedSignoffEmail && <p className="help" style={{ color: "var(--ember)" }}>The client typed {project.proposedSignoffEmail}. Confirm it on the project page.</p>}
+            <p style={{ margin: 0 }}>{client.proposedSignoffName ?? client.contactName} signs off</p>
+            <p className="mono-sm" style={{ margin: 0 }}>{client.proposedSignoffEmail ?? client.contactEmail}</p>
+            {client.proposedSignoffEmail && <p className="help" style={{ color: "var(--ember)" }}>The client typed this on the questionnaire. It is offered first when you start a project.</p>}
             {typeof answers.dec_others?.value === "string" && answers.dec_others.value && <p style={{ margin: 0, fontSize: 13.5, color: "var(--muted)" }}>{answers.dec_others.value}</p>}
             {typeof answers.dec_calendar?.value === "string" && answers.dec_calendar.value && <p style={{ margin: 0, fontSize: 13.5, color: "var(--ember)", borderTop: "1px solid var(--rule-soft)", paddingTop: 12 }}>{answers.dec_calendar.value}</p>}
           </div>

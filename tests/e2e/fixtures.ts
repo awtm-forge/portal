@@ -42,15 +42,18 @@ export const INTAKE_SLUG = "kavya-appliances-store";
 export const KNOWN_CODE = "424242";
 
 /** Rotates the project's link so the test holds a token it can actually use. */
-export async function freshLink(slug: string): Promise<{ token: string; projectId: string }> {
-  const rows = await query<{ id: string }>("SELECT id FROM Project WHERE slug = ?", [slug]);
+export async function freshLink(slug: string): Promise<{ token: string; projectId: string; clientId: string }> {
+  const rows = await query<{ id: string; clientId: string }>("SELECT id, clientId FROM Project WHERE slug = ?", [slug]);
   const projectId = rows[0]?.id;
-  if (!projectId) throw new Error(`seed project ${slug} is missing, run npm run db:seed`);
+  const clientId = rows[0]?.clientId;
+  if (!projectId || !clientId) throw new Error(`seed project ${slug} is missing, run npm run db:seed`);
+  // The link is the client's (ADR 0015); a project slug is just how the
+  // tests name which seed client they mean.
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  await query("UPDATE Project SET accessTokenHash = ? WHERE id = ?", [tokenHash, projectId]);
-  await query("DELETE FROM ClientSession WHERE projectId = ?", [projectId]);
-  return { token, projectId };
+  await query("UPDATE Client SET accessTokenHash = ? WHERE id = ?", [tokenHash, clientId]);
+  await query("DELETE FROM ClientSession WHERE clientId = ?", [clientId]);
+  return { token, projectId, clientId };
 }
 
 /**
@@ -59,13 +62,18 @@ export async function freshLink(slug: string): Promise<{ token: string; projectI
  * use, stays the app's own.
  */
 export async function takeoverLatestCode(projectId: string, purpose: "LOGIN" | "AGREEMENT" | "DELIVERY"): Promise<string> {
+  // Codes are keyed to the client, and hashed against the client id, for
+  // every purpose. The project id is what the specs hold, so resolve it.
+  const owner = await query<{ clientId: string }>("SELECT clientId FROM Project WHERE id = ?", [projectId]);
+  const clientId = owner[0]?.clientId;
+  if (!clientId) throw new Error("no such project");
   const rows = await query<{ id: string }>(
-    "SELECT id FROM OneTimeCode WHERE projectId = ? AND purpose = ? AND consumedAt IS NULL ORDER BY createdAt DESC LIMIT 1",
-    [projectId, purpose],
+    "SELECT id FROM OneTimeCode WHERE clientId = ? AND purpose = ? AND consumedAt IS NULL ORDER BY createdAt DESC LIMIT 1",
+    [clientId, purpose],
   );
   const id = rows[0]?.id;
   if (!id) throw new Error(`no ${purpose} code was issued`);
-  const codeHash = createHmac("sha256", process.env.SESSION_SECRET ?? "").update(`${projectId}:${KNOWN_CODE}`).digest("hex");
+  const codeHash = createHmac("sha256", process.env.SESSION_SECRET ?? "").update(`${clientId}:${KNOWN_CODE}`).digest("hex");
   await query("UPDATE OneTimeCode SET codeHash = ? WHERE id = ?", [codeHash, id]);
   return KNOWN_CODE;
 }

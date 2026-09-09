@@ -14,7 +14,7 @@ test.afterAll(async () => {
 test.describe("the leak walk", () => {
   test("no client or print route carries internal cost or internal notes", async ({ page, request }) => {
     await resetRateLimits();
-    const { token, projectId } = await freshLink(SEED_SLUG);
+    const { token, projectId, clientId } = await freshLink(SEED_SLUG);
     const secrets = await agreementSecrets(projectId);
 
     // Criteria 25 and 26: someone else's details, and words the client has not
@@ -69,7 +69,7 @@ test.describe("the leak walk", () => {
       `/p/${token}/thanks`,
       `/agreement/${token}/print`,
       ...invoiceRoutes,
-      `/admin/projects/${projectId}/intake/answers.json`,
+      `/admin/clients/${clientId}/intake/answers.json`,
     ];
 
     for (const route of routes) {

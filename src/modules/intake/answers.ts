@@ -81,7 +81,7 @@ export type SaveResult = { ok: true; at: string } | { ok: false; message: string
 export async function saveAnswer(intakeId: string, key: string, raw: unknown, enteredBy: "client" | "team"): Promise<SaveResult> {
   return db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
-    const row = await tx.intake.findUnique({ where: { id: intakeId }, include: { project: { include: { client: true } } } });
+    const row = await tx.intake.findUnique({ where: { id: intakeId }, include: { client: true } });
     if (!row) return { ok: false, message: "no questionnaire" };
     const doc = parseDocumentLoose(row.document);
     if (!doc) return { ok: false, message: "bad document" };
@@ -100,13 +100,15 @@ export async function saveAnswer(intakeId: string, key: string, raw: unknown, en
 
     await tx.intake.update({ where: { id: intakeId }, data: { answers, lastSavedAt: new Date() } });
 
+    // The sign-off person they name is held on the client until there is a
+    // project to put them on. The new-project form offers them first, and a
+    // project already waiting in intake is told too, so admin can decide.
     if (enteredBy === "client" && (key === SIGNOFF_EMAIL_KEY || key === SIGNOFF_NAME_KEY)) {
-      const project = row.project;
       const email = (answers[SIGNOFF_EMAIL_KEY]?.value as string | undefined) ?? "";
       const name = (answers[SIGNOFF_NAME_KEY]?.value as string | undefined) ?? "";
-      const differs = email !== "" && email.toLowerCase() !== project.signoffPersonEmail.toLowerCase();
-      await tx.project.update({
-        where: { id: project.id },
+      const differs = email !== "" && email.toLowerCase() !== row.client.contactEmail.toLowerCase();
+      await tx.client.update({
+        where: { id: row.clientId },
         data: differs
           ? { proposedSignoffEmail: email, proposedSignoffName: name || null, proposedAt: new Date() }
           : { proposedSignoffEmail: null, proposedSignoffName: null, proposedAt: null },
@@ -157,7 +159,10 @@ export function missingRequired(documentJson: unknown, answersJson: unknown): st
 export async function submitIntake(intakeId: string): Promise<SaveResult> {
   const result = await db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
-    const row = await tx.intake.findUnique({ where: { id: intakeId }, include: { project: { include: { client: true } } } });
+    const row = await tx.intake.findUnique({
+      where: { id: intakeId },
+      include: { client: { include: { projects: { where: { phase: Phase.INTAKE }, orderBy: { createdAt: "desc" }, take: 1 } } } },
+    });
     if (!row) return { ok: false as const, message: "no questionnaire" };
     const missing = missingRequired(row.document, row.answers);
     if (missing.length) return { ok: false as const, message: "Who says yes, and their email, are the two answers we need before sending." };
@@ -167,18 +172,22 @@ export async function submitIntake(intakeId: string): Promise<SaveResult> {
       where: { id: intakeId },
       data: { submittedAt: row.submittedAt ?? new Date(), lastSavedAt: new Date(), sectionsDone: doc?.sections.map((s) => s.key) ?? [] },
     });
-    // PORTAL-SPEC 5.2: submitting is what moves the project out of intake.
-    // Changing an answer later does not move it again.
-    if (firstSubmission && row.project.phase === Phase.INTAKE && can(row.project.phase, "intake_submitted")) {
-      await transition(tx, row.project, "intake_submitted");
+    // PORTAL-SPEC 5.2: submitting is what moves a project out of intake, if
+    // one is waiting there. Usually there is none yet: the questionnaire comes
+    // first now (Q12), and a project started afterwards begins past this
+    // gate. Changing an answer later does not move anything again.
+    const waiting = row.client.projects[0];
+    if (firstSubmission && waiting && can(waiting.phase, "intake_submitted")) {
+      await transition(tx, waiting, "intake_submitted");
     }
     return {
       ok: true as const,
       at: new Date().toISOString(),
       notify: firstSubmission,
-      projectId: row.projectId,
-      projectName: row.project.name,
-      businessName: row.project.client.businessName,
+      clientId: row.clientId,
+      projectId: waiting?.id ?? null,
+      projectName: waiting?.name ?? null,
+      businessName: row.client.businessName,
     };
   });
 
@@ -187,7 +196,7 @@ export async function submitIntake(intakeId: string): Promise<SaveResult> {
       type: "intake.submitted",
       projectId: result.projectId,
       actor: "client",
-      payload: { projectName: result.projectName, businessName: result.businessName },
+      payload: { clientId: result.clientId, projectName: result.projectName, businessName: result.businessName },
     });
   }
   return result.ok ? { ok: true, at: result.at } : result;
@@ -210,11 +219,11 @@ export async function setFileList(intakeId: string, key: string, mutate: (files:
 }
 
 /** INTAKE-SPEC section 6, the answers document handed to the scope draft. */
-export function answersDocument(project: { slug: string }, intake: { document: unknown; answers: unknown; accessGranted: unknown; submittedAt: Date | null; hiddenQuestionKeys: unknown }) {
+export function answersDocument(client: { id: string; businessName: string }, intake: { document: unknown; answers: unknown; accessGranted: unknown; submittedAt: Date | null; hiddenQuestionKeys: unknown }) {
   const doc = parseDocumentLoose(intake.document);
   return {
     questionnaire_version: doc?.version ?? 1,
-    project: project.slug,
+    client: client.businessName,
     submitted_at: intake.submittedAt ? intake.submittedAt.toISOString() : null,
     answers: readAnswers(intake.answers),
     access_granted: readBoolMap(intake.accessGranted),

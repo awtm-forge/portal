@@ -61,7 +61,6 @@ async function seedProject() {
       typeOfWork: "STORE",
       signoffPersonName: "Kavya Menon",
       signoffPersonEmail: "kavya@kavyaappliances.example",
-      accessTokenHash: hashToken(token),
       createdAt: new Date("2026-08-18T09:00:00+05:30"),
       client: {
         create: {
@@ -70,10 +69,9 @@ async function seedProject() {
           contactPhone: "+91 98450 12345",
           contactEmail: "kavya@kavyaappliances.example",
           location: "Bengaluru",
-        },
-      },
-      intake: {
-        create: {
+          accessTokenHash: hashToken(token),
+          intake: {
+            create: {
           document: v.document,
           documentUploadedById: admin.id,
           documentUploadedAt: new Date("2026-08-18T09:30:00+05:30"),
@@ -98,6 +96,8 @@ async function seedProject() {
           },
         },
       },
+      },
+    },
     },
   });
   console.log(`project ${project.slug} created`);
@@ -150,7 +150,6 @@ async function seedBuildingProject() {
       typeOfWork: "STORE",
       signoffPersonName: "Arjun Sundaram",
       signoffPersonEmail: "arjun@sundaraliving.example",
-      accessTokenHash: hashToken(token),
       createdAt: new Date("2026-08-05T09:00:00+05:30"),
       phase: "AGREEMENT_SENT",
       weekCount: 8,
@@ -161,7 +160,6 @@ async function seedBuildingProject() {
       retainerTier: "Monthly, one working session a week",
       retainerNamedPerson: "Rahul",
       retainerResponseTime: "One working day",
-      linkEmailedAt: new Date("2026-08-05T09:05:00+05:30"),
       client: {
         create: {
           businessName: "Sundara Living",
@@ -169,10 +167,10 @@ async function seedBuildingProject() {
           contactPhone: "+91 98860 44120",
           contactEmail: "arjun@sundaraliving.example",
           location: "Chennai",
-        },
-      },
-      intake: {
-        create: {
+          accessTokenHash: hashToken(token),
+          linkEmailedAt: new Date("2026-08-05T09:05:00+05:30"),
+          intake: {
+            create: {
           document: v.document,
           documentUploadedById: admin.id,
           documentUploadedAt: new Date("2026-08-05T09:30:00+05:30"),
@@ -190,6 +188,8 @@ async function seedBuildingProject() {
             dec_signoff_name: { value: "Arjun Sundaram", entered_by: "client", at },
             dec_signoff_email: { value: "arjun@sundaraliving.example", entered_by: "client", at },
           },
+        },
+      },
         },
       },
       agreement: {

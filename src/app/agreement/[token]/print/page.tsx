@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { AgreementDocument } from "@/components/portal/AgreementDocument";
 import { db } from "@/lib/db";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { clientByToken, currentClientSession } from "@/modules/auth/client";
+import { activeProjectFor } from "@/modules/clients";
 import { currentAdmin } from "@/modules/auth/admin";
 import { agreementToPrintView } from "@/modules/serializers";
 import "@/components/portal/portal.css";
@@ -20,10 +21,15 @@ export default async function AgreementPrintPage({ params }: { params: Promise<{
 
   // The path segment is a client link token. Admin, who never holds a token
   // because only its hash is stored, may pass a project id instead.
-  const byToken = await projectByToken(token);
-  const project = byToken ?? (admin ? await db.project.findUnique({ where: { id: token }, include: { client: true } }) : null);
-  if (!project) notFound();
-  if (!admin && !(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const client = await clientByToken(token);
+  const byToken = client ? await activeProjectFor(client.id) : null;
+  const project = byToken
+    ? { ...byToken, client }
+    : admin
+      ? await db.project.findUnique({ where: { id: token }, include: { client: true } })
+      : null;
+  if (!project || !project.client) notFound();
+  if (!admin && !(await currentClientSession(project.client.id))) redirect(`/p/${token}`);
 
   const agreement = await db.agreement.findUnique({ where: { projectId: project.id } });
   if (!agreement?.sentAt) notFound();

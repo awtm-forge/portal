@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { recordThanks, skipThanks } from "@/modules/review";
 import "@/modules/notifications/register";
 
@@ -16,9 +16,7 @@ export type ThanksState = { message?: string; values?: { quote: string; referral
 
 export async function sendThanksAction(_prev: ThanksState, formData: FormData): Promise<ThanksState> {
   const token = String(formData.get("token") ?? "");
-  const project = await projectByToken(token);
-  if (!project) redirect("/p/not-found");
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { project } = await projectScope(token);
   if (!project.deliveredAt) redirect(`/p/${token}`);
 
   if (String(formData.get("intent")) === "skip") {

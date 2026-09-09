@@ -43,7 +43,7 @@ test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
 });
 
-test("a client is added, gets a project, and the link cannot be recovered later", async ({ page }) => {
+test("a client is added, gets their link at once, and it cannot be recovered later", async ({ page }) => {
   await page.goto("/admin/clients");
   await page.getByRole("link", { name: /add a client/i }).click();
 
@@ -52,30 +52,24 @@ test("a client is added, gets a project, and the link cannot be recovered later"
   await page.getByLabel(/^name$/i).fill("Meher Shah");
   await page.getByLabel(/whatsapp number/i).fill("+91 99000 21188");
   await page.getByLabel(/^email$/i).fill("meher@example.invalid");
-  await page.getByRole("button", { name: /save, and start a project/i }).click();
+  await page.getByRole("button", { name: /save, and show me their link/i }).click();
 
-  // Straight into the project form, with the client already chosen.
-  await expect(page.getByRole("heading", { name: /start a project/i })).toBeVisible();
-  await expect(page.getByText(BUSINESS, { exact: true })).toBeVisible();
-
-  await page.getByLabel(/project name/i).fill("Brand and packaging");
-  await page.getByRole("button", { name: /create it and show me the link/i }).click();
-
-  // The handover screen, with the link in the clear.
+  // Straight to the handover, with the link in the clear. No project exists.
   await expect(page.getByRole("heading", { name: /send meher their link/i })).toBeVisible();
   const shown = page.getByText(/\/p\/[A-Za-z0-9_-]{20,}/).first();
   await expect(shown).toBeVisible();
   const link = (await shown.textContent()) ?? "";
   expect(link).toMatch(/\/p\/[A-Za-z0-9_-]{20,}/);
 
-  // The sign-off person defaulted to the contact, and the email went out.
-  const rows = await query<{ signoffPersonEmail: string; linkEmailedAt: string | null }>(
-    "SELECT p.signoffPersonEmail, p.linkEmailedAt FROM Project p JOIN Client c ON c.id = p.clientId WHERE c.businessName = ?",
+  // Q12: nothing has gone out and nothing has been started. The link belongs
+  // to the client, and the email waits for the questionnaire.
+  const rows = await query<{ linkEmailedAt: string | null; projects: number }>(
+    "SELECT c.linkEmailedAt, (SELECT COUNT(*) FROM Project p WHERE p.clientId = c.id) AS projects FROM Client c WHERE c.businessName = ?",
     [BUSINESS],
   );
   expect(rows).toHaveLength(1);
-  expect(rows[0].signoffPersonEmail).toBe("meher@example.invalid");
-  expect(rows[0].linkEmailedAt).not.toBeNull();
+  expect(rows[0].linkEmailedAt).toBeNull();
+  expect(Number(rows[0].projects)).toBe(0);
 
   // A reload still shows it, on purpose: losing the link to a stray refresh
   // would be hostile, so it rides a fifteen minute cookie.
@@ -97,15 +91,18 @@ test("the sign-off person can differ from the day to day contact", async ({ page
   await page.getByLabel(/^name$/i).fill("Meher Shah");
   await page.getByLabel(/whatsapp number/i).fill("+91 99000 21188");
   await page.getByLabel(/^email$/i).fill("meher@example.invalid");
-  await page.getByRole("button", { name: /save, and start a project/i }).click();
+  await page.getByRole("button", { name: /save, and show me their link/i }).click();
+  await expect(page.getByRole("heading", { name: /send meher their link/i })).toBeVisible();
 
+  const [c] = await query<{ id: string }>("SELECT id FROM Client WHERE businessName = ?", [BUSINESS]);
+  await page.goto(`/admin/clients/${c.id}/projects/new`);
   await page.getByLabel(/project name/i).fill("Brand and packaging");
   await page.getByRole("checkbox", { name: /same as meher shah/i }).uncheck();
   await page.getByLabel(/^name$/i).fill("Devika Rao");
   await page.getByLabel(/their email/i).fill("devika@example.invalid");
-  await page.getByRole("button", { name: /create it and show me the link/i }).click();
+  await page.getByRole("button", { name: /start the project/i }).click();
+  await page.waitForURL(/\/admin\/projects\//);
 
-  await expect(page.getByRole("heading", { name: /send meher their link/i })).toBeVisible();
   const rows = await query<{ signoffPersonName: string; signoffPersonEmail: string }>(
     "SELECT p.signoffPersonName, p.signoffPersonEmail FROM Project p JOIN Client c ON c.id = p.clientId WHERE c.businessName = ?",
     [BUSINESS],
@@ -113,16 +110,21 @@ test("the sign-off person can differ from the day to day contact", async ({ page
   expect(rows[0]).toMatchObject({ signoffPersonName: "Devika Rao", signoffPersonEmail: "devika@example.invalid" });
 });
 
-test("a client with no project says so, and offers to start one", async ({ page }) => {
+test("a client with no project is offered the questionnaire first, and a project second", async ({ page }) => {
   await page.goto("/admin/clients/new");
   await page.getByLabel(/business name/i).fill(BUSINESS);
   await page.getByLabel(/^name$/i).fill("Meher Shah");
   await page.getByLabel(/whatsapp number/i).fill("+91 99000 21188");
   await page.getByLabel(/^email$/i).fill("meher@example.invalid");
-  await page.getByRole("button", { name: /just save the client/i }).click();
+  await page.getByRole("button", { name: /save, and show me their link/i }).click();
+  await expect(page.getByRole("heading", { name: /send meher their link/i })).toBeVisible();
 
+  const [c] = await query<{ id: string }>("SELECT id FROM Client WHERE businessName = ?", [BUSINESS]);
+  await page.goto(`/admin/clients/${c.id}`);
   await expect(page.getByRole("heading", { name: BUSINESS })).toBeVisible();
-  await expect(page.getByText(/no project yet/i).first()).toBeVisible();
+  // Q12: the loud thing is the questionnaire, not a project.
+  await expect(page.getByRole("link", { name: /send the questionnaire/i })).toBeVisible();
+  await expect(page.getByText(/send the questionnaire first; the project comes after/i)).toBeVisible();
   await expect(page.getByRole("link", { name: /start a project/i })).toBeVisible();
   await expect(page.getByText(/no password exists/i)).toBeVisible();
 });
@@ -143,8 +145,8 @@ test("rotating the link kills the old one on the next request", async ({ request
 test("an uploaded file cannot be reached by guessing its address", async ({ request }) => {
   // INTAKE-SPEC 14.6. The id is a cuid, so guessing one is not the threat; the
   // threat is a real id reaching someone who has no session for that project.
-  const { token, projectId } = await freshLink(SEED_SLUG);
-  const rows = await query<{ id: string }>("SELECT id FROM IntakeFile WHERE projectId = ? LIMIT 1", [projectId]);
+  const { token, clientId } = await freshLink(SEED_SLUG);
+  const rows = await query<{ id: string }>("SELECT id FROM IntakeFile WHERE clientId = ? LIMIT 1", [clientId]);
   const fileId = rows[0]?.id ?? "cmtsq9anb005mpvs4w4avnux6";
 
   // No session at all.
@@ -153,5 +155,5 @@ test("an uploaded file cannot be reached by guessing its address", async ({ requ
   const other = await freshLink(INTAKE_SLUG);
   expect((await request.get(`/p/${other.token}/file/${fileId}`, { maxRedirects: 0 })).status()).toBe(404);
   // And the admin route is no easier without a session.
-  expect((await request.get(`/admin/projects/${projectId}/file/${fileId}`, { maxRedirects: 0 })).status()).not.toBe(200);
+  expect((await request.get(`/admin/clients/${clientId}/file/${fileId}`, { maxRedirects: 0 })).status()).not.toBe(200);
 });

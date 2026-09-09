@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
-import { withClient } from "@/modules/projects";
-import { projectLink } from "@/modules/auth/client";
+import { byId } from "@/modules/clients";
+import { clientLink } from "@/modules/auth/client";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
 import { CopyLink } from "../CopyLink";
@@ -16,21 +16,21 @@ import { CopyLink } from "../CopyLink";
 export default async function SendLinkPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   const { id } = await params;
-  const project = await withClient(id);
-  if (!project) notFound();
+  const client = await byId(id);
+  if (!client) notFound();
 
-  const token = await takeFlashLink(project.id);
-  const link = token ? projectLink(token) : null;
-  const c = project.client;
+  const token = await takeFlashLink(client.id);
+  const link = token ? clientLink(token) : null;
+  const c = client;
   const firstName = c.contactName.trim().split(/\s+/)[0] || c.contactName;
   const message = link ? questionnaireReadyMessage({ contactName: firstName, link }) : "";
 
   return (
-    <AdminShell active="projects" adminName={admin.name}>
+    <AdminShell active="clients" adminName={admin.name}>
       <div className="stack" style={{ gap: 6 }}>
-        <span className="k ember">Project created</span>
+        <span className="k ember">Client added</span>
         <h1 className="a-title">Send {firstName} their link</h1>
-        <p className="a-sub">{project.name} · {c.businessName}</p>
+        <p className="a-sub">{client.businessName}</p>
       </div>
 
       <div className="a-cols">
@@ -54,7 +54,7 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
                 It was shown when the project was made and only its hash was kept, so it cannot be shown again. Rotate it to make a new one, which stops the old link working at once.
               </p>
               <form action={rotateLinkAction}>
-                <input type="hidden" name="projectId" value={project.id} />
+                <input type="hidden" name="clientId" value={client.id} />
                 <button className="a-btn" type="submit">Make a new link</button>
               </form>
             </div>
@@ -68,28 +68,28 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
             </div>
           )}
 
-          <div className={`a-card${project.linkEmailError ? " ember" : ""}`}>
+          <div className={`a-card${client.linkEmailError ? " ember" : ""}`}>
             <div className="between">
-              <span className={`k${project.linkEmailError ? " ember" : ""}`}>The email</span>
-              <span className="mono-sm">{project.linkEmailedAt ? `Sent ${dayMonth(project.linkEmailedAt)}` : project.linkEmailError ? "Not sent" : "Not sent yet"}</span>
+              <span className={`k${client.linkEmailError ? " ember" : ""}`}>The email</span>
+              <span className="mono-sm">{client.linkEmailedAt ? `Sent ${dayMonth(client.linkEmailedAt)}` : client.linkEmailError ? "Not sent" : "Not sent yet"}</span>
             </div>
             <div className="stack">
               <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
-                <span>To {project.signoffPersonEmail}</span><span className="help">the sign-off address</span>
+                <span>To {client.contactEmail}</span><span className="help">the contact address</span>
               </div>
               <div className="between" style={{ padding: "9px 0" }}>
-                <span>Your project page, {c.businessName}</span>
+                <span>Your awtm forge page, {client.businessName}</span>
               </div>
             </div>
-            {project.linkEmailError ? (
+            {client.linkEmailError ? (
               <form action={resendLinkAction} className="stack" style={{ gap: 8 }}>
-                <input type="hidden" name="projectId" value={project.id} />
-                <p className="help err">It did not go out. The project was still created, and nothing is lost by trying again.</p>
+                <input type="hidden" name="clientId" value={client.id} />
+                <p className="help err">It did not go out. The client was still added, and nothing is lost by trying again.</p>
                 <div><button className="a-btn" type="submit">Try sending it again</button></div>
               </form>
             ) : (
               <p className="help" style={{ lineHeight: 1.65 }}>
-                Sent on its own when the project was created. Both go out: the email is the record, the WhatsApp message is the one they will actually read.
+                It goes out on its own when you send the questionnaire, or when the first project starts, whichever comes first. Both go out then: the email is the record, the WhatsApp message is the one they will actually read.
               </p>
             )}
           </div>
@@ -111,7 +111,7 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
             <p className="help" style={{ lineHeight: 1.9 }}>
               They open the link on a phone.<br />
               It offers to email them a code.<br />
-              The code lands with {project.signoffPersonName}.<br />
+              The code lands with {client.contactName}.<br />
               They type it once.<br />
               That phone stays signed in for thirty days.<br />
               Then: nothing to do yet, until the questionnaire is up.
@@ -120,8 +120,8 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
           <div className="a-card">
             <span className="k">Next</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <Link className="a-btn" href={`/admin/projects/${project.id}/intake/upload`}>Upload the questionnaire</Link>
-              <Link className="a-btn ghost" href={`/admin/projects/${project.id}`}>Go to the project</Link>
+              <Link className="a-btn" href={`/admin/clients/${client.id}/intake/upload`}>Upload the questionnaire</Link>
+              <Link className="a-btn ghost" href={`/admin/clients/${client.id}`}>Go to the project</Link>
             </div>
           </div>
         </div>

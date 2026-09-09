@@ -1,7 +1,9 @@
 /** The moments anything might want to react to. ADR 0006. */
 export type EventType =
+  | "client.created"
+  | "client.link_emailed"
+  | "intake.sent"
   | "project.created"
-  | "project.link_emailed"
   | "project.cancelled"
   | "project.closed"
   | "intake.submitted"

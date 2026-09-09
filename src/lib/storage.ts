@@ -33,9 +33,9 @@ async function write(relDir: string, ext: string, data: Buffer): Promise<string>
   return rel;
 }
 
-export function writeProjectFile(projectId: string, ext: string, data: Buffer): Promise<string> {
-  if (!/^[A-Za-z0-9_-]+$/.test(projectId)) throw new Error("bad project id");
-  return write(path.posix.join("projects", projectId), ext, data);
+export function writeClientFile(clientId: string, ext: string, data: Buffer): Promise<string> {
+  if (!/^[A-Za-z0-9_-]+$/.test(clientId)) throw new Error("bad client id");
+  return write(path.posix.join("clients", clientId), ext, data);
 }
 
 export function writeLibraryFile(ext: string, data: Buffer): Promise<string> {

@@ -149,4 +149,11 @@ The questionnaire itself argues for the change. Its five sections are Your busin
 
 Taking the first. The second is faster and produces a worse product for a client to read, which is the wrong trade for a feature whose whole purpose is the client's first impression.
 
-What it changes that needs deciding as it is built, recorded here as it is met: what `/p/[token]` shows a client whose questionnaire is done and whose project has not started, and whether a second project for the same client asks the questionnaire again. Taking: it shows "we are writing your agreement" with no action, and no, it is asked once per client.
+Built on 10 Sep 2026, ADR 0015. Rahul added on 9 Sep that saving the client should generate the link first and the questionnaire second, which is how it works: save the client, see their link once, send the questionnaire, which emails it.
+
+Four things decided while building, none of which the specs answer:
+
+- A client whose questionnaire is in and whose project has not started sees "Got it, thank you", with what they told us folded away and nothing to do.
+- The questionnaire is asked once per client. A second project starts past the gate.
+- The login code goes to the client's contact email, because there may be no project and no sign-off person yet. The two sign-off codes still go to the project's sign-off person.
+- A client's page shows their newest live project, and when none is live, the newest there was. The first cut hid a closed project, which broke "closed: the record, read-only" in PORTAL-SPEC 6.1, and the day-30 test caught it.

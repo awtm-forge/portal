@@ -84,6 +84,25 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The questionnaire before the project: done
+
+10 Sep 2026, AI-assisted. Rahul on 9 Sep: "questionnaire should not be followed by project", and then "after saving the client there should be link generation for the client and then questionnaire". QUESTIONS.md Q12, ADR 0015.
+
+Built: the link, the sessions, the login code, the questionnaire and its files belong to the client. Saving a client mints their link and shows it once on the same handover screen the project used to have; nothing is emailed and nothing is started. Send the questionnaire attaches the document and, the first time, emails the link. Starting a project puts it on the link they already have, mints nothing, and starts past the gate when the questionnaire is already in. The client zone kept its paths: the token resolves a client, one helper picks their project, and twenty-one routes changed the same way. The admin questionnaire and handover screens moved under the client. The login code goes to the contact; the two sign-off codes still carry the project.
+
+The migration adds the client's columns, backfills each from that client's earliest project, backfills every keyed row from its project's client, and only then drops. Prisma's generated diff would have dropped and re-added, orphaning every row.
+
+Verified: 139 unit tests and 133 end to end, both widths, plus the webpack build with the moved routes in it.
+
+Two real defects, both mine, both found by tests I already had:
+
+- **A closed project vanished from the client's page.** The first cut of "the project a client's page is about" excluded closed and cancelled, so the moment a project was closed the link showed nothing, against PORTAL-SPEC 6.1 and against the runbook line I had written the day before. The day-30 spec caught it. It prefers what is live and falls back to the newest of anything.
+- **A client was refused their own invoice.** The printable invoice route still checked the session against a project id where a client id was now required, so the owner got the same 404 as a stranger. The invoices spec caught it.
+
+And a design consequence worth naming: the needs-attention rule for an open questionnaire counts from when the questionnaire was sent, not from when a project was created, and can name a client who has no project at all. The block links to the client in that case.
+
+Deferred: a client with two live projects at once sees the newer one. PORTAL-SPEC section 4 is out of step with the schema on where the link and the intake live, and that wording is Rahul's.
+
 ## A first-run page, because the host cannot run a script: done
 
 9 Sep 2026, AI-assisted. Rahul tried to sign in to the live site and could not.

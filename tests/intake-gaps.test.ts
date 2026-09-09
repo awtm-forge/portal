@@ -15,6 +15,7 @@ import { overrideIntakeGate, send } from "@/modules/agreements";
  */
 const SLUG = "intake-gaps-test";
 let projectId = "";
+let clientId = "";
 let intakeId = "";
 let adminId = "";
 
@@ -27,9 +28,10 @@ async function seedDocument() {
 
 async function clearUp() {
   const where = `projectId IN (SELECT id FROM Project WHERE slug LIKE '${SLUG}-%')`;
-  for (const table of ["Agreement", "AgreementNote", "Intake", "ActivityEvent"]) {
+  for (const table of ["Agreement", "AgreementNote", "ActivityEvent"]) {
     await db.$executeRawUnsafe(`DELETE FROM \`${table}\` WHERE ${where}`);
   }
+  await db.$executeRaw`DELETE FROM Intake WHERE clientId IN (SELECT id FROM Client WHERE businessName = 'Intake Gaps Test')`;
   await db.$executeRaw`DELETE FROM Project WHERE slug LIKE ${`${SLUG}-%`}`;
   await db.$executeRaw`DELETE FROM Client WHERE businessName = 'Intake Gaps Test'`;
 }
@@ -42,7 +44,7 @@ beforeEach(async () => {
   })).id;
 
   const client = await db.client.create({
-    data: { businessName: "Intake Gaps Test", contactName: "T", contactPhone: "+910000000000", contactEmail: "t@example.test" },
+    data: { businessName: "Intake Gaps Test", contactName: "T", contactPhone: "+910000000000", contactEmail: "t@example.test", accessTokenHash: `test-${Math.random().toString(36).slice(2)}` },
   });
   const project = await db.project.create({
     data: {
@@ -52,12 +54,12 @@ beforeEach(async () => {
       typeOfWork: "STORE",
       signoffPersonName: "T",
       signoffPersonEmail: "t@example.test",
-      accessTokenHash: `test-${Math.random().toString(36).slice(2)}`,
     },
   });
   projectId = project.id;
-  await upsertDocument(projectId, await seedDocument(), adminId);
-  intakeId = (await db.intake.findUniqueOrThrow({ where: { projectId } })).id;
+  clientId = client.id;
+  await upsertDocument(clientId, await seedDocument(), adminId);
+  intakeId = (await db.intake.findUniqueOrThrow({ where: { clientId } })).id;
 });
 
 afterAll(async () => {
@@ -91,9 +93,9 @@ describe("INTAKE-SPEC 14.11, replacing the questionnaire", () => {
     await saveAnswer(intakeId, "biz_where", ["own_site", "amazon"], "client");
     await saveAnswer(intakeId, "biz_volume", "100_500", "client");
 
-    await upsertDocument(projectId, await seedDocument(), adminId);
+    await upsertDocument(clientId, await seedDocument(), adminId);
 
-    const answers = readAnswers((await db.intake.findUniqueOrThrow({ where: { projectId } })).answers);
+    const answers = readAnswers((await db.intake.findUniqueOrThrow({ where: { clientId } })).answers);
     expect(answers.biz_what.value).toBe("Home appliances.");
     expect(answers.biz_where.value).toEqual(["own_site", "amazon"]);
     expect(answers.biz_volume.value).toBe("100_500");
@@ -104,10 +106,10 @@ describe("INTAKE-SPEC 14.11, replacing the questionnaire", () => {
     const doc = await seedDocument();
     doc.sections[0].questions = doc.sections[0].questions.filter((q) => q.key !== "biz_what");
 
-    const { hidden } = await upsertDocument(projectId, doc, adminId);
+    const { hidden } = await upsertDocument(clientId, doc, adminId);
     expect(hidden).toContain("biz_what");
 
-    const row = await db.intake.findUniqueOrThrow({ where: { projectId } });
+    const row = await db.intake.findUniqueOrThrow({ where: { clientId } });
     // Still in the answers, so putting the question back brings it with it.
     expect(readAnswers(row.answers).biz_what.value).toBe("Home appliances.");
   });
@@ -125,7 +127,7 @@ describe("INTAKE-SPEC 14.7, the agreement gate", () => {
 
   it("records who overrode it and when, rather than just letting it through", async () => {
     expect(await overrideIntakeGate(projectId, adminId)).toBe(true);
-    const row = await db.intake.findUniqueOrThrow({ where: { projectId } });
+    const row = await db.intake.findUniqueOrThrow({ where: { clientId } });
     expect(row.overriddenAt).not.toBeNull();
     expect(row.overriddenById).toBe(adminId);
 

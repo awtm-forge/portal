@@ -10,7 +10,7 @@ export default async function ClientsPage() {
     orderBy: { createdAt: "desc" },
     include: { projects: { orderBy: { createdAt: "desc" } } },
   });
-  const waiting = clients.filter((c) => c.projects.some((p) => !p.linkEmailedAt)).length;
+  const waiting = clients.filter((c) => !c.linkEmailedAt).length;
 
   return (
     <AdminShell active="clients" adminName={admin.name}>
@@ -42,7 +42,6 @@ export default async function ClientsPage() {
                 c.projects.map((p) => (
                   <Link key={p.id} href={`/admin/projects/${p.id}`} className="mono-sm" style={{ color: "var(--muted)" }}>
                     {p.name}
-                    {!p.linkEmailedAt && <span style={{ color: "var(--ember)" }}> · link not sent</span>}
                   </Link>
                 ))
               )}

@@ -4,7 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { CodePurpose, SignoffMethod } from "@/generated/prisma/enums";
 import { clientIp } from "@/lib/rate-limit";
-import { currentClientSession, projectByToken, requestCode, verifyCode } from "@/modules/auth/client";
+import { requestCode, verifyCode } from "@/modules/auth/client";
+import { projectScope } from "../scope";
 import { requestChanges, signOffDelivery } from "@/modules/review";
 import "@/modules/notifications/register";
 
@@ -17,17 +18,15 @@ export type ReviewState = {
 };
 
 async function loadOrLeave(token: string) {
-  const project = await projectByToken(token);
-  if (!project) redirect("/p/not-found");
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
+  const { project } = await projectScope(token);
   return project;
 }
 
 /** PORTAL-SPEC 5.10: a fresh code even inside a valid session. */
 export async function startSignOffAction(_prev: ReviewState, formData: FormData): Promise<ReviewState> {
   const token = String(formData.get("token") ?? "");
-  const project = await loadOrLeave(token);
-  const result = await requestCode(project, CodePurpose.DELIVERY, await headers());
+  const { client, project } = await projectScope(token);
+  const result = await requestCode({ client, project }, CodePurpose.DELIVERY, await headers());
   if (!result.ok) {
     return {
       step: "idle",
@@ -43,10 +42,10 @@ export async function confirmSignOffAction(prev: ReviewState, formData: FormData
   const token = String(formData.get("token") ?? "");
   const code = String(formData.get("code") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  const project = await loadOrLeave(token);
+  const { client, project } = await projectScope(token);
   const head = await headers();
 
-  const verified = await verifyCode(project, CodePurpose.DELIVERY, code, head);
+  const verified = await verifyCode({ client, project }, CodePurpose.DELIVERY, code, head);
   if (!verified.ok) {
     switch (verified.reason) {
       case "wrong":

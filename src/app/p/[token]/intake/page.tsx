@@ -1,25 +1,24 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { IntakeRenderer } from "@/components/intake/IntakeRenderer";
 import { ClientShell } from "@/components/portal/ClientShell";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
-import { db } from "@/lib/db";
 import { readAnswers, readBoolMap, readStringList } from "@/modules/intake/answers";
 import { parseDocumentLoose } from "@/modules/intake/document";
 import { fileInfoMap } from "@/modules/intake/load";
+import { withIntake } from "@/modules/clients";
+import { clientScope } from "../scope";
 
 export default async function IntakePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const project = await projectByToken(token);
-  if (!project) notFound();
-  if (!(await currentClientSession(project.id))) redirect(`/p/${token}`);
-  const intake = await db.intake.findUnique({ where: { projectId: project.id } });
-  if (!intake) redirect(`/p/${token}`);
+  const who = await clientScope(token);
+  const client = await withIntake(who.id);
+  const intake = client?.intake;
+  if (!client || !intake) redirect(`/p/${token}`);
   const doc = parseDocumentLoose(intake.document);
   if (!doc) redirect(`/p/${token}`);
-  const files = await fileInfoMap(project.id);
+  const files = await fileInfoMap(client.id);
   const base = `/p/${token}`;
   return (
-    <ClientShell businessName={project.client.businessName} wide>
+    <ClientShell businessName={client.businessName} wide>
       <IntakeRenderer
         doc={doc}
         initialAnswers={readAnswers(intake.answers)}
@@ -31,9 +30,9 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         fileBase={`${base}/file`}
         libBase={`${base}/lib`}
         mode="client"
-        prefill={{ name: project.signoffPersonName, email: project.signoffPersonEmail }}
+        prefill={{ name: client.proposedSignoffName ?? client.contactName, email: client.proposedSignoffEmail ?? client.contactEmail }}
         kickoffDateText="the kickoff date"
-        contactFirstName={project.client.contactName.split(" ")[0] ?? ""}
+        contactFirstName={client.contactName.split(" ")[0] ?? ""}
       />
     </ClientShell>
   );

@@ -200,9 +200,10 @@ change once invoices carry it. Leave GSTIN empty until you register: see
 5. `curl -s https://portal.awtmforge.com/healthz` is `{"status":"ok"}`. It is
    200 only when the database answers, so it is the first thing to check when
    something looks wrong. Point Hostinger's monitor at it.
-6. A real one-time code arrives. Open a project link on a phone, ask for the
-   code, and confirm it reaches the sign-off address. This is the one check
-   that proves SMTP, and nothing else does.
+6. A real one-time code arrives. Add a throwaway client with your own address
+   as the contact, open their link on a phone, ask for the code, and confirm it
+   reaches you. No project is needed. This is the one check that proves SMTP,
+   and nothing else does.
 7. Uploads survive a redeploy: put a marker file in `UPLOAD_DIR`, push a
    trivial commit, confirm the marker is still there. If it is not, uploads
    need a different home and the build stops to say so.

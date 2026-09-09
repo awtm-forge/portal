@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 9 September 2026, after step 11.
+route; last checked against the code on 10 September 2026, after the questionnaire moved to the client.
 
 Zones and their rules are in `ARCHITECTURE.md`. This host is entirely private
 (ADR 0012): every route sends `X-Robots-Tag: noindex, nofollow`,
@@ -65,19 +65,19 @@ prints a one-time setup link and never a password.
 | `/admin/clients` | GET | admin | Every client, who we talk to, their projects, and whether each link has gone out. |
 | `/admin/clients/new` | GET, server action | admin | Adds a client on its own. Sends nothing. Can continue straight into a project. |
 | `/admin/clients/[id]` | GET, server action | admin | The client record, their projects, and their contact details, edited here rather than on a project. |
-| `/admin/clients/[id]/projects/new` | GET, server action | admin | Starts a project for that client. The sign-off person is asked here, defaulting to the day to day contact. Creating it mints the link, emails it and records `link_emailed_at` (criterion 22). |
-| `/admin/projects/[id]/link` | GET, server action | admin | The handover. Shows the link in the clear while a fifteen minute cookie holds it, the WhatsApp message ready to send, and the email's state with a retry. Once that cookie is gone the link cannot be shown again, because only its hash is stored; rotating makes a new one. |
+| `/admin/clients/[id]/projects/new` | GET, server action | admin | Starts a project on the client's existing link (ADR 0015). It mints nothing. The sign-off person is asked here, offered first from what the client named on the questionnaire. If the questionnaire is already in, the project starts past the gate. If the link never went out, this sends it (criterion 22). |
+| `/admin/clients/[id]/link` | GET, server action | admin | The handover, reached the moment a client is saved. Shows the link in the clear while a fifteen minute cookie holds it, the WhatsApp message ready to send, and the email's state with a retry. Once that cookie is gone the link cannot be shown again, because only its hash is stored; rotating makes a new one. The email goes when the questionnaire is sent, or when the first project starts, whichever comes first. |
 | `/admin/projects/[id]` | GET | admin | Phase, the agreement, invoices, sign-offs, the client link and its email status, the questionnaire, and the sign-off email confirmation. |
 | `/admin/projects/[id]/agreement` | GET, server action | admin | The editor, with internal cost and notes in a block marked never shown to the client. Saving, sending, and the questionnaire override. |
 | `/admin/projects/[id]` (record WhatsApp) | server action | admin | PORTAL-SPEC 5.11, both kinds. Records a yes that arrived on WhatsApp: the same sign-off event and the same invoice, `method=whatsapp`, no ip, the pasted message kept. Offered while the phase is `agreement_sent` for the agreement, `in_review` for the delivery. |
 | `/admin/projects/[id]` (mark ready) | server action | admin | Opens a review round. The link to the finished work is required. Offered only while the phase is `building` and the agreement is agreed. |
 | `/admin/projects/[id]` (forget a referral) | server action | admin | The one delete in the system. Removes the row and writes a `referral.forgotten` event, so the fact survives without the details. |
-| `/admin/projects/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer. |
-| `/admin/projects/[id]/intake/upload` | GET, server action | admin | Import or replace a questionnaire. Every failing rule is reported at once and nothing is saved (INTAKE-SPEC 14.2, 14.3). |
-| `/admin/projects/[id]/intake/fill` | GET | admin | Typing answers from a call; each is marked `entered_by: team`. |
-| `/admin/projects/[id]/intake/api/[action]` | POST | admin, same origin | The same actions as the client's, except `submit`, which only the client does. |
-| `/admin/projects/[id]/intake/answers.json` | GET | admin | The answers document (INTAKE-SPEC 6). |
-| `/admin/projects/[id]/file/[fileId]` | GET | admin | An uploaded file or its thumbnail. |
+| `/admin/clients/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer. |
+| `/admin/clients/[id]/intake/upload` | GET, server action | admin | "Send the questionnaire" (Q12). Import or replace the document on the client. The first time, it also emails the client their link. Every failing rule is reported at once and nothing is saved (INTAKE-SPEC 14.2, 14.3). |
+| `/admin/clients/[id]/intake/fill` | GET | admin | Typing answers from a call; each is marked `entered_by: team`. |
+| `/admin/clients/[id]/intake/api/[action]` | POST | admin, same origin | The same actions as the client's, except `submit`, which only the client does. |
+| `/admin/clients/[id]/intake/answers.json` | GET | admin | The answers document (INTAKE-SPEC 6). |
+| `/admin/clients/[id]/file/[fileId]` | GET | admin | An uploaded file or its thumbnail. |
 | `/admin/lib/[key]` | GET | admin | An image library picture. |
 | `/admin/library` | GET, server action | admin | Upload, replace, delete. A key named by any uploaded questionnaire cannot be deleted. |
 | `/admin/settings` | GET, server action | admin | Our own details: company, bank, invoice prefix, GSTIN, booking URL, default advance percentage. The prefix refuses to change once invoices carry it. Nothing here belongs to a client. |

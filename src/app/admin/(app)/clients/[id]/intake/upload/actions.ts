@@ -3,17 +3,23 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/modules/auth/admin";
 import { db } from "@/lib/db";
+import { deliverLink, sendQuestionnaire, withIntake } from "@/modules/clients";
 import { readAnswers } from "@/modules/intake/answers";
 import { validateDocument, type ImportFailure } from "@/modules/intake/import";
-import { upsertDocument } from "@/modules/intake/replace";
+import { takeFlashLink } from "../../../../actions";
 
 export type ImportState = { failures?: ImportFailure[]; message?: string; json?: string };
 
+/**
+ * "Send the questionnaire" (Q12). Attaches the document to the client and,
+ * the first time, emails their link, because now there is something on it.
+ * A replacement later attaches quietly: the link has already gone.
+ */
 export async function importAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
   const admin = await requireAdmin();
-  const projectId = String(formData.get("projectId") ?? "");
-  const project = await db.project.findUnique({ where: { id: projectId }, include: { intake: { select: { answers: true } } } });
-  if (!project) redirect("/admin");
+  const clientId = String(formData.get("clientId") ?? "");
+  const client = await withIntake(clientId);
+  if (!client) redirect("/admin/clients");
 
   let text = String(formData.get("json") ?? "").trim();
   const file = formData.get("file");
@@ -31,10 +37,16 @@ export async function importAction(_prev: ImportState, formData: FormData): Prom
   const result = validateDocument(raw, keys);
   if (!result.ok) return { json: text, failures: result.failures };
 
-  const hasAnswers = project.intake ? Object.keys(readAnswers(project.intake.answers)).length > 0 : false;
+  const hasAnswers = client.intake ? Object.keys(readAnswers(client.intake.answers)).length > 0 : false;
   if (hasAnswers && formData.get("confirm") !== "on") {
     return { json: text, message: "Answers exist. Tick the line confirming that answers to removed keys are kept but hidden, then upload again." };
   }
-  await upsertDocument(project.id, result.document, admin.id);
-  redirect(`/admin/projects/${project.id}`);
+  const firstTime = client.intake === null;
+  await sendQuestionnaire(client.id, result.document, admin.id);
+
+  if (firstTime && !client.linkEmailedAt) {
+    const token = await takeFlashLink(client.id);
+    if (token) await deliverLink(client.id, token);
+  }
+  redirect(`/admin/clients/${client.id}`);
 }

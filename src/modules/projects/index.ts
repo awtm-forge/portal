@@ -2,10 +2,55 @@
  * Project-level moves that are not owned by another module. Anything with its
  * own area (agreements, review, intake) lives there instead.
  */
-import { Phase } from "@/generated/prisma/enums";
+import { Phase, type TypeOfWork } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
+import { slugify } from "@/lib/format";
 import { emit } from "@/modules/events";
 import { transition } from "@/modules/projects/phase";
+
+export type NewProject = {
+  clientId: string;
+  name: string;
+  slug?: string;
+  typeOfWork: TypeOfWork;
+  signoffPersonName: string;
+  signoffPersonEmail: string;
+};
+
+/**
+ * Starts a project on a client. It mints no link: the client already has one
+ * (ADR 0015). It starts past the questionnaire gate when the questionnaire is
+ * already submitted or overridden, because the questionnaire is the client's
+ * and was asked before this project existed (Q12).
+ */
+export async function createProject(input: NewProject): Promise<{ id: string } | { error: "no_client" }> {
+  const client = await db.client.findUnique({ where: { id: input.clientId }, include: { intake: true } });
+  if (!client) return { error: "no_client" };
+
+  const baseSlug = slugify(input.slug || `${client.businessName} ${input.name}`) || "project";
+  let slug = baseSlug;
+  for (let i = 2; await db.project.findUnique({ where: { slug } }); i++) slug = `${baseSlug}-${i}`;
+
+  const gateOpen = Boolean(client.intake?.submittedAt || client.intake?.overriddenAt);
+  const project = await db.project.create({
+    data: {
+      clientId: client.id,
+      name: input.name,
+      slug,
+      typeOfWork: input.typeOfWork,
+      signoffPersonName: input.signoffPersonName,
+      signoffPersonEmail: input.signoffPersonEmail.toLowerCase(),
+      phase: gateOpen ? Phase.AGREEMENT_DRAFT : Phase.INTAKE,
+    },
+  });
+  await emit({
+    type: "project.created",
+    projectId: project.id,
+    actor: "team",
+    payload: { projectName: project.name, businessName: client.businessName, startedPastGate: gateOpen },
+  });
+  return { id: project.id };
+}
 
 export type KickoffResult = { ok: true } | { ok: false; reason: "not_found" | "wrong_phase" };
 
@@ -92,8 +137,7 @@ export function listForAdmin() {
   return db.project.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      client: true,
-      intake: { select: { submittedAt: true, lastSavedAt: true, document: true, answers: true, sectionsDone: true } },
+      client: { include: { intake: { select: { submittedAt: true, lastSavedAt: true, document: true, answers: true, sectionsDone: true } } } },
     },
   });
 }
@@ -103,8 +147,7 @@ export function forAdmin(projectId: string) {
   return db.project.findUnique({
     where: { id: projectId },
     include: {
-      client: true,
-      intake: { include: { documentUploadedBy: { select: { name: true } } } },
+      client: { include: { intake: { include: { documentUploadedBy: { select: { name: true } } } } } },
       agreement: true,
     },
   });
@@ -135,7 +178,7 @@ export function withClientAndAgreement(projectId: string) {
 export function forAgreementEditor(projectId: string) {
   return db.project.findUnique({
     where: { id: projectId },
-    include: { client: true, agreement: true, intake: true },
+    include: { client: { include: { intake: true } }, agreement: true },
   });
 }
 

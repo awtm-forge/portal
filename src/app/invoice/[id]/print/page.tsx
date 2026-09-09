@@ -21,7 +21,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   if (!invoice) notFound();
 
   const admin = await currentAdmin();
-  if (!admin && !(await currentClientSession(invoice.projectId))) notFound();
+  if (!admin && !(await currentClientSession(invoice.project.clientId))) notFound();
 
   const c = await company();
 

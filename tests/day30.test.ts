@@ -25,7 +25,7 @@ let projectId = "";
 
 async function freshProject(): Promise<string> {
   const client = await db.client.create({
-    data: { businessName: "Day30 Test", contactName: "T", contactPhone: "+910000000000", contactEmail: "t@example.test" },
+    data: { businessName: "Day30 Test", contactName: "T", contactPhone: "+910000000000", contactEmail: "t@example.test", accessTokenHash: `test-${Math.random().toString(36).slice(2)}` },
   });
   const project = await db.project.create({
     data: {
@@ -35,7 +35,6 @@ async function freshProject(): Promise<string> {
       typeOfWork: "STORE",
       signoffPersonName: "T",
       signoffPersonEmail: "t@example.test",
-      accessTokenHash: `test-${Math.random().toString(36).slice(2)}`,
       metricName: "Checkout completion",
       metricBaselineValue: "41 percent",
     },

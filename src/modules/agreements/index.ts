@@ -67,11 +67,15 @@ export type SendResult = { ok: true; version: number } | { ok: false; reason: "n
  */
 export async function send(projectId: string): Promise<SendResult> {
   return db.$transaction(async (tx) => {
-    const project = await tx.project.findUnique({ where: { id: projectId }, include: { intake: true, agreement: true } });
+    const project = await tx.project.findUnique({
+      where: { id: projectId },
+      include: { client: { include: { intake: true } }, agreement: true },
+    });
     if (!project?.agreement) return { ok: false, reason: "no_agreement" } as const;
     if (project.agreement.agreedAt) return { ok: false, reason: "frozen" } as const;
-    const submitted = project.intake?.submittedAt !== null && project.intake?.submittedAt !== undefined;
-    const overridden = project.intake?.overriddenAt !== null && project.intake?.overriddenAt !== undefined;
+    const intake = project.client.intake;
+    const submitted = intake?.submittedAt !== null && intake?.submittedAt !== undefined;
+    const overridden = intake?.overriddenAt !== null && intake?.overriddenAt !== undefined;
     if (!submitted && !overridden) return { ok: false, reason: "intake_open" } as const;
     if (project.phase !== Phase.AGREEMENT_DRAFT) return { ok: false, reason: "wrong_phase" } as const;
 
@@ -85,10 +89,11 @@ export async function send(projectId: string): Promise<SendResult> {
 
 /** INTAKE-SPEC 13.3: the override records who and when. */
 export async function overrideIntakeGate(projectId: string, adminId: string): Promise<boolean> {
-  const project = await db.project.findUnique({ where: { id: projectId }, include: { intake: true } });
-  if (!project?.intake || project.phase !== Phase.INTAKE) return false;
+  const project = await db.project.findUnique({ where: { id: projectId }, include: { client: { include: { intake: true } } } });
+  const intake = project?.client.intake;
+  if (!project || !intake || project.phase !== Phase.INTAKE) return false;
   await db.$transaction(async (tx) => {
-    await tx.intake.update({ where: { id: project.intake!.id }, data: { overriddenAt: new Date(), overriddenById: adminId } });
+    await tx.intake.update({ where: { id: intake.id }, data: { overriddenAt: new Date(), overriddenById: adminId } });
     await transition(tx, project, "intake_overridden");
   });
   await emit({ type: "intake.overridden", projectId, actor: adminId, payload: {} });

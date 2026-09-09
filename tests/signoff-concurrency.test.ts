@@ -23,6 +23,7 @@ async function freshAgreedProject(): Promise<string> {
       contactName: "T",
       contactPhone: "+910000000000",
       contactEmail: "t@example.test",
+      accessTokenHash: `conc-${Math.random().toString(36).slice(2)}`,
     },
   });
   const project = await db.project.create({
@@ -33,7 +34,6 @@ async function freshAgreedProject(): Promise<string> {
       typeOfWork: "STORE",
       signoffPersonName: "T",
       signoffPersonEmail: "t@example.test",
-      accessTokenHash: `conc-${Math.random().toString(36).slice(2)}`,
       phase: Phase.AGREEMENT_SENT,
       agreement: {
         create: {

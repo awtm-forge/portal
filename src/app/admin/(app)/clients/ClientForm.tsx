@@ -28,8 +28,7 @@ export function ClientForm() {
         </div>
         {state.message && <p className="help err">{state.message}</p>}
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <button className="a-btn" type="submit" name="intent" value="start_project" disabled={pending}>{pending ? "Saving" : "Save, and start a project"}</button>
-          <button className="a-btn ghost" type="submit" name="intent" value="save" disabled={pending}>Just save the client</button>
+          <button className="a-btn" type="submit" disabled={pending}>{pending ? "Saving" : "Save, and show me their link"}</button>
           <Link className="a-btn ghost" href="/admin/clients">Cancel</Link>
         </div>
       </div>

@@ -34,7 +34,7 @@ neither, and says what it would take.
 | 19 | Portal and admin send no-store | test | `e2e/leak-walk.spec.ts` |
 | 20 | The portal looks like the marketing site | **restate** | The marketing site is not deployed. It still exists in `components/marketing` and shares the tokens, so the comparison is possible, but the criterion points at something no one can visit. |
 | 21 | INTAKE-SPEC section 14 all pass | part | See below. |
-| 22 | Creating a project sends one link email and records it | test | `e2e/onboarding.spec.ts` |
+| 22 | The link goes out once, and is recorded | test, reworded | `e2e/onboarding.spec.ts`. Reworded by ADR 0015: saving a client mints the link and emails nothing; sending the questionnaire, or starting the first project, emails it once and records `link_emailed_at`. |
 | 23 | A note moves agreement_sent back to draft, and nowhere else | test | `e2e/agreement.spec.ts`, `phase.test.ts` |
 | 24 | The thank-you page 404s before delivery | test | `e2e/review.spec.ts` |
 | 25 | A referral never reaches a client route or a template | test | `e2e/leak-walk.spec.ts` |

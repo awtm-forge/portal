@@ -11,7 +11,7 @@ export default async function ProjectsPage() {
   const admin = await requireAdmin();
   const attention = await needsAttention();
   const projects = await listForAdmin();
-  const waiting = projects.filter((p) => !p.intake?.submittedAt).length;
+  const waiting = projects.filter((p) => !p.client.intake?.submittedAt).length;
 
   return (
     <AdminShell active="projects" adminName={admin.name}>
@@ -29,11 +29,11 @@ export default async function ProjectsPage() {
         {projects.length === 0 && <p className="c-sub">No projects yet. The first one starts after a discovery call.</p>}
         {projects.map((p) => {
           let q: { text: string; tone: "ember" | "muted" | "dim" };
-          if (!p.intake) q = { text: "Not uploaded yet", tone: "dim" };
-          else if (p.intake.submittedAt) q = { text: `Submitted ${dayMonth(p.intake.submittedAt)}`, tone: "muted" };
+          if (!p.client.intake) q = { text: "Not uploaded yet", tone: "dim" };
+          else if (p.client.intake.submittedAt) q = { text: `Submitted ${dayMonth(p.client.intake.submittedAt)}`, tone: "muted" };
           else {
-            const pr = intakeProgress(p.intake.document, p.intake.answers, p.intake.sectionsDone);
-            q = { text: `Open, ${pr.done} of ${pr.total} sections${p.intake.lastSavedAt ? `, saved ${dayMonth(p.intake.lastSavedAt)}` : ""}`, tone: "ember" };
+            const pr = intakeProgress(p.client.intake.document, p.client.intake.answers, p.client.intake.sectionsDone);
+            q = { text: `Open, ${pr.done} of ${pr.total} sections${p.client.intake.lastSavedAt ? `, saved ${dayMonth(p.client.intake.lastSavedAt)}` : ""}`, tone: "ember" };
           }
           return (
             <div key={p.id} style={{ display: "grid", gridTemplateColumns: "1.6fr 1.2fr 1.6fr 1.2fr 0.7fr", gap: 16, alignItems: "center", padding: "13px 0", borderBottom: "1px solid var(--rule-soft)" }}>

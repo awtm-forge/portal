@@ -52,9 +52,26 @@ model Client {
   contactName  String
   contactPhone String
   contactEmail String
+  /// The link belongs to the client, not to a project (ADR 0015, QUESTIONS.md
+  /// Q12). One link per client, minted when the client is created, and every
+  /// project they ever have appears on it. Only the hash is stored.
+  accessTokenHash      String    @unique
+  tokenCreatedAt       DateTime  @default(now())
+  tokenRotatedAt       DateTime?
+  linkEmailedAt        DateTime?
+  linkEmailError       String?   @db.VarChar(300)
+  /// A sign-off person the client typed in the questionnaire. Held here until
+  /// a project exists to put them on; the new-project form offers them first.
+  proposedSignoffName  String?
+  proposedSignoffEmail String?
+  proposedAt           DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   projects     Project[]
+  intake       Intake?
+  sessions     ClientSession[]
+  oneTimeCodes OneTimeCode[]
+  files        IntakeFile[]
 }
 
 enum TypeOfWork {
@@ -75,20 +92,11 @@ model Project {
   /// Who says yes for this project. On the project rather than the client,
   /// decided by Rahul on 8 Sep 2026: one business can have a different
   /// approver for a brand job than for a store rebuild. This departs from
-  /// PORTAL-SPEC section 4, which puts these on client. The six digit code
-  /// goes to signoffPersonEmail.
+  /// PORTAL-SPEC section 4, which puts these on client. The two sign-off
+  /// codes go to signoffPersonEmail; the login code goes to the client's
+  /// contact, because a client can be signed in before any project exists.
   signoffPersonName        String
   signoffPersonEmail       String
-  /// A sign-off email the client typed in the questionnaire that differs from
-  /// the one above. Codes keep going to signoffPersonEmail until admin says.
-  proposedSignoffName      String?
-  proposedSignoffEmail     String?
-  proposedAt               DateTime?
-  accessTokenHash          String          @unique
-  tokenCreatedAt           DateTime        @default(now())
-  tokenRotatedAt           DateTime?
-  linkEmailedAt            DateTime?
-  linkEmailError           String?         @db.VarChar(300)
   phase                    Phase           @default(INTAKE)
   weekCount                Int?
   metricName               String?
@@ -110,7 +118,6 @@ model Project {
   cancelledAt              DateTime?
   cancelReason             String?         @db.VarChar(500)
   createdAt                DateTime        @default(now())
-  intake                   Intake?
   agreement                Agreement?
   agreementNotes           AgreementNote[]
   signoffEvents            SignoffEvent[]
@@ -121,24 +128,22 @@ model Project {
   testimonials             Testimonial[]
   referrals                Referral[]
   day30                    Day30?
-  sessions                 ClientSession[]
   oneTimeCodes             OneTimeCode[]
-  files                    IntakeFile[]
 
   @@index([clientId])
 }
 
 model ClientSession {
   id         String   @id @default(cuid())
-  projectId  String
-  project    Project  @relation(fields: [projectId], references: [id])
+  clientId   String
+  client     Client   @relation(fields: [clientId], references: [id])
   tokenHash  String   @unique
   createdAt  DateTime @default(now())
   expiresAt  DateTime
   lastSeenAt DateTime @default(now())
   userAgent  String?  @db.VarChar(400)
 
-  @@index([projectId])
+  @@index([clientId])
 }
 
 enum CodePurpose {
@@ -149,8 +154,12 @@ enum CodePurpose {
 
 model OneTimeCode {
   id         String      @id @default(cuid())
-  projectId  String
-  project    Project     @relation(fields: [projectId], references: [id])
+  clientId   String
+  client     Client      @relation(fields: [clientId], references: [id])
+  /// Set for the two sign-off purposes, which belong to a project. A login
+  /// code belongs to the client alone.
+  projectId  String?
+  project    Project?    @relation(fields: [projectId], references: [id])
   purpose    CodePurpose @default(LOGIN)
   codeHash   String
   sentTo     String
@@ -159,7 +168,8 @@ model OneTimeCode {
   attempts   Int         @default(0)
   consumedAt DateTime?
 
-  @@index([projectId, purpose, createdAt])
+  @@index([clientId, purpose, createdAt])
+  @@index([projectId])
 }
 
 model RateLimit {
@@ -170,8 +180,10 @@ model RateLimit {
 
 model Intake {
   id                   String    @id @default(cuid())
-  projectId            String    @unique
-  project              Project   @relation(fields: [projectId], references: [id])
+  /// One questionnaire per client, asked once (Q12). Its five sections are
+  /// about the business, not about a piece of work.
+  clientId             String    @unique
+  client               Client    @relation(fields: [clientId], references: [id])
   document             Json
   documentUploadedAt   DateTime  @default(now())
   documentUploadedById String
@@ -190,8 +202,8 @@ model Intake {
 
 model IntakeFile {
   id           String   @id @default(cuid())
-  projectId    String
-  project      Project  @relation(fields: [projectId], references: [id])
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id])
   questionKey  String
   storedPath   String
   thumbPath    String?
@@ -200,7 +212,7 @@ model IntakeFile {
   sizeBytes    Int
   uploadedAt   DateTime @default(now())
 
-  @@index([projectId, questionKey])
+  @@index([clientId, questionKey])
 }
 
 model ImageLibrary {

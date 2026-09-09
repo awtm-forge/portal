@@ -4,7 +4,8 @@ import { ClientShell } from "@/components/portal/ClientShell";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
-import { currentClientSession, projectByToken } from "@/modules/auth/client";
+import { clientByToken, currentClientSession } from "@/modules/auth/client";
+import { activeProjectFor } from "@/modules/clients";
 import { intakeProgress } from "@/modules/intake/progress";
 import { forProject as day30For, isUnlocked as day30Unlocked } from "@/modules/day30";
 import { invoiceToClientView, updateToClientView } from "@/modules/serializers";
@@ -20,14 +21,67 @@ import { CodeScreen } from "./CodeScreen";
  */
 export default async function ProjectPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const project = await projectByToken(token);
-  if (!project) notFound();
+  const client = await clientByToken(token);
+  if (!client) notFound();
 
-  const session = await currentClientSession(project.id);
+  const session = await currentClientSession(client.id);
   if (!session) {
     return (
-      <ClientShell businessName={project.client.businessName}>
-        <CodeScreen token={token} personName={project.signoffPersonName} />
+      <ClientShell businessName={client.businessName}>
+        <CodeScreen token={token} personName={client.contactName} />
+      </ClientShell>
+    );
+  }
+
+  // The questionnaire is the client's and comes first (ADR 0015). Until a
+  // project exists, this page is about that and nothing else.
+  const intake = client.intake;
+  const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
+  const project = await activeProjectFor(client.id);
+
+  if (!project) {
+    return (
+      <ClientShell businessName={client.businessName}>
+        <div style={{ padding: "22px 20px 18px" }} className="stack">
+          <p className="k">Your page</p>
+          <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{client.businessName}</h1>
+        </div>
+        <div style={{ padding: "0 20px" }} className="stack">
+          {!intake && (
+            <Card>
+              <span className="sec-name" style={{ fontSize: 17 }}>Nothing for you to do yet</span>
+              <p className="c-sub">
+                Rahul is writing your questionnaire from what you said on the call, so it asks about your business and not everyone else&rsquo;s. It turns up here when it is ready and we will message you.
+              </p>
+            </Card>
+          )}
+          {intake && progress && !intake.submittedAt && (
+            <Card loud>
+              <p className="k ember">Now</p>
+              <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Before we start, about ten minutes</span>
+              <p className="c-sub">
+                {progress.done > 0
+                  ? `You are ${progress.done} of ${progress.total} sections in. Pick up where you left off.`
+                  : `${progress.total} short sections, mostly about what is going wrong in your own words.`}
+              </p>
+              <p className="c-sub">It saves as you type, so you can stop anywhere and come back.</p>
+              <Link className="btn-full" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>
+                {progress.done > 0 ? "Carry on with the questionnaire" : "Open the questionnaire"}
+              </Link>
+            </Card>
+          )}
+          {intake?.submittedAt && (
+            <Card>
+              <span className="sec-name" style={{ fontSize: 17 }}>Got it, thank you. Sent {dayMonthYear(intake.submittedAt)}.</span>
+              <p className="c-sub">
+                We are turning your answers into one page: what we are building, what it costs, when it lands, and how you will know it is done. It turns up here when it is ready and we will message you.
+              </p>
+              <Collapsed summary="What you told us">
+                <Link className="btn-full ghost" href={`/p/${token}/intake`}>Open your answers</Link>
+              </Collapsed>
+            </Card>
+          )}
+        </div>
       </ClientShell>
     );
   }
@@ -43,12 +97,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   const day30Due = day30 !== null && day30Unlocked(day30) && day30.metricAfterSubmittedAt === null;
   const updates = updateRows.map(updateToClientView);
   const latest = updates[0] ?? null;
-  const intake = project.intake;
-  const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
   const phase = project.phase;
 
   return (
-    <ClientShell businessName={project.client.businessName}>
+    <ClientShell businessName={client.businessName}>
       <div style={{ padding: "22px 20px 18px" }} className="stack">
         <p className="k">Your project</p>
         <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{project.name}</h1>
