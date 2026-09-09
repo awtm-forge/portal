@@ -66,7 +66,7 @@ Set these in hPanel, never in the repo. Every one of them is needed.
 | `SMTP_USER` | `hello@awtmforge.com` |
 | `SMTP_PASS` | that mailbox's password |
 | `SMTP_FROM` | `awtm forge <hello@awtmforge.com>` |
-| `TEAM_NOTIFY_EMAIL` | where team notifications go: intake submitted, agreed, delivered, and every enquiry |
+| `TEAM_NOTIFY_EMAIL` | `rahul@awtmforge.com`. Where team notifications go: intake submitted, agreed, changes requested, delivered, day 30 approved, and every enquiry. One address, not a list. |
 | `TZ` | `Asia/Kolkata`. All dates, the financial year boundary and invoice dates are computed here. |
 | `NODE_ENV` | `production`. Hostinger sets this itself; confirm it, because the seed uses it to keep demo projects out. |
 
@@ -81,7 +81,7 @@ Without `SMTP_HOST` the app refuses to send codes in production.
 Hostinger Cloud plans include SSH. From the app directory:
 
 ```bash
-npm run admin:create -- rahul@zyphextech.com "zekst"
+npm run admin:create -- rahul@awtmforge.com "Rahul"
 ```
 
 ```bash

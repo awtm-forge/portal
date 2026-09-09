@@ -2,7 +2,7 @@
 // setup link. It never generates, prints, or asks for a password: the person
 // sets their own by opening the link (CLAUDE.md section 4).
 //
-//   npm run admin:create -- rahul@zyphextech.com "zekst"
+//   npm run admin:create -- rahul@awtmforge.com "Rahul"
 import "dotenv/config";
 import { createHash, randomBytes } from "node:crypto";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
