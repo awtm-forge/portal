@@ -1,6 +1,6 @@
 # Data flow diagrams
 
-Drafted 7 Sep 2026, last checked against the code on 7 Sep 2026 after step 5. From PORTAL-SPEC v2, INTAKE-SPEC v2 and CLAUDE.md §5. The build session keeps these true: any step that adds a process, a store or a flow updates this file in the same commit. Diagrams are Mermaid; GitHub renders them.
+Drafted 7 Sep 2026, last checked against the code on 10 Sep 2026 after ADR 0016. From PORTAL-SPEC v2, INTAKE-SPEC v2 and CLAUDE.md §5. The build session keeps these true: any step that adds a process, a store or a flow updates this file in the same commit. Diagrams are Mermaid; GitHub renders them.
 
 Notation. Rounded boxes are external entities. Rectangles are processes, numbered so the level 1 diagram can be read against the build order. Cylinders are data stores. Every arrow is data, labelled with what moves, never with an action.
 
@@ -68,7 +68,7 @@ flowchart TB
   D1[(enquiry)]
   D2[(client, project, one_time_code, client_session)]
   D12[(admin setup links)]
-  D3[(intake, intake_file, image_library)]
+  D3[(intake, intake_file, image_library, intake_version, intake_change_request)]
   D4[(agreement, agreement_note)]
   D5[(signoff_event)]
   D6[(update)]
@@ -96,6 +96,9 @@ flowchart TB
   Team -- "questionnaire JSON" --> P9 --> D3
   P3 -- "intake submitted" --> P10
   P3 -- "phase: agreement_draft" --> D2
+  P3 -- "each sending as a version; the ask, in a line" --> D3
+  Team -- "open for a change, decline with a line, lock again" --> P9 --> D3
+  P3 -- "change asked, changes sent" --> P10
 
   Team -- "scope, deliverables, dates, price, split, internal cost" --> P4
   P4 -- "agreement, versions, notes" --> D4

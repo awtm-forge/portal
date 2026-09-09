@@ -25,8 +25,8 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
  * the system, so the guard lives at the client rather than in each module: a
  * new screen cannot get around it by writing its own query.
  */
-const NO_WRITE_BACK = new Set(["SignoffEvent", "AgreementNote"]);
-const NO_DELETE = new Set(["SignoffEvent", "AgreementNote", "Invoice", "ReviewRound", "Testimonial", "Day30"]);
+const NO_WRITE_BACK = new Set(["SignoffEvent", "AgreementNote", "IntakeVersion"]);
+const NO_DELETE = new Set(["SignoffEvent", "AgreementNote", "Invoice", "ReviewRound", "Testimonial", "Day30", "IntakeVersion", "IntakeChangeRequest"]);
 // Referral is deliberately absent from both sets. It holds a third party's
 // name and contact, and that person never consented to being stored, so admin
 // can remove it. The no-delete rule covers evidence, not other people's

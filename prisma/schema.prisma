@@ -29,6 +29,7 @@ model AdminUser {
   createdAt       DateTime       @default(now())
   sessions        AdminSession[]
   intakeUploads   Intake[]       @relation("uploadedBy")
+  intakeDecisions IntakeChangeRequest[] @relation("decidedChanges")
 }
 
 model AdminSession {
@@ -72,6 +73,8 @@ model Client {
   sessions     ClientSession[]
   oneTimeCodes OneTimeCode[]
   files        IntakeFile[]
+  intakeVersions IntakeVersion[]
+  intakeChanges  IntakeChangeRequest[]
 }
 
 enum TypeOfWork {
@@ -213,6 +216,58 @@ model IntakeFile {
   uploadedAt   DateTime @default(now())
 
   @@index([clientId, questionKey])
+}
+
+/// A snapshot of the answers each time the questionnaire is sent (ADR 0016).
+/// Version 1 is the first sending; every later one is the change the client
+/// asked for and then sent. Never updated, never deleted: the agreement is
+/// written from these, so what was said when has to stay readable.
+model IntakeVersion {
+  id            String      @id @default(cuid())
+  clientId      String
+  client        Client      @relation(fields: [clientId], references: [id])
+  version       Int
+  answers       Json
+  accessGranted Json
+  sentAt        DateTime    @default(now())
+  sentBy        IntakeParty
+
+  @@unique([clientId, version])
+}
+
+/// Asking to change the questionnaire after it was sent (ADR 0016). The
+/// client asks with a line on what needs changing. The team opens it, or
+/// declines with a line the client reads. Sending the changes closes it with
+/// the version they became. The team can open one without being asked.
+model IntakeChangeRequest {
+  id          String             @id @default(cuid())
+  clientId    String
+  client      Client             @relation(fields: [clientId], references: [id])
+  status      IntakeChangeStatus @default(ASKED)
+  note        String             @db.Text
+  askedBy     IntakeParty
+  askedAt     DateTime           @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   AdminUser?         @relation("decidedChanges", fields: [decidedById], references: [id])
+  reply       String?            @db.Text
+  sentAt      DateTime?
+  version     Int?
+
+  @@index([clientId, status])
+  @@index([decidedById])
+}
+
+enum IntakeParty {
+  CLIENT
+  TEAM
+}
+
+enum IntakeChangeStatus {
+  ASKED
+  OPEN
+  DECLINED
+  SENT
 }
 
 model ImageLibrary {

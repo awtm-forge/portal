@@ -30,7 +30,7 @@ export function NeedsAttention({ items }: { items: Attention[] }) {
             style={{ padding: "11px 0", borderBottom: "1px solid var(--rule-soft)", gap: 16 }}
           >
             <span className="stack" style={{ gap: 3 }}>
-              <Link href={`/admin/projects/${item.projectId}`} className="sec-name" style={{ fontSize: 14, textDecoration: "none" }}>
+              <Link href={item.projectId ? `/admin/projects/${item.projectId}` : `/admin/clients/${item.clientId}`} className="sec-name" style={{ fontSize: 14, textDecoration: "none" }}>
                 {item.projectName}
               </Link>
               <span className="help">{item.businessName}</span>

@@ -6,6 +6,7 @@
  * raw model. Formatting lives here too, because paise to rupees and UTC to
  * Asia/Kolkata belong at the same boundary.
  */
+import type { IntakeState } from "@/modules/intake/changes";
 import type {
   AgreementModel,
   ClientModel,
@@ -346,4 +347,29 @@ export function testimonialToAdminView(t: TestimonialModel): TestimonialAdminVie
     createdAt: dayMonthYear(t.createdAt),
     approvedAt: t.approvedAt ? dayMonthYear(t.approvedAt) : null,
   };
+}
+
+/**
+ * ADR 0016. What a client sees of their questionnaire's state once sent:
+ * locked, asked, or open for changes, with the one line we wrote if we said
+ * no. Who on the team decided, and the request rows themselves, stay in
+ * admin; the raw state cannot reach the renderer.
+ */
+export type IntakeStateClientView =
+  | { kind: "open" }
+  | { kind: "locked"; declinedReply: string | null }
+  | { kind: "asked"; askedAt: string }
+  | { kind: "changing"; askedBy: "client" | "team" };
+
+export function intakeStateToClientView(state: IntakeState): IntakeStateClientView {
+  switch (state.kind) {
+    case "open":
+      return { kind: "open" };
+    case "locked":
+      return { kind: "locked", declinedReply: state.declined?.reply ?? null };
+    case "asked":
+      return { kind: "asked", askedAt: state.request.askedAt.toISOString() };
+    case "changing":
+      return { kind: "changing", askedBy: state.request.askedBy === "TEAM" ? "team" : "client" };
+  }
 }

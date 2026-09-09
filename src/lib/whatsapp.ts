@@ -14,6 +14,16 @@ export function questionnaireReadyMessage(input: { contactName: string; link: st
   ].join("\n");
 }
 
+/** ADR 0016: the team opened the questionnaire for a change, asked for or not. */
+export function questionnaireOpenMessage(input: { contactName: string; asked: boolean }): string {
+  return [
+    input.asked
+      ? `Hi ${input.contactName}, your questionnaire is open for the change you asked for.`
+      : `Hi ${input.contactName}, we have opened your questionnaire again in case something needs changing.`,
+    "It is the same link as before. Tap an answer to change it, then press Send the changes at the bottom. It locks again after that and we see what changed.",
+  ].join("\n");
+}
+
 /** Only a hash of the link is stored, so the nudge points at the link already sent. */
 export function questionnaireNudgeMessage(input: { contactName: string; openSections: string[] }): string {
   const what = input.openSections.length ? `Still open: ${input.openSections.join(", ")}.` : "A couple of sections are still open.";

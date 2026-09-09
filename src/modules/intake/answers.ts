@@ -1,9 +1,10 @@
-import { Phase } from "@/generated/prisma/enums";
+import { IntakeChangeStatus, IntakeParty, Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { emit } from "@/modules/events";
 import { can, transition } from "@/modules/projects/phase";
 import { parseDocumentLoose, type Question } from "@/modules/intake/document";
 import { SIGNOFF_EMAIL_KEY, SIGNOFF_NAME_KEY } from "@/modules/intake/import";
+import { LOCKED_MESSAGE, openForWriting, snapshotVersion } from "@/modules/intake/versions";
 
 /** INTAKE-SPEC section 6. One entry per question key. */
 export type AnswerEntry = {
@@ -83,6 +84,7 @@ export async function saveAnswer(intakeId: string, key: string, raw: unknown, en
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
     const row = await tx.intake.findUnique({ where: { id: intakeId }, include: { client: true } });
     if (!row) return { ok: false, message: "no questionnaire" };
+    if (!(await openForWriting(tx, row))) return { ok: false, message: LOCKED_MESSAGE };
     const doc = parseDocumentLoose(row.document);
     if (!doc) return { ok: false, message: "bad document" };
     const q = doc.sections.flatMap((s) => s.questions).find((x) => x.key === key);
@@ -139,6 +141,7 @@ export async function markSectionDone(intakeId: string, sectionKey: string): Pro
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
     const row = await tx.intake.findUnique({ where: { id: intakeId } });
     if (!row) return { ok: false, message: "no questionnaire" };
+    if (!(await openForWriting(tx, row))) return { ok: false, message: LOCKED_MESSAGE };
     const doc = parseDocumentLoose(row.document);
     if (!doc?.sections.some((s) => s.key === sectionKey)) return { ok: false, message: "no such section" };
     const done = new Set(readStringList(row.sectionsDone));
@@ -156,7 +159,13 @@ export function missingRequired(documentJson: unknown, answersJson: unknown): st
   return doc.sections.flatMap((s) => s.questions).filter((q) => q.required && !(typeof answers[q.key]?.value === "string" && (answers[q.key].value as string).length > 0)).map((q) => q.key);
 }
 
-export async function submitIntake(intakeId: string): Promise<SaveResult> {
+/**
+ * Sending. The first time it records the sending, makes version 1 and moves
+ * a project waiting in intake on. After that the answers are locked (ADR
+ * 0016): a sending goes through only under an open change request, which it
+ * closes as the next version, and it moves no phase.
+ */
+export async function submitIntake(intakeId: string, by: IntakeParty = IntakeParty.CLIENT): Promise<SaveResult> {
   const result = await db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
     const row = await tx.intake.findUnique({
@@ -168,22 +177,34 @@ export async function submitIntake(intakeId: string): Promise<SaveResult> {
     if (missing.length) return { ok: false as const, message: "Who says yes, and their email, are the two answers we need before sending." };
     const doc = parseDocumentLoose(row.document);
     const firstSubmission = row.submittedAt === null;
+    const open = firstSubmission
+      ? null
+      : await tx.intakeChangeRequest.findFirst({ where: { clientId: row.clientId, status: IntakeChangeStatus.OPEN } });
+    if (!firstSubmission && !open) return { ok: false as const, message: LOCKED_MESSAGE };
+
+    const now = new Date();
     await tx.intake.update({
       where: { id: intakeId },
-      data: { submittedAt: row.submittedAt ?? new Date(), lastSavedAt: new Date(), sectionsDone: doc?.sections.map((s) => s.key) ?? [] },
+      data: { submittedAt: row.submittedAt ?? now, lastSavedAt: now, sectionsDone: doc?.sections.map((s) => s.key) ?? [] },
     });
+    const snap = await snapshotVersion(tx, row.clientId, row.answers, row.accessGranted, by);
+    if (open) {
+      await tx.intakeChangeRequest.update({ where: { id: open.id }, data: { status: IntakeChangeStatus.SENT, sentAt: now, version: snap.version } });
+    }
     // PORTAL-SPEC 5.2: submitting is what moves a project out of intake, if
     // one is waiting there. Usually there is none yet: the questionnaire comes
     // first now (Q12), and a project started afterwards begins past this
-    // gate. Changing an answer later does not move anything again.
+    // gate. Sending changes later does not move anything again.
     const waiting = row.client.projects[0];
     if (firstSubmission && waiting && can(waiting.phase, "intake_submitted")) {
       await transition(tx, waiting, "intake_submitted");
     }
     return {
       ok: true as const,
-      at: new Date().toISOString(),
-      notify: firstSubmission,
+      at: now.toISOString(),
+      first: firstSubmission,
+      version: snap.version,
+      changed: snap.changed.length,
       clientId: row.clientId,
       projectId: waiting?.id ?? null,
       projectName: waiting?.name ?? null,
@@ -191,12 +212,19 @@ export async function submitIntake(intakeId: string): Promise<SaveResult> {
     };
   });
 
-  if (result.ok && result.notify) {
+  if (result.ok && result.first) {
     await emit({
       type: "intake.submitted",
       projectId: result.projectId,
       actor: "client",
       payload: { clientId: result.clientId, projectName: result.projectName, businessName: result.businessName },
+    });
+  } else if (result.ok) {
+    await emit({
+      type: "intake.changes_sent",
+      projectId: null,
+      actor: by === IntakeParty.TEAM ? "team" : "client",
+      payload: { clientId: result.clientId, businessName: result.businessName, changed: result.changed, version: result.version },
     });
   }
   return result.ok ? { ok: true, at: result.at } : result;
@@ -208,6 +236,7 @@ export async function setFileList(intakeId: string, key: string, mutate: (files:
     await tx.$executeRaw`SELECT id FROM Intake WHERE id = ${intakeId} FOR UPDATE`;
     const row = await tx.intake.findUnique({ where: { id: intakeId } });
     if (!row) return { ok: false, message: "no questionnaire" };
+    if (!(await openForWriting(tx, row))) return { ok: false, message: LOCKED_MESSAGE };
     const answers = readAnswers(row.answers);
     const files = mutate(answers[key]?.files ?? []);
     const at = new Date().toISOString();
@@ -219,10 +248,16 @@ export async function setFileList(intakeId: string, key: string, mutate: (files:
 }
 
 /** INTAKE-SPEC section 6, the answers document handed to the scope draft. */
-export function answersDocument(client: { id: string; businessName: string }, intake: { document: unknown; answers: unknown; accessGranted: unknown; submittedAt: Date | null; hiddenQuestionKeys: unknown }) {
+export function answersDocument(
+  client: { id: string; businessName: string },
+  intake: { document: unknown; answers: unknown; accessGranted: unknown; submittedAt: Date | null; hiddenQuestionKeys: unknown },
+  version: number | null = null,
+) {
   const doc = parseDocumentLoose(intake.document);
   return {
     questionnaire_version: doc?.version ?? 1,
+    // ADR 0016: which sending these answers are. Null while still open.
+    answers_version: version,
     client: client.businessName,
     submitted_at: intake.submittedAt ? intake.submittedAt.toISOString() : null,
     answers: readAnswers(intake.answers),

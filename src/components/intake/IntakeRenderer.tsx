@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { IntakeDocument, Question, Section } from "@/modules/intake/document";
 import type { Answers } from "@/modules/intake/answers";
+import type { IntakeStateClientView } from "@/modules/serializers";
 
 /**
  * INTAKE-SPEC section 11. One column, one open section, one button. The
@@ -23,6 +24,10 @@ export type RendererProps = {
   prefill: { name: string; email: string };
   kickoffDateText: string;
   contactFirstName: string;
+  /** ADR 0016: once sent, what the questionnaire is doing now. */
+  state: IntakeStateClientView;
+  /** When the latest version was sent; the first sending when there is only one. */
+  lastSentAt: string | null;
 };
 
 export type FileInfo = { id: string; name: string; mime: string; hasThumb: boolean };
@@ -42,6 +47,8 @@ export function IntakeRenderer(p: RendererProps) {
   const [status, setStatus] = useState<SaveStatus>({ kind: "idle" });
   const [message, setMessage] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [state, setState] = useState<IntakeStateClientView>(p.state);
+  const [lastSentAt, setLastSentAt] = useState<string | null>(p.lastSentAt);
   const sections = p.doc.sections;
   const firstOpen = useMemo(() => {
     const idx = sections.findIndex((s) => !p.initialDone.includes(s.key));
@@ -126,41 +133,86 @@ export function IntakeRenderer(p: RendererProps) {
     const r = await post("submit", {});
     if (!r.ok) { setMessage(r.message ?? "Could not send. Try again."); return; }
     setSubmitted(r.at ?? new Date().toISOString());
+    setLastSentAt(r.at ?? null);
+    setState({ kind: "locked", declinedReply: null });
     setDone(new Set(sections.map((s) => s.key)));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** ADR 0016: sending the changes closes the open request as the next version and locks it again. */
+  async function sendChanges() {
+    setMessage(null);
+    const r = await post("submit", {});
+    if (!r.ok) { setMessage(r.message ?? "Could not send. Try again."); return; }
+    setEditingKey(null);
+    setLastSentAt(r.at ?? new Date().toISOString());
+    setState({ kind: "locked", declinedReply: null });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** One line on what needs changing. The team opens it or says why not. */
+  async function askToOpen(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMessage(null);
+    const note = String(new FormData(e.currentTarget).get("note") ?? "");
+    const r = await post("ask-change", { note });
+    if (!r.ok) { setMessage(r.message ?? "Could not send. Try again."); return; }
+    setState({ kind: "asked", askedAt: new Date().toISOString() });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const doneCount = sections.filter((s) => done.has(s.key)).length;
   const lastSavedText = statusText(status);
 
-  // After sending: every answer read-only, tap to change one. INTAKE-SPEC 11.
-  if (submitted && p.mode === "client") {
+  // After sending (ADR 0016, Q14): read-only and locked, until the team opens
+  // it for a change. Then tap an answer to change it, and send. The access
+  // ticks stay live throughout: they are granted over the days that follow.
+  if (submitted) {
+    const editable = state.kind === "changing";
+    const sentLine = `Sent on ${formatDay(submitted)}.${lastSentAt && lastSentAt !== submitted ? ` Changes sent ${formatDay(lastSentAt)}.` : ""}`;
+    const accessToggle = (k: string, v: boolean) => { setAccess((a) => ({ ...a, [k]: v })); void post("access", { key: k, granted: v }); };
     return (
       <div>
         <div style={{ padding: "24px 20px 18px" }} className="stack">
           <p className="k">{p.doc.title}</p>
-          <h1 className="c-title" style={{ marginTop: 10 }}>Your answers</h1>
-          <p className="c-sub" style={{ marginTop: 10 }}>Sent on {formatDay(submitted)}. You can still change any answer. Tap it.</p>
+          <h1 className="c-title" style={{ marginTop: 10 }}>{p.mode === "client" ? "Your answers" : "Their answers"}</h1>
+          {p.mode === "client" && state.kind === "changing" && (
+            <p className="c-sub" style={{ marginTop: 10 }}>Open for changes. Tap an answer to change it, then press Send the changes at the bottom.</p>
+          )}
+          {p.mode === "client" && state.kind === "asked" && (
+            <p className="c-sub" style={{ marginTop: 10 }}>{sentLine} You asked on {formatDay(state.askedAt)} to change something. We will open it and message you.</p>
+          )}
+          {p.mode === "client" && state.kind === "locked" && (
+            <p className="c-sub" style={{ marginTop: 10 }}>{sentLine} It is locked now, so nothing changes by accident. If something needs changing, ask at the bottom.</p>
+          )}
+          {p.mode === "client" && state.kind === "locked" && state.declinedReply && (
+            <p className="c-sub" style={{ marginTop: 8, color: "var(--ember)" }}>We could not open it this time: {state.declinedReply}</p>
+          )}
+          {p.mode === "team" && (
+            <p className="c-sub" style={{ marginTop: 10 }}>{sentLine}{editable ? " Open for changes. What you type here is marked as taken on a call." : " Locked. Open it for changes from their page to type into it."}</p>
+          )}
           <p className="help" style={{ marginTop: 8 }}>{lastSavedText}</p>
         </div>
         <div className="stack" style={{ gap: 12 }}>
           {sections.map((s) => (
             <div key={s.key} className="card" style={{ margin: "0 20px" }}>
-              <div className="card-h open"><span className="sec-name">{s.title}</span><span className="tag">Done</span></div>
+              <div className="card-h open"><span className="sec-name">{s.title}</span><span className={`tag${editable ? " ember" : ""}`}>{editable ? "Open" : "Done"}</span></div>
               <div className="card-b">
-                {s.access_items && <AccessBlock items={s.access_items} access={access} kickoff={p.kickoffDateText} onToggle={(k, v) => { setAccess((a) => ({ ...a, [k]: v })); void post("access", { key: k, granted: v }); }} />}
+                {s.access_items && <AccessBlock items={s.access_items} access={access} kickoff={p.kickoffDateText} onToggle={accessToggle} />}
                 {s.questions.map((q) => (
                   <div key={q.key} className="stack" style={{ gap: 6 }}>
                     <p className="q">{q.text}</p>
-                    {editingKey === q.key ? (
+                    {editable && editingKey === q.key ? (
                       <>
                         <Field q={q} answers={answers} files={files} p={p} setLocal={setLocal} saveNow={saveNow} saveDebounced={saveDebounced} setFiles={setFiles} setStatus={setStatus} post={post} />
-                        <button className="btn-full" type="button" onClick={() => setEditingKey(null)}>Done with this answer</button>
+                        <button className="btn-full ghost" type="button" onClick={() => setEditingKey(null)}>Done with this answer</button>
                       </>
-                    ) : (
+                    ) : editable ? (
                       <button type="button" className="fld" style={{ textAlign: "left", cursor: "pointer", minHeight: 44 }} onClick={() => setEditingKey(q.key)}>
                         <ReadOnlyValue q={q} answers={answers} files={files} />
                       </button>
+                    ) : (
+                      <div className="fld" style={{ minHeight: 44 }}><ReadOnlyValue q={q} answers={answers} files={files} /></div>
                     )}
                   </div>
                 ))}
@@ -168,6 +220,26 @@ export function IntakeRenderer(p: RendererProps) {
             </div>
           ))}
         </div>
+        {p.mode === "client" && editable && (
+          <div style={{ padding: "16px 20px 0" }} className="stack">
+            {message && <p className="help err">{message}</p>}
+            <button className="btn-full" type="button" onClick={sendChanges} disabled={status.kind === "saving"}>Send the changes</button>
+            <p className="help" style={{ textAlign: "center" }}>It locks again after this, and we see what changed.</p>
+          </div>
+        )}
+        {p.mode === "client" && state.kind === "locked" && (
+          <div style={{ padding: "8px 20px 0" }}>
+            <details className="pushback">
+              <summary>Something needs changing</summary>
+              <form className="stack" style={{ gap: 10, paddingTop: 12 }} onSubmit={askToOpen}>
+                <label className="help" htmlFor="ask-note">What needs changing, in a line. We open it and message you.</label>
+                <textarea id="ask-note" className="fld" name="note" rows={3} maxLength={2000} required />
+                {message && <p className="help err">{message}</p>}
+                <button className="btn-full ghost" type="submit" disabled={status.kind === "saving"}>Ask us to open it</button>
+              </form>
+            </details>
+          </div>
+        )}
         <RuleBlock />
       </div>
     );
@@ -223,7 +295,7 @@ export function IntakeRenderer(p: RendererProps) {
                   ) : (
                     <button className="btn-full ghost" type="button" onClick={saveAndCarryOn} disabled={status.kind === "saving"}>Save. The client sends it.</button>
                   )}
-                  {i === sections.length - 1 && p.mode === "client" && <p className="help" style={{ textAlign: "center" }}>You can still change any answer after sending.</p>}
+                  {i === sections.length - 1 && p.mode === "client" && <p className="help" style={{ textAlign: "center" }}>After sending it locks. If something needs changing later, you can ask us to open it from this page.</p>}
                   {i > 0 && (
                     <button className="backlink" type="button" onClick={goBack} disabled={status.kind === "saving"}><span aria-hidden="true">←</span> Back</button>
                   )}

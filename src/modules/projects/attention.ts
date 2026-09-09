@@ -9,7 +9,7 @@
  * The thresholds are the spec's. They are here as named constants so a change
  * is one line and the reason it changed can sit beside it.
  */
-import { InvoiceStatus, Phase } from "@/generated/prisma/enums";
+import { IntakeChangeStatus, InvoiceStatus, Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 
 export const DAYS = {
@@ -22,6 +22,7 @@ export const DAYS = {
 
 export type Reason =
   | "intake_unsubmitted"
+  | "intake_change_asked"
   | "agreement_unsigned"
   | "no_update"
   | "review_open"
@@ -100,6 +101,26 @@ export async function needsAttention(now: Date = new Date()): Promise<Attention[
         line: `Questionnaire still open after ${d} days.`,
       });
     }
+  }
+
+  // The one item here that is not silence: a client asked to change their
+  // questionnaire and is waiting on us to open it (ADR 0016). It shows from
+  // the day it is asked, because the client cannot move until we do.
+  const asked = await db.intakeChangeRequest.findMany({
+    where: { status: IntakeChangeStatus.ASKED },
+    include: { client: { select: { id: true, businessName: true, contactName: true } } },
+  });
+  for (const r of asked) {
+    const d = daysSince(r.askedAt, now);
+    out.push({
+      projectId: null,
+      clientId: r.client.id,
+      projectName: `${r.client.businessName}, questionnaire`,
+      businessName: r.client.contactName,
+      reason: "intake_change_asked",
+      days: d,
+      line: d === 0 ? "Asked today to change the questionnaire. Open it or decline." : `Asked ${d} ${d === 1 ? "day" : "days"} ago to change the questionnaire. Open it or decline.`,
+    });
   }
 
   for (const p of projects) {

@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { addDays } from "@/lib/dates";
+import { askForChange, openForChanges } from "@/modules/intake/changes";
 import { DAYS, needsAttention } from "@/modules/projects/attention";
 
 /**
@@ -61,7 +62,9 @@ async function clearUp() {
     await db.$executeRawUnsafe(`DELETE FROM \`${table}\` WHERE ${where}`);
   }
   // The questionnaire is the client's (ADR 0015), so it goes by client.
-  await db.$executeRaw`DELETE FROM Intake WHERE clientId IN (SELECT id FROM Client WHERE businessName = 'Attention Test')`;
+  for (const table of ["IntakeChangeRequest", "IntakeVersion", "Intake"]) {
+    await db.$executeRawUnsafe(`DELETE FROM \`${table}\` WHERE clientId IN (SELECT id FROM Client WHERE businessName = 'Attention Test')`);
+  }
   await db.$executeRaw`DELETE FROM Project WHERE slug LIKE ${`${SLUG}-%`}`;
   await db.$executeRaw`DELETE FROM Client WHERE businessName = 'Attention Test'`;
 }
@@ -109,6 +112,25 @@ describe("a questionnaire nobody filled in", () => {
     projectId = await freshProject("INTAKE");
     await anIntake(true);
     await age(30);
+    expect(await mine()).toHaveLength(0);
+  });
+});
+
+describe("a client waiting for us to open their questionnaire", () => {
+  it("shows from the day they ask, and goes quiet once it is opened", async () => {
+    projectId = await freshProject("AGREEMENT_DRAFT");
+    await anIntake(true);
+    expect(await mine()).toHaveLength(0);
+
+    const asked = await askForChange(clientId, "The sign-off email is wrong.");
+    if (!asked.ok) throw new Error(asked.reason);
+    const [item] = await mine();
+    expect(item.reason).toBe("intake_change_asked");
+    expect(item.line).toContain("Asked today");
+    expect(item.projectId).toBeNull();
+
+    const opened = await openForChanges(clientId, await anAdmin(), asked.id);
+    expect(opened.ok).toBe(true);
     expect(await mine()).toHaveLength(0);
   });
 });

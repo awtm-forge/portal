@@ -258,7 +258,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
 
         {intake?.submittedAt && phase !== Phase.INTAKE && (
           <Collapsed summary="What you told us">
-            <Link className="btn-full ghost" href={`/p/${token}/intake`}>Read it back, and change anything</Link>
+            <Link className="btn-full ghost" href={`/p/${token}/intake`}>Read it back</Link>
           </Collapsed>
         )}
 

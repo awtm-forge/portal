@@ -169,3 +169,24 @@ INTAKE-SPEC section 11 says one section is open at a time and one button sits at
 - **Leave it.** Rejected: it was found by the second person to fill one in.
 
 Taking the first. Built the same day, with an end to end test at both widths. The titles stay tappable as well.
+
+## Q14. The questionnaire locks when sent; a change is asked for and becomes a version
+
+Asked by Ayush on 10 Sep 2026: "once client is done with the questionnaire it gets locked and they can request change after that. admin approves, then there would be another version of it, so admin can access the new version, and previous too."
+
+INTAKE-SPEC section 11 says the opposite: after sending, "You can still change any answer. Tap it." So this is a departure from the spec, not a gap in it, and it is Rahul's to confirm. The case for it: the agreement is written from these answers, and an answer that changes silently after the agreement is drafted leaves two records that disagree.
+
+- **Lock on sending; ask in a line; the team opens or declines; sending the changes is the next version, and every version is kept.** Two new tables, the lock enforced inside every write, three states on the sent page, the versions and what changed on the admin page. Costs a person's attention when a client wants to fix a typo, and the needs-attention block shows the ask the day it is made so that wait is short.
+- **Lock, and mark what changed, but let the client change answers without asking.** Smaller. Rejected: it is the silent change that is the problem, not the missing mark.
+- **Leave it as the spec says.** Rejected: it is what was asked to change, and the spec was written before there was an agreement to write from the answers.
+
+Taking the first. Built on 10 Sep 2026, ADR 0016.
+
+Decided while building, none of which the ask covers:
+
+- The access checklist is not locked. Those ticks are granted over the days after sending, and the clock rule in that section depends on them staying live.
+- The client is not emailed when it is opened. The team says so on WhatsApp with a prefilled line, as every other nudge goes. The team is emailed when a change is asked for and when the changes are sent.
+- The team can open it unasked, for a correction from a call, and can lock it again itself. Both are recorded as done by the team.
+- A later sending moves no phase. Only the first one moves a project out of intake.
+
+Two lines in INTAKE-SPEC are now out of step and are yours to reword: the last bullet of section 11, and "nothing depends on it being pressed" in 13.1.

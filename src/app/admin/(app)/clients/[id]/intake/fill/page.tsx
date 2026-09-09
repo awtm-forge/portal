@@ -7,6 +7,9 @@ import { withIntake } from "@/modules/clients";
 import { readAnswers, readBoolMap, readStringList } from "@/modules/intake/answers";
 import { parseDocumentLoose } from "@/modules/intake/document";
 import { fileInfoMap } from "@/modules/intake/load";
+import { requestsFor, stateOf } from "@/modules/intake/changes";
+import { versionsFor } from "@/modules/intake/versions";
+import { intakeStateToClientView } from "@/modules/serializers";
 
 export default async function FillPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -16,7 +19,7 @@ export default async function FillPage({ params }: { params: Promise<{ id: strin
   if (!client.intake) redirect(`/admin/clients/${id}`);
   const doc = parseDocumentLoose(client.intake.document);
   if (!doc) redirect(`/admin/clients/${id}`);
-  const files = await fileInfoMap(client.id);
+  const [files, requests, versions] = await Promise.all([fileInfoMap(client.id), requestsFor(client.id), versionsFor(client.id)]);
   return (
     <AdminShell active="clients" adminName={admin.name}>
       <div className="between">
@@ -41,6 +44,8 @@ export default async function FillPage({ params }: { params: Promise<{ id: strin
           prefill={{ name: client.proposedSignoffName ?? client.contactName, email: client.proposedSignoffEmail ?? client.contactEmail }}
           kickoffDateText="the kickoff date"
           contactFirstName={client.contactName.split(" ")[0] ?? ""}
+          state={intakeStateToClientView(stateOf(client.intake, requests))}
+          lastSentAt={versions.at(-1)?.sentAt.toISOString() ?? null}
         />
       </div>
     </AdminShell>

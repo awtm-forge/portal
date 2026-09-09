@@ -13,9 +13,12 @@ import { subscribe, type Activity } from "@/modules/events";
 
 /** Team links go to the team host, which is a different name from the
  *  client's when the two are split (ADR 0013). */
-function adminLink(projectId: string | null): string {
+function adminLink(projectId: string | null, clientId?: unknown): string {
   const base = adminBase();
-  return projectId ? `${base}/admin/projects/${projectId}` : `${base}/admin`;
+  if (projectId) return `${base}/admin/projects/${projectId}`;
+  // The questionnaire belongs to the client and usually has no project yet.
+  if (typeof clientId === "string" && clientId) return `${base}/admin/clients/${clientId}`;
+  return `${base}/admin`;
 }
 
 /** One line each, plain text. CLAUDE.md section 5: name the project and the event. */
@@ -23,11 +26,21 @@ function teamMessage(a: Activity): { subject: string; body: string } | null {
   const p = a.payload;
   const name = typeof p.projectName === "string" ? p.projectName : "A project";
   const business = typeof p.businessName === "string" ? ` (${p.businessName})` : "";
-  const where = `\n\n${adminLink(a.projectId)}`;
+  const where = `\n\n${adminLink(a.projectId, p.clientId)}`;
 
   switch (a.type) {
     case "intake.submitted":
       return { subject: `${name}: questionnaire sent`, body: `${name}${business} finished the questionnaire.${where}` };
+    case "intake.change_asked": {
+      const who = typeof p.businessName === "string" ? p.businessName : "A client";
+      const note = typeof p.note === "string" ? p.note : "";
+      return { subject: `${who}: asked to change the questionnaire`, body: `${who} asked to change something on the questionnaire:\n\n${note}\n\nOpen it for them, or decline with a line, from their page.${where}` };
+    }
+    case "intake.changes_sent": {
+      const who = typeof p.businessName === "string" ? p.businessName : "A client";
+      const n = typeof p.changed === "number" ? p.changed : 0;
+      return { subject: `${who}: questionnaire changed`, body: `${who} sent their changes: ${n} ${n === 1 ? "answer" : "answers"} changed, now version ${String(p.version ?? "")}. The changed answers are marked on their page.${where}` };
+    }
     case "agreement.note":
       return {
         subject: `${name}: something is off with the agreement`,

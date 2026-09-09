@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
+import { IntakeParty } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { MAX_FILE_BYTES, processUpload, REASON_TEXT, svgThumb } from "@/lib/files";
 import { fail, json, sameOrigin } from "@/lib/http";
 import { markSectionDone, readAnswers, saveAccess, saveAnswer, setFileList, submitIntake } from "@/modules/intake/answers";
+import { askForChange } from "@/modules/intake/changes";
 import { parseDocumentLoose } from "@/modules/intake/document";
+import { LOCKED_MESSAGE, openForWriting } from "@/modules/intake/versions";
 import { readStored, removeStored, writeClientFile } from "@/lib/storage";
 
 export type IntakeActor = { clientId: string; enteredBy: "client" | "team"; canSubmit: boolean };
 
-const ACTIONS = new Set(["save", "access", "section-done", "submit", "upload", "remove-file"]);
+const ACTIONS = new Set(["save", "access", "section-done", "submit", "upload", "remove-file", "ask-change"]);
+/** What the lock covers (ADR 0016). Not "access": those ticks are granted over the days after sending. */
+const WRITES = new Set(["save", "section-done", "upload", "remove-file"]);
 
 /** One dispatcher serves both bases: /p/[token]/intake/api and /admin/clients/[id]/intake/api. */
 export async function handleIntakeAction(request: Request, action: string, actor: IntakeActor): Promise<NextResponse> {
@@ -16,6 +21,9 @@ export async function handleIntakeAction(request: Request, action: string, actor
   if (!ACTIONS.has(action)) return fail("No such action.", 404);
   const intake = await db.intake.findUnique({ where: { clientId: actor.clientId } });
   if (!intake) return fail("No questionnaire yet.", 404);
+  // The same check runs again inside each write's transaction; this one is
+  // so an upload is refused before its file is stored.
+  if (WRITES.has(action) && !(await openForWriting(db, intake))) return fail(LOCKED_MESSAGE, 409);
 
   if (action === "upload") return handleUpload(request, intake.id, actor);
 
@@ -38,8 +46,20 @@ export async function handleIntakeAction(request: Request, action: string, actor
     }
     case "submit": {
       if (!actor.canSubmit) return fail("Only the client sends the questionnaire.", 403);
-      const r = await submitIntake(intake.id);
+      const r = await submitIntake(intake.id, IntakeParty.CLIENT);
       return r.ok ? json({ ok: true, at: r.at }) : fail(r.message);
+    }
+    case "ask-change": {
+      if (actor.enteredBy !== "client") return fail("Only the client asks to change their answers.", 403);
+      const r = await askForChange(actor.clientId, String(body.note ?? ""));
+      if (r.ok) return json({ ok: true });
+      const why: Record<string, string> = {
+        empty: "Say what needs changing, in a line.",
+        not_sent: "It has not been sent yet, so you can change it directly.",
+        already_asked: "You have already asked. We will open it and message you.",
+        already_open: "It is open for changes now. Tap an answer to change it.",
+      };
+      return fail(why[r.reason]);
     }
     case "remove-file": {
       const fileId = String(body.fileId ?? "");

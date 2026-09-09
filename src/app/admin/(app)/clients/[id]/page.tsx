@@ -4,9 +4,13 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { withProjects } from "@/modules/clients";
+import { requestsFor, stateOf } from "@/modules/intake/changes";
 import { intakeProgress } from "@/modules/intake/progress";
+import { versionsFor } from "@/modules/intake/versions";
 import { PHASE_LABEL } from "@/modules/projects/phase";
+import { questionnaireOpenMessage, waLink } from "@/lib/whatsapp";
 import { updateClientAction } from "../../actions";
+import { declineChangeAction, lockAgainAction, openChangesAction } from "./intake/changeActions";
 
 /**
  * A client, before and after there is a project (ADR 0015, Q12). The loud
@@ -23,6 +27,11 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
   const submitted = Boolean(intake?.submittedAt || intake?.overriddenAt);
   const live = client.projects.filter((p) => p.phase !== "CLOSED" && p.phase !== "CANCELLED");
+  // ADR 0016: once sent, the questionnaire is locked; this card is where the
+  // team opens it, declines, or locks it again.
+  const [requests, versions] = intake ? await Promise.all([requestsFor(client.id), versionsFor(client.id)]) : [[], []];
+  const state = intake ? stateOf(intake, requests) : { kind: "open" as const };
+  const firstName = client.contactName.split(" ")[0] ?? client.contactName;
 
   return (
     <AdminShell active="clients" adminName={admin.name}>
@@ -59,14 +68,64 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           )}
 
           {intake && submitted && (
-            <div className="a-card">
+            <div className={`a-card${state.kind === "asked" ? " ember" : ""}`}>
               <div className="between">
-                <span className="k">The questionnaire</span>
-                <span className="mono-sm">{intake.submittedAt ? `Submitted ${dayMonth(intake.submittedAt)}` : "Overridden"}</span>
+                <span className={`k${state.kind === "asked" ? " ember" : ""}`}>
+                  {state.kind === "asked" ? "The questionnaire, they asked to change it" : state.kind === "changing" ? "The questionnaire, open for changes" : "The questionnaire"}
+                </span>
+                <span className="mono-sm">{intake.submittedAt ? `Sent ${dayMonth(intake.submittedAt)}` : "Overridden"}{versions.length > 1 ? `, version ${versions.length} on ${dayMonth(versions[versions.length - 1].sentAt)}` : ""}</span>
               </div>
+
+              {state.kind === "asked" && (
+                <>
+                  <p className="c-sub" style={{ fontSize: 14, color: "var(--ink)" }}>{firstName} asked on {dayMonth(state.request.askedAt)}: &ldquo;{state.request.note}&rdquo;</p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <form action={openChangesAction}>
+                      <input type="hidden" name="clientId" value={client.id} />
+                      <input type="hidden" name="requestId" value={state.request.id} />
+                      <button className="a-btn" type="submit">Open it for them</button>
+                    </form>
+                    <form action={declineChangeAction} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      <input type="hidden" name="clientId" value={client.id} />
+                      <input type="hidden" name="requestId" value={state.request.id} />
+                      <input className="a-fld" name="reply" placeholder="Or the line they read if not" required style={{ minWidth: 260 }} />
+                      <button className="a-btn ghost" type="submit">Decline with that line</button>
+                    </form>
+                  </div>
+                  <p className="help">Opening it lets them change answers until they press Send the changes; then it locks again and what changed is marked. Declining keeps it locked and shows them your line. They can ask again.</p>
+                </>
+              )}
+
+              {state.kind === "changing" && (
+                <>
+                  <p className="c-sub" style={{ fontSize: 14 }}>
+                    Open since {dayMonth(state.request.decidedAt ?? state.request.askedAt)}
+                    {state.request.askedBy === "CLIENT" ? <>, as they asked: &ldquo;{state.request.note}&rdquo;</> : state.request.note ? `: ${state.request.note}` : ", opened by us"}. It locks again when they press Send the changes, or when you lock it here.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <a className="a-btn" href={waLink(client.contactPhone, questionnaireOpenMessage({ contactName: firstName, asked: state.request.askedBy === "CLIENT" }))} target="_blank" rel="noopener">Tell them on WhatsApp</a>
+                    <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/fill`}>Type the change yourself</Link>
+                    <form action={lockAgainAction}>
+                      <input type="hidden" name="clientId" value={client.id} />
+                      <button className="a-btn ghost" type="submit">Lock it again</button>
+                    </form>
+                  </div>
+                </>
+              )}
+
+              {state.kind === "locked" && state.declined && (
+                <p className="help">Declined on {dayMonth(state.declined.decidedAt ?? state.declined.askedAt)}, to &ldquo;{state.declined.note}&rdquo;: {state.declined.reply}</p>
+              )}
+
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake`}>What they told us</Link>
+                <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake`}>What they told us{versions.length > 1 ? `, ${versions.length} versions` : ""}</Link>
                 <a className="a-btn ghost" href={`/admin/clients/${client.id}/intake/answers.json`}>Download answers JSON</a>
+                {state.kind === "locked" && (
+                  <form action={openChangesAction}>
+                    <input type="hidden" name="clientId" value={client.id} />
+                    <button className="a-btn ghost" type="submit">Open it for changes</button>
+                  </form>
+                )}
               </div>
             </div>
           )}

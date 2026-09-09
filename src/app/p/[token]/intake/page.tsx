@@ -4,6 +4,9 @@ import { ClientShell } from "@/components/portal/ClientShell";
 import { readAnswers, readBoolMap, readStringList } from "@/modules/intake/answers";
 import { parseDocumentLoose } from "@/modules/intake/document";
 import { fileInfoMap } from "@/modules/intake/load";
+import { requestsFor, stateOf } from "@/modules/intake/changes";
+import { versionsFor } from "@/modules/intake/versions";
+import { intakeStateToClientView } from "@/modules/serializers";
 import { withIntake } from "@/modules/clients";
 import { clientScope } from "../scope";
 
@@ -15,7 +18,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
   if (!client || !intake) redirect(`/p/${token}`);
   const doc = parseDocumentLoose(intake.document);
   if (!doc) redirect(`/p/${token}`);
-  const files = await fileInfoMap(client.id);
+  const [files, requests, versions] = await Promise.all([fileInfoMap(client.id), requestsFor(client.id), versionsFor(client.id)]);
   const base = `/p/${token}`;
   return (
     <ClientShell businessName={client.businessName} wide>
@@ -33,6 +36,8 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         prefill={{ name: client.proposedSignoffName ?? client.contactName, email: client.proposedSignoffEmail ?? client.contactEmail }}
         kickoffDateText="the kickoff date"
         contactFirstName={client.contactName.split(" ")[0] ?? ""}
+        state={intakeStateToClientView(stateOf(intake, requests))}
+        lastSentAt={versions.at(-1)?.sentAt.toISOString() ?? null}
       />
     </ClientShell>
   );

@@ -84,6 +84,16 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The questionnaire locks when sent, and a change is a version: done
+
+10 Sep 2026, AI-assisted. Ayush, the same day: "once client is done with the questionnaire it gets locked and they can request change after that. admin approves, then there would be another version of it, so admin can access the new version, and previous too." QUESTIONS.md Q14, ADR 0016. It overrides the last bullet of INTAKE-SPEC 11, which said any answer could be changed after sending, and Q14 says so for Rahul.
+
+Built: sending writes `intake_version` 1 and locks the answers; the lock is checked inside every writing transaction, and again at the API so an upload is refused before its file is stored. The access ticks stay live. The sent page has three states: locked, with "Something needs changing" folded under it and one line to send; asked, waiting on us; open for changes, tap an answer, then "Send the changes", which is the next version and the lock again. Admin: the client page card shows the ask with their line, Open it for them, Decline with the line they read, a WhatsApp line to say it is open, Type the change yourself, Lock it again, and Open it for changes unasked. What they told us lists every version, opens any as it was sent with the changed answers marked, and exports each as JSON. The needs-attention block shows an ask from the day it is made, and its items with no project now link to the client rather than to `/admin/projects/null`. Two team emails: asked to change, and changes sent. The migration writes version 1 for every questionnaire already sent.
+
+Verified: 150 unit tests, including the lock, the versions, what counts as a change, the append-only guard on both tables and the attention reason; end to end at both widths, the client asking and sending a change and the team opening, locking and reading version 1.
+
+Deferred: none. Needs Rahul: Q14, and the two INTAKE-SPEC lines it names.
+
 ## The questionnaire before the project: done
 
 10 Sep 2026, AI-assisted. Rahul on 9 Sep: "questionnaire should not be followed by project", and then "after saving the client there should be link generation for the client and then questionnaire". QUESTIONS.md Q12, ADR 0015.

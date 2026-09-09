@@ -49,6 +49,18 @@ emails nobody.
 **Type answers from a call.** Client, Type answers from a call. Each answer is
 marked as entered by the team, and that mark is permanent and visible.
 
+**Open a sent questionnaire for a change.** Client page. Once sent, the
+answers are locked (ADR 0016). When the client asks, the card says so with
+their line: Open it for them, or type the line they will read and Decline.
+Opening lets them change answers until they press Send the changes; then it
+locks again as the next version, and what changed is marked on What they told
+us. You can open it unasked, and Lock it again yourself. Tell them it is open
+on WhatsApp; the button has the line ready.
+
+**Read an earlier version of the answers.** What they told us, Versions, in
+the side column. Each version opens as it was sent, with the answers that
+changed from the one before marked, and has its own JSON.
+
 **Override an unsubmitted questionnaire.** On the agreement editor, when you
 need to send an agreement before they finished. It records who overrode it and
 when.

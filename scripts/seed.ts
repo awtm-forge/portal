@@ -143,6 +143,15 @@ async function seedBuildingProject() {
 
   const token = randomToken();
   const at = new Date("2026-08-12T11:00:00+05:30").toISOString();
+  const sundaraAnswers = {
+    biz_what: { value: "Home textiles and small furniture.", entered_by: "client", at },
+    st_why: { value: "Returns are eating the margin and nobody can tell me why.", entered_by: "client", at },
+    st_tried: { value: "Changed the size guide. It did not move.", entered_by: "client", at },
+    st_tuesday: { value: "I would stop reading the returns inbox at eleven at night.", entered_by: "client", at },
+    st_platform: { value: "woo", entered_by: "client", at },
+    dec_signoff_name: { value: "Arjun Sundaram", entered_by: "client", at },
+    dec_signoff_email: { value: "arjun@sundaraliving.example", entered_by: "client", at },
+  };
   const project = await db.project.create({
     data: {
       name: "Storefront and returns flow",
@@ -179,17 +188,19 @@ async function seedBuildingProject() {
           accessGranted: { acc_store: true, acc_dns: true, acc_courier: true },
           submittedAt: new Date("2026-08-12T11:20:00+05:30"),
           lastSavedAt: new Date("2026-08-12T11:20:00+05:30"),
-          answers: {
-            biz_what: { value: "Home textiles and small furniture.", entered_by: "client", at },
-            st_why: { value: "Returns are eating the margin and nobody can tell me why.", entered_by: "client", at },
-            st_tried: { value: "Changed the size guide. It did not move.", entered_by: "client", at },
-            st_tuesday: { value: "I would stop reading the returns inbox at eleven at night.", entered_by: "client", at },
-            st_platform: { value: "woo", entered_by: "client", at },
-            dec_signoff_name: { value: "Arjun Sundaram", entered_by: "client", at },
-            dec_signoff_email: { value: "arjun@sundaraliving.example", entered_by: "client", at },
-          },
+          answers: sundaraAnswers,
         },
       },
+          // ADR 0016: every sending is kept as a version. This is the first.
+          intakeVersions: {
+            create: {
+              version: 1,
+              answers: sundaraAnswers,
+              accessGranted: { acc_store: true, acc_dns: true, acc_courier: true },
+              sentAt: new Date("2026-08-12T11:20:00+05:30"),
+              sentBy: "CLIENT",
+            },
+          },
         },
       },
       agreement: {

@@ -149,3 +149,29 @@ sequenceDiagram
 ```
 
 The financial year is computed once, in Asia/Kolkata, from the issuing moment; 1 April starts a new `(prefix, fy)` row at 0, so the first invoice of the year is 001. A rolled-back transaction leaves `last_seq` untouched, which is what makes "never skipped" true. The test issues twenty invoices in parallel and asserts twenty consecutive numbers.
+
+## 5. Asking to change a sent questionnaire (ADR 0016)
+
+Once sent, the answers are locked. The client asks in a line, the team opens
+it or declines, the changes are sent as the next version. The access ticks
+are outside the lock throughout.
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant P as Portal
+  participant T as Team
+
+  C->>P: Finish and send
+  P->>P: intake_version 1, lock
+  C->>P: Something needs changing, one line
+  P->>P: intake_change_request asked
+  P-->>T: email, asked to change the questionnaire
+  T->>P: Open it for them (or Decline, with a line)
+  P->>P: request open
+  T-->>C: WhatsApp, it is open
+  C->>P: change answers (each saves), Send the changes
+  P->>P: intake_version 2 with the changed keys, request sent, lock
+  P-->>T: email, changes sent, n answers
+```
+

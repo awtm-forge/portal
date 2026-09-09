@@ -33,7 +33,7 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 | `/p/[token]` | GET | link; a session shows the project | The one page whose content follows `project.phase`. Without a session it is the code screen. While building it carries the current week in full, the week counter, and the Book a sync button when a booking link is set. |
 | `/p/[token]` (code) | server action | link | Requesting a `login` code, then verifying it. Ten minutes, five attempts, single use, then a thirty-day cookie (criterion 5). |
 | `/p/[token]/intake` | GET | link and session | The questionnaire, one section at a time. |
-| `/p/[token]/intake/api/[action]` | POST | link and session, same origin | `save`, `access`, `section-done`, `submit`, `upload`, `remove-file`. Submitting moves the phase to `agreement_draft` and notifies the team. |
+| `/p/[token]/intake/api/[action]` | POST | link and session, same origin | `save`, `access`, `section-done`, `submit`, `upload`, `remove-file`, `ask-change`. The first `submit` moves a waiting project to `agreement_draft`, notifies the team and writes version 1. After that every write but `access` answers 409 until the team opens it; `ask-change` takes one line; `submit` then sends the changes as the next version and locks again (ADR 0016). |
 | `/p/[token]/file/[fileId]` | GET | link and session | An uploaded file, or its thumbnail with `?thumb`. 404 for a file on another project (INTAKE-SPEC 14.6). |
 | `/p/[token]/lib/[key]` | GET | link and session | An image library picture, for `image_choice`. |
 | `/p/[token]/agreement` | GET | link and session | The agreement once it has been sent. Frozen and stamped after sign-off. |
@@ -72,11 +72,12 @@ prints a one-time setup link and never a password.
 | `/admin/projects/[id]` (record WhatsApp) | server action | admin | PORTAL-SPEC 5.11, both kinds. Records a yes that arrived on WhatsApp: the same sign-off event and the same invoice, `method=whatsapp`, no ip, the pasted message kept. Offered while the phase is `agreement_sent` for the agreement, `in_review` for the delivery. |
 | `/admin/projects/[id]` (mark ready) | server action | admin | Opens a review round. The link to the finished work is required. Offered only while the phase is `building` and the agreement is agreed. |
 | `/admin/projects/[id]` (forget a referral) | server action | admin | The one delete in the system. Removes the row and writes a `referral.forgotten` event, so the fact survives without the details. |
-| `/admin/clients/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer. |
+| `/admin/clients/[id]/intake` | GET | admin | What they told us, with `entered_by` per answer, the versions, and the changes asked for. `?version=n` reads an earlier version as it was sent, with the answers that changed marked (ADR 0016). |
+| `/admin/clients/[id]` (server actions) | POST | admin | Open a sent questionnaire for a change, answering the client's ask or unasked; decline the ask with the line they read; lock it again as the next version (ADR 0016). |
 | `/admin/clients/[id]/intake/upload` | GET, server action | admin | "Send the questionnaire" (Q12). Import or replace the document on the client. The first time, it also emails the client their link. Every failing rule is reported at once and nothing is saved (INTAKE-SPEC 14.2, 14.3). |
 | `/admin/clients/[id]/intake/fill` | GET | admin | Typing answers from a call; each is marked `entered_by: team`. |
 | `/admin/clients/[id]/intake/api/[action]` | POST | admin, same origin | The same actions as the client's, except `submit`, which only the client does. |
-| `/admin/clients/[id]/intake/answers.json` | GET | admin | The answers document (INTAKE-SPEC 6). |
+| `/admin/clients/[id]/intake/answers.json` | GET | admin | The answers document (INTAKE-SPEC 6), with `answers_version`. `?version=n` for the answers as they were sent then. |
 | `/admin/clients/[id]/file/[fileId]` | GET | admin | An uploaded file or its thumbnail. |
 | `/admin/lib/[key]` | GET | admin | An image library picture. |
 | `/admin/library` | GET, server action | admin | Upload, replace, delete. A key named by any uploaded questionnaire cannot be deleted. |

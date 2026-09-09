@@ -1,6 +1,6 @@
 # Data model
 
-Drafted 7 Sep 2026, last checked against the code on 8 Sep 2026, after step 8. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
+Drafted 7 Sep 2026, last checked against the code on 10 Sep 2026, after ADR 0016. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
 
 ## Entity relationship diagram
 
@@ -23,6 +23,8 @@ erDiagram
   project ||--o{ client_session : "opens"
   project ||--o{ activity_event : "emits"
   intake ||--o{ intake_file : "stores"
+  client ||--o{ intake_version : "every sending"
+  client ||--o{ intake_change_request : "asked, opened, declined, sent"
   image_library ||--o{ intake : "referenced by image_choice"
   invoice_sequence ||--o{ invoice : "numbers"
 
@@ -195,6 +197,28 @@ erDiagram
     string mime
     int bytes
   }
+  intake_version {
+    id id PK
+    id client_id FK
+    int version "1 is the first sending"
+    json answers "as they were when sent"
+    json access_granted
+    datetime sent_at
+    enum sent_by "client, team"
+  }
+  intake_change_request {
+    id id PK
+    id client_id FK
+    enum status "asked, open, declined, sent"
+    text note "the client's line, or the team's reason"
+    enum asked_by "client, team"
+    datetime asked_at
+    datetime decided_at
+    id decided_by FK "admin_user"
+    text reply "the line the client reads when declined"
+    datetime sent_at
+    int version "what the changes became"
+  }
   image_library {
     string key PK
     string stored_path
@@ -240,13 +264,14 @@ These are constraints, not application code, so a bug in a route cannot get arou
 
 - `project.phase` is a database enum. Transitions are enforced in `modules/projects/phase.ts` (see ARCHITECTURE.md); the enum stops an unknown value, the module stops an illegal move.
 - `agreement.project_id` is unique: one agreement per project. A new version edits the row before `agreed_at`; after `agreed_at` a trigger-free check in the service refuses writes, and a test proves it.
-- `signoff_event`, `agreement_note`, `review_round`, `invoice`, `testimonial` and `day30` cannot be deleted through the Prisma client wrapper. `signoff_event` and `agreement_note` cannot be updated either; a review round can be, once, when the client answers it, and an invoice only on its payment fields.
+- `signoff_event`, `agreement_note`, `review_round`, `invoice`, `testimonial`, `day30`, `intake_version` and `intake_change_request` cannot be deleted through the Prisma client wrapper. `signoff_event`, `agreement_note` and `intake_version` cannot be updated either; a review round can be, once, when the client answers it, and an invoice only on its payment fields.
 - `referral` is deliberately absent from both guards. It holds a third party's name and contact and that person never consented to being stored, so admin can delete it (CLAUDE.md 5.1). The deletion writes a `referral.forgotten` activity event, so the fact survives without the details. `tests/append-only.test.ts` asserts both the rule and this exception, and that every model named in the guard exists, so a rename cannot silently disarm it.
 - `review_round.finished_work_url` is NOT NULL, departing from PORTAL-SPEC 4 where `staging_url` is nullable. Rahul, 8 Sep 2026: a review only happens when the work is one hundred percent complete, so there is always somewhere to see it. It is also renamed, because "staging" undersells what it points at.
 - `project.phase` is written by exactly one function, conditionally on its current value, which is what makes it the lock that stops a sign-off happening twice (ADR 0011).
 - `invoice.number` is unique. `invoice_sequence (prefix, fy)` is incremented by one `INSERT ... ON DUPLICATE KEY UPDATE last_seq = last_seq + 1` inside the issuing transaction, which takes the row's exclusive lock in a single statement; the read that follows sees only this transaction's increment. An earlier version took a shared lock first and then upgraded it, which deadlocked under the parallel test. `last_seq` only ever increases by one, and a rollback reverts it, which is what makes "never skipped" true.
 - Every `_paise` column is `BIGINT`. No `DECIMAL`, no `FLOAT`.
 - `one_time_code.code_hash`, `project.access_token_hash`, `client_session.token_hash`, `admin_user.password_hash`, `admin_user.setup_token_hash`: hashes only. There is no column anywhere that stores a token, a code or a password in clear. `one_time_code.purpose` binds a code to what it may do (ADR 0010).
+- Once `intake.submitted_at` is set, `answers` is written only while an `intake_change_request` is `open`, checked inside the same row-locked transaction as the write; `access_granted` stays writable (ADR 0016). Every sending writes the next `intake_version`; `tests/intake-changes.test.ts` covers the lock, the versions and the guard.
 - `intake` has no column for a credential, and the importer refuses an `upload` field inside the access section; `intake_file` rows can only point at question keys of type `upload`.
 - `activity_event.payload` is written through one function that runs the client serializer first, so internal cost cannot enter the log even by accident.
 - The sign-off person lives on `project`, not `client`. Decided by Rahul on 8 Sep 2026, departing from PORTAL-SPEC section 4: one business can have a different approver per piece of work. See QUESTIONS.md Q4.
