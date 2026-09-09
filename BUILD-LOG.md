@@ -84,6 +84,19 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The way-in page, and two things the screenshots found: done
+
+9 Sep 2026, AI-assisted. Rahul looked at `/` on a laptop and said it was not good. He was right.
+
+I built that page with the client column, which is 480px wide and starts at the top of the screen, and I never looked at it on anything but a phone. On a laptop it was a small block of text stranded in the top corner with most of the window empty under it, and "Team sign in" was a bare link that did not read as something you could press. It has its own layout now: the wordmark across the top, the block centred in what is left, type that scales with the viewport, and the team link as a bordered control with a hover and a focus ring. Checked at 1440 and at 375.
+
+Two more things came out of screenshotting every client screen:
+
+- **The weekly update printed "a placeholder., by 12 September".** The due date is appended to whatever was typed, full stop and all. It trims a trailing stop now. Nobody would have found this without looking at a real week on a real page.
+- **Two sign-in helpers matched `/your project/i`,** which also matches "Where your project is", the heading on the weekly update card. The moment a project had a sent update, both specs failed on a strict-mode violation. They match the exact string now. The tests were wrong, not the app.
+
+Verified: 122 unit tests, 121 end to end, the webpack build.
+
 ## Closing the audit's gaps: done, with four things left for a person
 
 9 Sep 2026, AI-assisted. Straight after the audit below, because most of what it called "needs a person" turned out to be automatable.

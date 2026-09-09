@@ -153,3 +153,65 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .inv-table td.num, .inv-table tr.total td { color: #141110; }
   .inv-table tr.total td { border-top-color: #b5661f; }
 }
+
+/* The way in, at the bare domain. Its own layout rather than the client
+   column: this page is read on a laptop as often as a phone, and the phone
+   column leaves it stranded in the top corner of a wide screen. */
+.wayin {
+  min-height: 100dvh;
+  background: var(--ground);
+  display: flex;
+  flex-direction: column;
+}
+.wayin-head {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+.wayin-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 72px;
+}
+.wayin-card { width: 100%; max-width: 560px; }
+.wayin-card h1 {
+  font-family: var(--font-display-stack);
+  font-weight: 600;
+  font-size: clamp(28px, 4.6vw, 48px);
+  line-height: 1.06;
+  letter-spacing: -0.028em;
+  margin: 14px 0 0;
+  text-wrap: balance;
+}
+.wayin-card p.lede {
+  color: var(--muted);
+  font-size: clamp(15.5px, 1.35vw, 18px);
+  line-height: 1.68;
+  margin: 20px 0 0;
+  max-width: 46ch;
+}
+.wayin-team {
+  margin-top: 40px;
+  padding-top: 26px;
+  border-top: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.wayin-team a {
+  font-family: var(--font-mono-stack);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 9px 15px;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.wayin-team a:hover { border-color: var(--ember); color: var(--ember); }
+.wayin-team a:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.wayin-team span { font-family: var(--font-mono-stack); font-size: 11px; color: var(--faint); }

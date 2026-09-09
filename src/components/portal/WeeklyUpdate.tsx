@@ -15,7 +15,7 @@ export function WeeklyUpdate({ update, full }: { update: UpdateClientView; full:
       {([
         ["Moved", update.moved],
         ["Next", update.nextUp],
-        ["Need from you", update.needFromYou ? `${update.needFromYou}${update.needByDate ? `, by ${update.needByDate}` : ""}` : ""],
+        ["Need from you", needLine(update.needFromYou, update.needByDate)],
         ["Risks", update.risks],
       ] as const)
         .filter(([, value]) => value.trim().length > 0)
@@ -30,4 +30,16 @@ export function WeeklyUpdate({ update, full }: { update: UpdateClientView; full:
       )}
     </div>
   );
+}
+
+/**
+ * The date reads as part of the sentence, so a full stop in the middle of it
+ * looks like a mistake: "the returns policy copy., by 12 September". Trim the
+ * one the person typed rather than asking them not to type it.
+ */
+function needLine(need: string, by: string | null): string {
+  const text = need.trim();
+  if (!text) return "";
+  if (!by) return text;
+  return `${text.replace(/[.,;]+$/, "")}, by ${by}`;
 }

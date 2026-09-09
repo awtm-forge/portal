@@ -28,7 +28,7 @@ async function signIn(page: import("@playwright/test").Page, token: string, proj
   await page.getByLabel(/six digit code/i).fill(code);
   await page.getByRole("button", { name: /open my page/i }).click();
   // "Your project" only renders once the session cookie is accepted.
-  await expect(page.getByText(/your project/i)).toBeVisible();
+  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
 }
 
 test.afterAll(async () => {

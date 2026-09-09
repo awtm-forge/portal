@@ -51,7 +51,7 @@ test.describe("the leak walk", () => {
     await page.getByLabel(/six digit code/i).fill(code);
     await page.getByRole("button", { name: /open my page/i }).click();
     // "Your project" only renders once the session cookie is accepted.
-    await expect(page.getByText(/your project/i)).toBeVisible();
+    await expect(page.getByText("Your project", { exact: true })).toBeVisible();
 
     // Every invoice on the project, printed. PORTAL-SPEC 6.7 says neither
     // printable route carries internal cost, so both are walked.
