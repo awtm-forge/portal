@@ -7,11 +7,23 @@ import nodemailer from "nodemailer";
  * process with neither refuses to send rather than silently dropping mail.
  */
 function transportMode(): "smtp" | "log" {
-  if (process.env.MAIL_TRANSPORT === "log") return "log";
-  if (process.env.SMTP_HOST) return "smtp";
-  if (process.env.NODE_ENV === "production") {
+  const mode = mailMode();
+  if (mode === "none") {
     throw new Error("No mail transport: set SMTP_HOST, or MAIL_TRANSPORT=log for a test run");
   }
+  return mode;
+}
+
+/**
+ * What sending would do, for /healthz. "none" is the production state where
+ * nothing is configured and every code silently fails from the client's side
+ * with "the email did not go out", which looks like a bug and is a missing
+ * variable. Naming it here is what turns an afternoon into a glance.
+ */
+export function mailMode(): "smtp" | "log" | "none" {
+  if (process.env.MAIL_TRANSPORT === "log") return "log";
+  if (process.env.SMTP_HOST) return "smtp";
+  if (process.env.NODE_ENV === "production") return "none";
   return "log";
 }
 

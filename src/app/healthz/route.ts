@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { mailMode } from "@/lib/mail";
 import { activatedAdminCount } from "@/modules/auth/admin";
 import { requestLogger, safeError } from "@/lib/logger";
 
@@ -23,7 +24,7 @@ export async function GET() {
     // would have saved an afternoon of guessing on 9 September.
     const claimed = (await activatedAdminCount()) > 0;
     return NextResponse.json(
-      { status: "ok", commit: process.env.BUILD_COMMIT ?? "unknown", claimed },
+      { status: "ok", commit: process.env.BUILD_COMMIT ?? "unknown", claimed, mail: mailMode() },
       { headers: NO_STORE },
     );
   } catch (error) {

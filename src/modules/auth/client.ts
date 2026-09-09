@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { clientBase } from "@/lib/hosts";
 import { hashCode, hashToken, randomToken, safeEqualHex, sixDigitCode } from "@/lib/crypto";
+import { requestLogger, safeError } from "@/lib/logger";
 import { sendCode } from "@/lib/mail";
 import { allow, clientIp } from "@/lib/rate-limit";
 import { CodePurpose } from "@/generated/prisma/enums";
@@ -117,7 +118,11 @@ export async function requestCode(scope: CodeScope, purpose: CodePurpose, header
   ]);
   try {
     await sendCode(to, code, scope.client.businessName, purpose);
-  } catch {
+  } catch (error) {
+    // The client sees "the email did not go out". The reason belongs here,
+    // where it can be read: a missing SMTP_HOST and a refused password look
+    // identical from the client's side and need different fixes.
+    await requestLogger.error("one-time code not sent", { clientId: scope.client.id, purpose, error: safeError(error) });
     return { ok: false, reason: "send_failed" };
   }
   return { ok: true, sentTo: maskEmail(to) };
