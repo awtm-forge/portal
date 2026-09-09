@@ -25,7 +25,7 @@ neither, and says what it would take.
 | 10 | Day 30 shut before the date, no scheduled job | test | `day30.test.ts`, `e2e/day30.spec.ts` |
 | 11 | Nothing holds a client's own credential | test | `import.test.ts` for the access section, `logger.test.ts` for the log. Checked 9 Sep 2026: every client-zone form input is `code`, `intent`, `metricAfter`, `name`, `quote`, `referralContact`, `referralName`, `text`, `token`, `useLogo`, `useName`, and no schema column could hold one. The audit found that `String(error)` could carry a database or SMTP password into a log line; `safeError` now redacts credentials in URLs and anything token-shaped. |
 | 12 | Money in paise, words match the figure | test | `money.test.ts`, `e2e/invoices.spec.ts` |
-| 13 | One primary action above the fold at 375px, no navigation | test, reworded | `e2e/phone.spec.ts` walks every client page. Measured, three pages have no primary action above the fold and should not: see QUESTIONS.md Q10. What is tested is never more than one, plus exactly one where the page asks for something. |
+| 13 | One primary action above the fold, no navigation | test, reworded twice | `e2e/layout.spec.ts` walks every client page at both widths the suite runs. Two rewordings: QUESTIONS.md Q10, three pages have none and should; and Q11, the criterion names 375px and this is a web product, so the rule is tested at any width. |
 | 14 | Both themes render with no invisible text | **dead** | There is one theme. You chose dark only on 5 September. The criterion needs rewriting or removing, and until then it cannot pass or fail. |
 | 15 | Both print routes on A4, no navigation, no internal cost | part | No navigation and no internal cost are tested (`e2e/agreement.spec.ts`, `e2e/leak-walk.spec.ts`). **Open**: A4 margins and page breaks, which need a person and a print dialog. |
 | 16 | No code path deletes evidence rows | test | `append-only.test.ts` |
@@ -44,7 +44,7 @@ neither, and says what it would take.
 
 | # | Criterion | State | Where |
 |---|---|---|---|
-| 1 | An answer survives a new device and a fresh code | test | `e2e/phone.spec.ts`, with two browser contexts, which is what a second device is |
+| 1 | An answer survives a new device and a fresh code | test | `e2e/layout.spec.ts`, with two browser contexts, which is what a second device is |
 | 2 | Duplicate key, and an upload in the access section, refused | test | `import.test.ts` |
 | 3 | An image key not in the library is refused | test | `import.test.ts` |
 | 4 | A renamed executable refused, EXIF stripped | test | `files.test.ts` |
@@ -53,10 +53,10 @@ neither, and says what it would take.
 | 7 | The agreement is blocked by an unsubmitted questionnaire, override recorded | test | `intake-gaps.test.ts` |
 | 8 | An answer typed by the team reads `entered_by: team` | test | `intake-gaps.test.ts` |
 | 9 | An image_choice shows its pictures and stores option ids | part | Storing is tested (`answers.test.ts`). Rendering is not. |
-| 10 | Every question type renders on a 375px screen | part | `e2e/phone.spec.ts` asserts the questionnaire does not scroll sideways at 375px and offers one action. That every one of the eight types renders and is answerable there is still a person's job. |
+| 10 | Every question type renders on a small screen | part | `e2e/layout.spec.ts` asserts the questionnaire does not scroll sideways and offers one action, at 375 and at 1440. That every one of the eight types renders and is answerable is still a person's job. |
 | 11 | Replacing a document keeps the answers that still have a question | test | `intake-gaps.test.ts`, including that a removed question hides its answer rather than losing it |
 | 12 | No admin control edits a question | part | True by construction: there is no such route or action, and CLAUDE.md 2 item 12 forbids one. Worth recording as checked with a date rather than left implied. |
-| 13 | On a phone, only the open section is interactive above the fold | test | `e2e/phone.spec.ts` |
+| 13 | Only the open section is interactive above the fold | test | `e2e/layout.spec.ts`, at both widths |
 
 ## What this adds up to
 
@@ -70,9 +70,10 @@ Three need rewriting, and only Rahul can say how:
   not deployed. It still exists in `components/marketing` and shares the
   tokens, so the comparison is possible, but the criterion points at something
   nobody can visit.
-- **13**, exactly one primary action above the fold, when three pages have none
-  and should. See QUESTIONS.md Q10. The rule is now tested as "never more than
-  one", plus "exactly one where the page asks for something".
+- **13**, twice over. It asks for exactly one primary action above the fold
+  when three pages have none and should (Q10), and it names a 375px screen
+  when this is a web product (Q11). It is tested as "never more than one",
+  plus "exactly one where the page asks for something", at both widths.
 
 **17** is restated by ADR 0012 rather than broken: the way-in page at `/` reads
 nothing, so the check still passes, about a different page.

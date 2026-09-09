@@ -19,7 +19,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
   const files = await fileInfoMap(project.id);
   const base = `/p/${token}`;
   return (
-    <ClientShell businessName={project.client.businessName}>
+    <ClientShell businessName={project.client.businessName} wide>
       <IntakeRenderer
         doc={doc}
         initialAnswers={readAnswers(intake.answers)}

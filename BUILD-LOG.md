@@ -84,6 +84,28 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The client portal on a desktop: done
+
+9 Sep 2026, AI-assisted. Rahul: "this would mainly be a web, people will be using it on the web only."
+
+The whole client zone was built phone-first and capped at a 480px column, so on a laptop every page was a narrow ribbon down the middle of the window with the header bar floating inside it rather than spanning. The questionnaire was the worst of it: 3,355 pixels tall, with every option list, Shopify through I do not know, running one per row down a strip a third of the window wide.
+
+The one-thing-to-do rule did not change and is not weakened. It is about attention, not width. What changed is that 480px stopped being the width of the page and became the measure of its prose:
+
+- `ClientShell` spans the window. The bar and the footer run edge to edge, the content keeps a measure inside them, and the measure grows with the viewport: 580 at 640px, 660 at 960, 700 at 1280.
+- Option lists became a grid rather than a stack, so they spread out when there is room.
+- The questionnaire gets a wider measure than the rest, 940px at 1280, because it is a form and a form wants more room than an article. Its options go four across and the page lost five hundred pixels of height.
+- Type, field padding and card spacing step up at 960px instead of staying at phone size.
+- `.c-page` is untouched, so the two printable routes and the two auth screens are exactly as they were. A4 is not a viewport.
+
+One real defect found by looking: **the day-30 permission switches used space-between**, which reads fine at 375px and falls apart at 660, where the tick ends up six hundred pixels from the words it belongs to. They are proper checkbox rows now, box first, label beside it.
+
+The layout spec is no longer a phone spec. `tests/e2e/phone.spec.ts` is `tests/e2e/layout.spec.ts`, and every assertion in it runs on the desktop project as well: no navigation, never more than one loud button in the first screenful, exactly one where the page asks for something, and no sideways scroll. A rule that only held at one width was never really the rule.
+
+Verified: 122 unit tests and 129 end to end, at 375 and at 1440, plus the webpack build.
+
+Needs Rahul: QUESTIONS.md Q11. Two lines in the specs now name a phone and should say "at any width": CLAUDE.md 2 item 9, and criterion 13.
+
 ## The way-in page, and two things the screenshots found: done
 
 9 Sep 2026, AI-assisted. Rahul looked at `/` on a laptop and said it was not good. He was right.

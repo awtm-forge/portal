@@ -2,20 +2,23 @@ import { expect, test } from "@playwright/test";
 import { backToBuilding, closeDb, day30Open, freshLink, INTAKE_SLUG, openRoundDirect, query, resetRateLimits, SEED_SLUG, setPhase, takeoverLatestCode } from "./fixtures";
 
 /**
- * Acceptance criterion 13, for every client page rather than one of them, and
- * INTAKE-SPEC 14.13. Written on 9 September 2026, when the acceptance audit
- * found that this rested on somebody having looked rather than on anything
- * that would go red.
+ * Acceptance criterion 13 and INTAKE-SPEC 14.13, on every client page and at
+ * every width the suite runs.
  *
- * The rule from CLAUDE.md 2 item 9 says "exactly one primary action above the
- * fold". Measured, three pages have none, and each for a good reason: while
- * building there is nothing for the client to do but read the week's update,
- * and on the agreement and the review the button deliberately sits after the
- * document, because agreeing to something you have not scrolled through is
- * the thing the whole design is against.
+ * Two things about the criterion turned out to be wrong when it was measured
+ * rather than assumed, and both are recorded in QUESTIONS.md.
  *
- * So what is tested is "never more than one", which is the rule the wording
- * was reaching for. Recorded in QUESTIONS.md Q10.
+ * Q10: it says "exactly one primary action above the fold", and three pages
+ * have none. While building there is nothing for the client to do but read
+ * the week's update, and on the agreement and the review the button sits
+ * after the document on purpose, because agreeing to something you have not
+ * scrolled through is what the whole design is against. So the rule tested is
+ * "never more than one", plus "exactly one where the page asks for something".
+ *
+ * Q11: it says "on a 375px screen", and Rahul said on 9 September that people
+ * use this on the web. These run on the desktop project too now. The rule is
+ * about attention, not viewport, so it should hold at any width, and a rule
+ * that only holds at one width was never really the rule.
  */
 let projectId = "";
 let token = "";
@@ -100,8 +103,7 @@ const PAGES: { name: string; setUp: () => Promise<void>; path: () => string }[] 
 ];
 
 for (const screen of PAGES) {
-  test(`${screen.name} shows one thing to do above the fold, and no navigation`, async ({ page, isMobile }) => {
-    test.skip(!isMobile, "phone project only");
+  test(`${screen.name} shows one thing to do above the fold, and no navigation`, async ({ page }) => {
     await screen.setUp();
     await signIn(page);
     await page.goto(screen.path());
@@ -115,9 +117,8 @@ for (const screen of PAGES) {
   });
 }
 
-test("the questionnaire shows only the open section above the fold", async ({ page, isMobile }) => {
+test("the questionnaire shows only the open section above the fold", async ({ page }) => {
   // INTAKE-SPEC 14.13.
-  test.skip(!isMobile, "phone project only");
   await setPhase(projectId, "INTAKE");
   await signIn(page);
   await page.goto(`/p/${token}/intake`);
@@ -127,8 +128,7 @@ test("the questionnaire shows only the open section above the fold", async ({ pa
   expect(actions.length, actions.join(" | ")).toBeLessThanOrEqual(1);
 });
 
-test("no client page scrolls sideways", async ({ page, isMobile }) => {
-  test.skip(!isMobile, "phone project only");
+test("no client page scrolls sideways", async ({ page }) => {
   await setPhase(projectId, "BUILDING");
   await signIn(page);
 
@@ -139,10 +139,9 @@ test("no client page scrolls sideways", async ({ page, isMobile }) => {
   }
 });
 
-test("the pages that ask for something put exactly one button in reach", async ({ page, isMobile }) => {
+test("the pages that ask for something put exactly one button in reach", async ({ page }) => {
   // The other half of the rule. Where there is something to do, it is one
   // thing and it is on the first screen, not buried.
-  test.skip(!isMobile, "phone project only");
 
   await query("UPDATE Project SET deliveredAt = NOW(3), thanksSeenAt = NULL WHERE id = ?", [projectId]);
   await setPhase(projectId, "DELIVERED");

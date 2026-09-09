@@ -215,3 +215,83 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .wayin-team a:hover { border-color: var(--ember); color: var(--ember); }
 .wayin-team a:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 .wayin-team span { font-family: var(--font-mono-stack); font-size: 11px; color: var(--faint); }
+
+/* -------------------------------------------------------------------------
+   The client shell, at any width.
+   Built phone-first and capped at 480px, which on a laptop left every client
+   page as a narrow ribbon down the middle with the bar floating in it, and
+   the questionnaire three screenfuls tall for no reason. Rahul asked for it
+   to work on the web on 9 September 2026.
+
+   The one-thing-to-do rule is untouched: it is about attention, not width.
+   One column of decisions, no navigation, no tabs. What changes is that 480px
+   stops being the width of the page and becomes the measure of its prose,
+   and repeated controls spread out when there is room for them.
+   ---------------------------------------------------------------------- */
+.p-shell {
+  --p-measure: 100%;
+  min-height: 100dvh;
+  background: var(--ground);
+  font-size: 15px;
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+}
+.p-head { border-bottom: 1px solid var(--rule); background: var(--surface); }
+.p-head-in,
+.p-foot-in {
+  width: 100%;
+  max-width: var(--p-measure);
+  margin: 0 auto;
+}
+.p-head-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; }
+.p-body { width: 100%; max-width: var(--p-measure); margin: 0 auto; flex: 1; }
+.p-foot { margin-top: 34px; border-top: 1px solid var(--rule); }
+.p-foot-in { display: flex; flex-direction: column; gap: 5px; padding: 18px 20px 26px; }
+.p-foot-in p { margin: 0; font-family: var(--font-mono-stack); font-size: 10.5px; color: var(--faint); letter-spacing: 0.03em; }
+.p-foot-in a { color: var(--muted); }
+
+/* A list of options is a set to scan, not a queue to scroll. */
+.opts { display: flex; flex-direction: column; gap: 6px; }
+
+@media (min-width: 640px) {
+  .p-shell { --p-measure: 580px; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+}
+
+@media (min-width: 960px) {
+  .p-shell { --p-measure: 660px; font-size: 16px; }
+  .p-shell .c-title { font-size: 31px; }
+  .p-shell .c-sub { font-size: 16px; }
+  .p-shell .q { font-size: 15.5px; }
+  .p-shell .help { font-size: 11px; }
+  .p-shell .sec-name { font-size: 16.5px; }
+  .p-shell .fld { font-size: 15.5px; padding: 12px 14px; }
+  .p-shell .opt { font-size: 15px; padding: 12px 14px; }
+  .p-shell .card-b { gap: 22px; padding: 20px 20px 22px; }
+  .p-shell .card-h { padding: 16px 20px; }
+  .p-shell .btn-full { padding: 16px; font-size: 12.5px; }
+  .p-head-in { padding: 16px 20px; }
+}
+
+@media (min-width: 1280px) {
+  .p-shell { --p-measure: 700px; }
+}
+
+/* The questionnaire is a form, not an article, and a form wants more width
+   than prose does: at a document measure its option lists stay two across and
+   the whole thing runs three screenfuls deep. Wider, they go three across and
+   the fields have room to be read at a glance. */
+@media (min-width: 960px) {
+  .p-shell.p-wide { --p-measure: 860px; }
+  .p-shell.p-wide .opts { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .p-shell.p-wide { --p-measure: 940px; }
+}
+
+/* A tick and its label belong together at any width. */
+.tickrow { display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 32px; }
+.tickrow input { width: 17px; height: 17px; flex: none; accent-color: var(--ember); cursor: pointer; }
+.tickrow span { font-family: var(--font-mono-stack); font-size: 10.5px; color: var(--faint); line-height: 1.5; }
+.p-shell .tickrow span { font-size: 11px; }

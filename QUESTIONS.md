@@ -122,3 +122,15 @@ The pages that do ask for something, the thank-you page and day 30, have exactly
 - **Keep "exactly one" and add buttons.** Three buttons that exist to satisfy a sentence.
 
 Taking the first. Worth changing the wording in PORTAL-SPEC and CLAUDE.md so the next person does not read the code as broken.
+
+## Q11. The client portal was built for a 375px screen, and people use it on the web
+
+Decided by Rahul on 9 Sep 2026: **it is a web product, and it has to work on a desktop.**
+
+CLAUDE.md 2 item 9 and criterion 13 are both written as "on a 375px screen", and every client page was capped at a 480px column. On a laptop that left each one as a narrow ribbon down the middle of the window with the header bar floating inside it, and the questionnaire three and a half thousand pixels tall with its option lists stacked one per row.
+
+The one-thing-to-do rule is not what changed. It is about attention, not width: one column of decisions, no navigation, no tabs, and never more than one loud button in the first screenful. That still holds, and it is now tested at both widths rather than only at 375.
+
+What changed is that 480px stopped being the width of the page and became the measure of its prose. The shell spans the window, the measure grows with the viewport, and repeated controls spread out when there is room: the questionnaire's option lists go four across at 1440 and the page lost five hundred pixels of height. The questionnaire gets a wider measure than the rest, because it is a form and a form wants more room than an article.
+
+Two lines in the specs are now out of step and are yours to reword: CLAUDE.md 2 item 9, and criterion 13. Both should say "at any width" rather than naming a phone. Criterion 20, which compares the portal to a marketing site that is no longer deployed, was already waiting for the same treatment.

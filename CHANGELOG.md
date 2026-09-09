@@ -22,3 +22,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-09 The acceptance audit: all thirty-four criteria mapped to what covers them, five missing tests written, and five left that need a person rather than a test.
 - 2026-09-09 Closed most of the audit's gaps: error logs can no longer carry a password, and every client page is checked at 375px, which found that criterion 13 asks for a button three pages should not have.
 - 2026-09-09 The way-in page at / composes at any width instead of sitting in the corner of a laptop screen, and the weekly update no longer prints a full stop in the middle of a sentence.
+- 2026-09-09 The client portal works on a desktop: the shell spans the window, the measure grows with it, option lists spread out, and the questionnaire lost five hundred pixels of height. The layout rules are tested at both widths now.

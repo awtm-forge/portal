@@ -261,7 +261,7 @@ function AccessBlock({ items, access, kickoff, onToggle }: { items: NonNullable<
       <p className="sec-name" style={{ fontSize: 17, lineHeight: 1.2 }}>{ACCESS_TEXT_1}</p>
       <p className="c-sub" style={{ fontSize: 14 }}>{ACCESS_TEXT_2}</p>
       <p className="c-sub" style={{ fontSize: 14 }}>{ACCESS_TEXT_3}</p>
-      <div className="stack" style={{ gap: 6 }}>
+      <div className="opts">
         {items.map((it) => {
           const on = access[it.key] === true;
           return (
@@ -346,7 +346,7 @@ function Field({ q, answers, files, p, setLocal, saveNow, saveDebounced, setFile
     case "pick_one": {
       const value = typeof a?.value === "string" ? a.value : "";
       return (
-        <div className="stack" style={{ gap: 6 }}>
+        <div className="opts">
           {q.options.map((o) => {
             const on = value === o.id;
             return (
@@ -362,7 +362,7 @@ function Field({ q, answers, files, p, setLocal, saveNow, saveDebounced, setFile
     case "pick_many": {
       const value = Array.isArray(a?.value) ? (a.value as string[]) : [];
       return (
-        <div className="stack" style={{ gap: 6 }}>
+        <div className="opts">
           {q.options.map((o) => {
             const on = value.includes(o.id);
             return (

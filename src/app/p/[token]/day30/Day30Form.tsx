@@ -48,13 +48,15 @@ export function Day30Form({ token, view, draft }: { token: string; view: Day30Cl
       </div>
 
       <div className="stack" style={{ gap: 10 }}>
-        <label className="between" style={{ gap: 12 }}>
-          <span className="help">You may use my name and my company with it</span>
+        {/* The box sits with its label, not at the far edge of the column:
+            space-between reads fine at 375px and falls apart at 900. */}
+        <label className="tickrow">
           <input type="checkbox" name="useName" defaultChecked={v?.useName} />
+          <span>You may use my name and my company with it</span>
         </label>
-        <label className="between" style={{ gap: 12 }}>
-          <span className="help">You may use our logo with it</span>
+        <label className="tickrow">
           <input type="checkbox" name="useLogo" defaultChecked={v?.useLogo} />
+          <span>You may use our logo with it</span>
         </label>
         <p className="help">Both off by default. We use nothing you have not ticked.</p>
       </div>
