@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { adminCount } from "@/modules/auth/admin";
+import { activatedAdminCount } from "@/modules/auth/admin";
 import "@/components/portal/portal.css";
 import { FirstRunForm } from "./FirstRunForm";
 
@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "awtm forge", robots: { index: false, follow: false } };
 
 export default async function FirstRunPage() {
-  if ((await adminCount()) > 0) notFound();
+  if ((await activatedAdminCount()) > 0) notFound();
   const configured = Boolean(process.env.SETUP_KEY?.trim());
 
   return (

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
-import { adminCount, createFirstAdmin } from "@/modules/auth/admin";
+import { activatedAdminCount, createFirstAdmin } from "@/modules/auth/admin";
 
 /**
  * ADR 0014. A route that can create an administrator is worth being paranoid
@@ -70,17 +70,38 @@ describe("making the very first admin", () => {
     expect(user.setupTokenHash).not.toBeNull();
   });
 
-  it("is shut the moment one account exists", async () => {
-    await createFirstAdmin({ email: "first@example.invalid", name: "First", key: KEY, headers: headers() });
-    const second = await createFirstAdmin({ email: "second@example.invalid", name: "Second", key: KEY, headers: headers() });
-    expect(second).toEqual({ ok: false, reason: "not_first_run" });
-    expect(await adminCount()).toBe(1);
+  it("is shut the moment somebody can actually sign in", async () => {
+    const first = await createFirstAdmin({ email: "first@example.invalid", name: "First", key: KEY, headers: headers() });
+    expect(first.ok).toBe(true);
+    // Still open: the account exists but has no password, so nobody can get
+    // in and the door has to stay open or the system is bricked.
+    const again = await createFirstAdmin({ email: "second@example.invalid", name: "Second", key: KEY, headers: headers() });
+    expect(again.ok).toBe(true);
+
+    // Somebody sets a password. Now it is shut.
+    await db.adminUser.updateMany({ where: { email: "first@example.invalid" }, data: { passwordHash: "$2b$12$x" } });
+    const after = await createFirstAdmin({ email: "third@example.invalid", name: "Third", key: KEY, headers: headers() });
+    expect(after).toEqual({ ok: false, reason: "not_first_run" });
+  });
+
+  it("reissues the link for an account whose link was lost, rather than locking everyone out", async () => {
+    // The live failure on 9 September: admin:create had made a row, nobody
+    // saw the link it printed, and the page then hid itself behind a row that
+    // no one could use.
+    await db.adminUser.create({ data: { email: "stuck@awtmforge.com", name: "Stuck" } });
+    expect(await activatedAdminCount()).toBe(0);
+
+    const result = await createFirstAdmin({ email: "stuck@awtmforge.com", name: "Stuck", key: KEY, headers: headers() });
+    expect(result.ok).toBe(true);
+    const rows = await db.adminUser.findMany();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].setupTokenHash).not.toBeNull();
   });
 
   it("refuses a wrong key, and tells a wrong key nothing about the system", async () => {
     const bad = await createFirstAdmin({ email: "a@example.invalid", name: "A", key: "wrong", headers: headers() });
     expect(bad).toEqual({ ok: false, reason: "bad_key" });
-    expect(await adminCount()).toBe(0);
+    expect(await activatedAdminCount()).toBe(0);
 
     // Same answer once the system is claimed: bad_key, not not_first_run, so
     // a guesser cannot learn whether there is anything left to take.
@@ -93,31 +114,31 @@ describe("making the very first admin", () => {
     delete process.env.SETUP_KEY;
     const result = await createFirstAdmin({ email: "a@example.invalid", name: "A", key: "", headers: headers() });
     expect(result).toEqual({ ok: false, reason: "no_key_configured" });
-    expect(await adminCount()).toBe(0);
+    expect(await activatedAdminCount()).toBe(0);
   });
 
   it("refuses an empty key even when SETUP_KEY is an empty string", async () => {
     process.env.SETUP_KEY = "   ";
     expect(await createFirstAdmin({ email: "a@example.invalid", name: "A", key: "   ", headers: headers() }))
       .toEqual({ ok: false, reason: "no_key_configured" });
-    expect(await adminCount()).toBe(0);
+    expect(await activatedAdminCount()).toBe(0);
   });
 
   it("refuses nonsense for an email or a name", async () => {
     for (const [email, name] of [["notanemail", "A"], ["a@example.invalid", ""], ["a@example.invalid", "x".repeat(200)]]) {
       expect(await createFirstAdmin({ email, name, key: KEY, headers: headers() })).toEqual({ ok: false, reason: "invalid" });
     }
-    expect(await adminCount()).toBe(0);
+    expect(await activatedAdminCount()).toBe(0);
   });
 
-  it("gives one account when two people press it at the same moment", async () => {
+  it("gives one account when the same person presses twice at once", async () => {
     const h = headers();
     const results = await Promise.all([
       createFirstAdmin({ email: "one@example.invalid", name: "One", key: KEY, headers: h }),
-      createFirstAdmin({ email: "two@example.invalid", name: "Two", key: KEY, headers: h }),
+      createFirstAdmin({ email: "one@example.invalid", name: "One", key: KEY, headers: h }),
     ]);
-    expect(results.filter((r) => r.ok)).toHaveLength(1);
-    expect(await adminCount()).toBe(1);
+    expect(results.some((r) => r.ok)).toBe(true);
+    expect(await db.adminUser.count()).toBe(1);
   });
 
   it("stops a guesser after five tries from one address", async () => {
@@ -130,6 +151,6 @@ describe("making the very first admin", () => {
     expect(await createFirstAdmin({ email: "a@example.invalid", name: "A", key: KEY, headers: h })).toEqual({
       ok: false, reason: "rate_limited",
     });
-    expect(await adminCount()).toBe(0);
+    expect(await activatedAdminCount()).toBe(0);
   });
 });

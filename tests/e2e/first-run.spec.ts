@@ -11,9 +11,9 @@ import { closeDb, query } from "./fixtures";
  */
 test.afterAll(closeDb);
 
-test("is not there once somebody has an account", async ({ request }) => {
-  const [row] = await query<{ n: number }>("SELECT COUNT(*) AS n FROM AdminUser");
-  expect(Number(row.n), "the seed should have left an admin").toBeGreaterThan(0);
+test("is not there once somebody can actually sign in", async ({ request }) => {
+  const [row] = await query<{ n: number }>("SELECT COUNT(*) AS n FROM AdminUser WHERE passwordHash IS NOT NULL");
+  expect(Number(row.n), "the suite should have left an admin with a password").toBeGreaterThan(0);
 
   const response = await request.get("/admin/first-run", { maxRedirects: 0 });
   expect(response.status()).toBe(404);

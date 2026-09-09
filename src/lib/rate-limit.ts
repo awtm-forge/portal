@@ -6,22 +6,31 @@ import { db } from "@/lib/db";
  * Returns true when the call is allowed.
  */
 export async function allow(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-  // One statement, because a read followed by a write is a race: two requests
-  // from the same address arriving together both found no row and both tried
-  // to create one, and the loser threw a duplicate key error instead of being
-  // rate limited. A double click was a 500. Same trick as the invoice
-  // sequence in modules/invoices: let MySQL do the deciding.
+  // Increment and read as one thing, on one connection.
+  //
+  // Two earlier versions were wrong in different ways. Reading the row and
+  // then writing it raced: two requests from one address both found nothing,
+  // both inserted, and the loser threw a duplicate key error out of the
+  // limiter, so a double click was a 500. Fixing that with a single upsert
+  // stopped the throwing but left the read separate, and under eight
+  // simultaneous calls several of them read a count somebody else had already
+  // bumped, so the limit came out fuzzy.
+  //
+  // LAST_INSERT_ID(expr) stores the value and hands it back on this
+  // connection, which is the standard MySQL atomic counter. It is per
+  // connection, so it has to run inside a transaction or the pool may answer
+  // the second query from a different one.
   const cutoff = new Date(Date.now() - windowSeconds * 1000);
-  await db.$executeRaw`
-    INSERT INTO RateLimit (\`key\`, count, windowStart) VALUES (${key}, 1, NOW(3))
-    ON DUPLICATE KEY UPDATE
-      count = IF(windowStart < ${cutoff}, 1, count + 1),
-      windowStart = IF(windowStart < ${cutoff}, NOW(3), windowStart)`;
-
-  const rows = await db.$queryRaw<{ count: number }[]>`
-    SELECT count FROM RateLimit WHERE \`key\` = ${key}`;
-  const count = rows[0]?.count;
-  if (typeof count !== "number") return true;
+  const count = await db.$transaction(async (tx) => {
+    await tx.$executeRaw`
+      INSERT INTO RateLimit (\`key\`, count, windowStart)
+      VALUES (${key}, LAST_INSERT_ID(1), NOW(3))
+      ON DUPLICATE KEY UPDATE
+        count = LAST_INSERT_ID(IF(windowStart < ${cutoff}, 1, count + 1)),
+        windowStart = IF(windowStart < ${cutoff}, NOW(3), windowStart)`;
+    const rows = await tx.$queryRaw<{ n: bigint | number }[]>`SELECT LAST_INSERT_ID() AS n`;
+    return Number(rows[0]?.n ?? 1);
+  });
   return count <= limit;
 }
 

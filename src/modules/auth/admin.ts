@@ -86,8 +86,17 @@ export async function adminLogout(): Promise<void> {
  * application that nobody can ever sign in to.
  * ---------------------------------------------------------------------- */
 
-export function adminCount(): Promise<number> {
-  return db.adminUser.count();
+/**
+ * How many people can actually sign in.
+ *
+ * Not how many rows exist. An account created by `admin:create` has no
+ * password until somebody opens its setup link, and if that link is lost the
+ * row is a locked door with no key: it blocks first run without letting
+ * anyone in. That happened on the live site on 9 September, and the fix is to
+ * count what matters, which is whether the system is reachable by anyone.
+ */
+export function activatedAdminCount(): Promise<number> {
+  return db.adminUser.count({ where: { NOT: { passwordHash: null } } });
 }
 
 export type FirstRunResult =
@@ -95,9 +104,6 @@ export type FirstRunResult =
   | { ok: false; reason: "not_first_run" | "no_key_configured" | "bad_key" | "rate_limited" | "invalid" };
 
 const SETUP_HOURS = 48;
-
-/** The very first account takes a known id, so the primary key is the lock. */
-const FIRST_ADMIN_ID = "first-admin";
 
 /**
  * Makes the first admin account, and only ever the first.
@@ -132,24 +138,29 @@ export async function createFirstAdmin(args: {
     return { ok: false, reason: "invalid" };
   }
 
-  // Counted after the key check, so a wrong key never learns whether the
-  // system is claimed. Counted inside the same call that creates, so two
-  // requests at once cannot both pass it.
-  if ((await adminCount()) > 0) return { ok: false, reason: "not_first_run" };
+  // Checked after the key, so a wrong key never learns whether the system is
+  // claimed.
+  if ((await activatedAdminCount()) > 0) return { ok: false, reason: "not_first_run" };
 
   const token = randomToken();
   try {
-    await db.adminUser.create({
-      data: {
-        // A fixed id, so the primary key is what decides. The count above is
-        // a cheap early-out, not the guard: two requests arriving together
-        // both passed it and both created an account, with different emails
-        // so no constraint caught them. Now the second one loses on the key.
-        id: FIRST_ADMIN_ID,
+    // Upsert, not create. A row with no password is an account nobody can use,
+    // usually one whose setup link was lost, and reissuing its link is exactly
+    // what is wanted. The unique index on email is what settles two requests
+    // arriving together.
+    await db.adminUser.upsert({
+      where: { email },
+      create: {
         email,
         name,
         setupTokenHash: hashToken(token),
         setupExpiresAt: new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000),
+      },
+      update: {
+        name,
+        setupTokenHash: hashToken(token),
+        setupExpiresAt: new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000),
+        setupLinkUsedAt: null,
       },
     });
   } catch {

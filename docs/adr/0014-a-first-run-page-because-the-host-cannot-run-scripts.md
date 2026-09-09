@@ -29,9 +29,17 @@ server" is not one this host can carry out.
 ## Decision
 `/admin/first-run` makes the first account, and only ever the first.
 
-Three conditions, each closing a different hole. No admin may exist: once one
-does the page is a 404 on that deployment for good, so it is not a way to add
-an account later or to take over a live system. `SETUP_KEY` must be set in the
+Three conditions, each closing a different hole. Nobody may be able to sign in
+yet: the page is a 404 the moment any account has a password, so it is not a
+way to add an account later or to take over a live system.
+
+The rule is "can anyone sign in", not "does a row exist", and that distinction
+was learned the hard way. An account made by `admin:create` has no password
+until somebody opens its setup link. On the live site an earlier attempt had
+left exactly such a row, so the first-run page hid itself behind an account
+nobody could use: a locked door with no key. Counting rows bricked the very
+deployment the page exists to rescue. Creation upserts on the email for the
+same reason, so a lost link is reissued rather than refused. `SETUP_KEY` must be set in the
 environment: without it the page refuses rather than letting whoever finds the
 URL first claim a freshly deployed system. And the key must match, compared on
 its hash in constant time.

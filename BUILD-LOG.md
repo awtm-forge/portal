@@ -97,7 +97,11 @@ Two real defects came out of testing it, and neither was in the new code:
 - **The rate limiter threw instead of counting.** `allow()` read the row and then wrote it, so two requests from one address arriving together both found nothing and both tried to insert; the loser got a duplicate key error out of the limiter. A double click on any rate limited action was a 500, not a refusal. It is one `INSERT ... ON DUPLICATE KEY UPDATE` now, the same technique the invoice sequence uses, and `tests/rate-limit.test.ts` runs eight calls at once to prove it counts.
 - **First run itself had the same shape of race.** Counting the admins and then creating one let two simultaneous requests both pass the count and both create an account, with different emails so no constraint caught it. The first account takes a fixed primary key now, so the database decides and the second request loses.
 
-Verified: 134 unit tests and 133 end to end, plus the webpack build. Eight of the unit tests are the first-run route alone, which is proportionate for the one route in the system that can create an administrator.
+Then the page went live and returned 404, and the reason was my own rule. It hid itself when an admin *row* existed, and one did: an earlier `admin:create` attempt had made the account without anybody ever seeing its link. A row with no password is a locked door with no key, and counting rows bricked the very deployment the page exists to rescue. The rule is "can anyone sign in" now, not "does a row exist", and creation upserts on the email so a lost link is reissued rather than refused.
+
+And the rate limiter needed a third pass. The single upsert stopped it throwing, but the read after it was a separate statement, and under eight simultaneous calls several read a count somebody else had already bumped, so the limit came out fuzzy. `LAST_INSERT_ID(expr)`, the standard MySQL atomic counter, inside a transaction so the pool cannot answer the read from a different connection. Exact now, and tested with eight at once.
+
+Verified: 135 unit tests and 133 end to end, plus the webpack build. Nine of the unit tests are the first-run route alone, which is proportionate for the one route in the system that can create an administrator.
 
 Deferred: none.
 
