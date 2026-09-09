@@ -84,7 +84,25 @@ one on anyone's laptop: an account created locally does not exist here. Until
 password, because there is no account to match.
 
 Hostinger Cloud plans include SSH, and hPanel has a browser terminal that does
-the same job. From the app directory:
+the same job. Node is not on the PATH in a bare SSH session on this account,
+and the app is not in your home directory, so start with:
+
+```bash
+export PATH=/opt/alt/alt-nodejs22/root/usr/bin:$PATH
+```
+
+Then change into the directory that has both `node_modules` and `.next`, which
+is the one the running process was built in. Hostinger assembles the app under
+`~/domains/<domain>/hbuilds/`, and the copy of `package.json` in `hbuilds/config`
+has no dependencies installed beside it, so it is not the one to stand in.
+
+`tsx` and `dotenv` are runtime dependencies rather than dev ones, because both
+commands below need them and the deployed directory holds production
+dependencies only. That was found the hard way on 9 September: `admin:create`
+failed with `tsx: command not found` on a server where the build had plainly
+succeeded, because the build runs somewhere the app does not.
+
+From that directory:
 
 ```bash
 npm run admin:create -- rahul@awtmforge.com "Rahul"
