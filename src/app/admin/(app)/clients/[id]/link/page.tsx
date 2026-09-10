@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { byId } from "@/modules/clients";
-import { clientLink } from "@/modules/auth/client";
+import { clientUrl } from "@/lib/request-origin";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
 import { CopyLink } from "../CopyLink";
@@ -20,7 +20,7 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
   if (!client) notFound();
 
   const token = await takeFlashLink(client.id);
-  const link = token ? clientLink(token) : null;
+  const link = token ? await clientUrl(`/p/${token}`) : null;
   const c = client;
   const firstName = c.contactName.trim().split(/\s+/)[0] || c.contactName;
   const message = link ? questionnaireReadyMessage({ contactName: firstName, link }) : "";

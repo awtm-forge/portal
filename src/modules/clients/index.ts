@@ -10,7 +10,8 @@ import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { safeError } from "@/lib/logger";
 import { requestLogger } from "@/lib/logger";
-import { clientLink, mintToken, rotateClientToken } from "@/modules/auth/client";
+import { mintToken, rotateClientToken } from "@/modules/auth/client";
+import { clientUrl } from "@/lib/request-origin";
 import { emit } from "@/modules/events";
 import type { IntakeDocument } from "@/modules/intake/document";
 import { upsertDocument } from "@/modules/intake/replace";
@@ -43,7 +44,7 @@ export async function deliverLink(clientId: string, token: string): Promise<bool
       to: client.contactEmail,
       contactName: client.contactName,
       businessName: client.businessName,
-      link: clientLink(token),
+      link: await clientUrl(`/p/${token}`),
     });
     await db.client.update({ where: { id: clientId }, data: { linkEmailedAt: new Date(), linkEmailError: null } });
     await emit({ type: "client.link_emailed", projectId: null, actor: "system", payload: { clientId } });

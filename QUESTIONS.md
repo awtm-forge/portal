@@ -205,3 +205,13 @@ Taking the first. Built on 10 Sep 2026, with a `/p/[token]/invoices` page so the
 
 Two lines are now out of step and are yours to reword: CLAUDE.md section 2 item 9, and criterion 13 (again).
 
+## Q16. A link handed to a person follows the host the request came in on, when there is one host
+
+Found by Ayush on 10 Sep 2026: adding the second admin from Settings produced a setup link nobody could open. Not the form: the account is made and the link is minted, but every link is built from `APP_URL` / `ADMIN_URL`, and on production both resolve to `https://portal.awtmforge.com`, a hostname that has no DNS record yet. The app runs on `dashboard.awtmforge.com`. So the setup link, the client handover link and the questionnaire email all pointed at a dead host.
+
+- **On a single host, build these links from the host the request actually arrived on**, which is provably reachable; when the two hosts are genuinely split (ADR 0013), keep the configured base, because a client link must name the client host even when built on the admin one. Costs one small server-only helper and three call sites (the admin setup link, the client link email, the handover screen). `/healthz` now also reports the two resolved hostnames, so the misconfiguration is a glance.
+- **Leave it, and require the environment to be right.** Rejected on its own: correct, but it fails silently, and it had already cost an afternoon. Kept as the clean end state alongside the fix: `APP_URL` should name a host that resolves.
+- **Hardcode the dashboard host.** Rejected: wrong the day the portal subdomain exists.
+
+Taking the first. Built 10 Sep 2026. It leaves the team-notification email links still built from the configured base; those go to the team, who know the host, and the clean fix for them is the same one-line config change. Ayush: set `APP_URL=https://dashboard.awtmforge.com` (leave `ADMIN_URL` empty) until `portal.awtmforge.com` is set up, so every link, including those, names a host that resolves.
+

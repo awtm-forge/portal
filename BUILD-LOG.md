@@ -84,6 +84,16 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The setup link nobody could open, and the dead host behind it: done
+
+10 Sep 2026, AI-assisted. Ayush: the second admin could not be added from Settings. The account was made and the link minted; the link was the problem. Every link is built from APP_URL / ADMIN_URL (ADR 0013), and on production both resolve to https://portal.awtmforge.com, which has no DNS record: the app answers on dashboard.awtmforge.com. So the setup link, the client handover link and the questionnaire email all named a dead host. QUESTIONS.md Q16.
+
+Built: a server-only helper (src/lib/request-origin.ts) that, on a single host, builds a link from the host the request arrived on, and on a genuine split keeps the configured base. Used for the admin setup link, the client link email and the handover screen. /healthz now reports the two resolved hostnames, so the misconfiguration shows from outside. Five unit cases cover the builder; the whole suite stays green.
+
+Left as the clean end state for Ayush: set APP_URL to a host that resolves. That also fixes the team-notification email links, which still build from the configured base by design.
+
+Deferred: team-notification links, covered by the config fix. Needs Rahul: Q16 is a fix, not a question, but it is recorded there with the reasoning.
+
 ## The last three manual checks, and the print palette they found: done
 
 10 Sep 2026, AI-assisted. `docs/ACCEPTANCE.md` had three criteria that wanted a person: 15 (both print routes on A4), INTAKE 9 (the picture question shows its pictures) and INTAKE 10 (all eight question types at phone width).

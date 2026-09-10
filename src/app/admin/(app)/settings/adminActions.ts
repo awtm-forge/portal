@@ -1,6 +1,6 @@
 "use server";
 
-import { adminBase } from "@/lib/hosts";
+import { adminUrl } from "@/lib/request-origin";
 import { inviteAdmin, requireAdmin } from "@/modules/auth/admin";
 
 export type InviteState = { message?: string; link?: string; email?: string; values?: { email: string; name: string } };
@@ -20,5 +20,5 @@ export async function inviteAdminAction(_prev: InviteState, formData: FormData):
       values,
     };
   }
-  return { link: `${adminBase()}/admin/setup/${result.token}`, email: result.email };
+  return { link: await adminUrl(`/admin/setup/${result.token}`), email: result.email };
 }

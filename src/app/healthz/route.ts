@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mailMode, mailVars } from "@/lib/mail";
+import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
 import { activatedAdminCount } from "@/modules/auth/admin";
 import { requestLogger, safeError } from "@/lib/logger";
 
@@ -31,6 +32,7 @@ export async function GET() {
         claimed,
         mail: mailMode(),
         mailVars: mailVars(),
+        links: { client: hostnameOf(clientBase()), admin: hostnameOf(adminBase()) },
       },
       { headers: NO_STORE },
     );
