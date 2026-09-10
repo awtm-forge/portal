@@ -1,12 +1,12 @@
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/modules/auth/admin";
-import { db } from "@/lib/db";
-import { deleteImageAction, libraryUsage } from "./actions";
+import { libraryUsage, listImages } from "@/modules/library";
+import { deleteImageAction } from "./actions";
 import { UploadImageForm } from "./UploadImageForm";
 
 export default async function LibraryPage() {
   const admin = await requireAdmin();
-  const [images, usage] = await Promise.all([db.imageLibrary.findMany({ orderBy: { key: "asc" } }), libraryUsage()]);
+  const [images, usage] = await Promise.all([listImages(), libraryUsage()]);
   return (
     <AdminShell active="library" adminName={admin.name}>
       <div className="stack" style={{ gap: 6 }}>

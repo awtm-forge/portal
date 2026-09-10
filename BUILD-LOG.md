@@ -84,6 +84,20 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## The last three manual checks, and the print palette they found: done
+
+10 Sep 2026, AI-assisted. `docs/ACCEPTANCE.md` had three criteria that wanted a person: 15 (both print routes on A4), INTAKE 9 (the picture question shows its pictures) and INTAKE 10 (all eight question types at phone width).
+
+Done with headless Chromium standing in for the print dialog: both routes printed to A4 PDF with and without backgrounds and every page read; every section of the seed questionnaire opened at phone width and photographed, with the sideways overflow measured at zero each time. Recorded with the date.
+
+The print check found a defect: the print stylesheet set a white page but left most text on the screen tokens, so with backgrounds off (a print dialog's default) the headings and body were near-white on white paper. Fixed by swapping the colour tokens themselves under `@media print`, and adding the break rules so a section does not split across pages and a heading is never left at the foot of one. The agreement now prints on two A4 pages, the invoice on one.
+
+Also: the image library's reads and writes moved into `src/modules/library/`, so the admin library page, its actions and the questionnaire importer no longer touch the table through Prisma directly (docs/ARCHITECTURE.md). Fourteen other route files still import `@/lib/db`, all front-half leftovers, listed for the step that next touches each: the admin actions, the client home, agreement and review pages, the agreement print page, the enquiry route, `/healthz`, the setup pages, settings, the new-project page and the clients list.
+
+Verified: unit suite green; `agreement`, `invoices`, `leak-walk` and `layout` specs at both widths.
+
+Deferred: the fourteen files above, one area at a time. Needs Rahul: none.
+
 ## A usability pass on the client portal: done
 
 10 Sep 2026, AI-assisted. Ayush, the same day: make the portal more intuitive without changing any logic, let the client move between their pages, and give them one constant way to reach us by WhatsApp or email. QUESTIONS.md Q15, because CLAUDE.md section 2 item 9 says no navigation and this overrides it.

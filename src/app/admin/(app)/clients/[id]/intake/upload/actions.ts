@@ -2,10 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/modules/auth/admin";
-import { db } from "@/lib/db";
 import { deliverLink, sendQuestionnaire, withIntake } from "@/modules/clients";
 import { readAnswers } from "@/modules/intake/answers";
 import { validateDocument, type ImportFailure } from "@/modules/intake/import";
+import { libraryKeys } from "@/modules/library";
 import { takeFlashLink } from "../../../../actions";
 
 export type ImportState = { failures?: ImportFailure[]; message?: string; json?: string };
@@ -33,8 +33,7 @@ export async function importAction(_prev: ImportState, formData: FormData): Prom
   try { raw = JSON.parse(text); } catch (e) {
     return { json: text, failures: [{ rule: "json", message: `Not valid JSON: ${(e as Error).message}` }] };
   }
-  const keys = new Set((await db.imageLibrary.findMany({ select: { key: true } })).map((r) => r.key));
-  const result = validateDocument(raw, keys);
+  const result = validateDocument(raw, await libraryKeys());
   if (!result.ok) return { json: text, failures: result.failures };
 
   const hasAnswers = client.intake ? Object.keys(readAnswers(client.intake.answers)).length > 0 : false;

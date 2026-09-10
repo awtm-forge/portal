@@ -7,6 +7,7 @@ import { markSectionDone, readAnswers, saveAccess, saveAnswer, setFileList, subm
 import { askForChange } from "@/modules/intake/changes";
 import { parseDocumentLoose } from "@/modules/intake/document";
 import { LOCKED_MESSAGE, openForWriting } from "@/modules/intake/versions";
+import { imageByKey } from "@/modules/library";
 import { readStored, removeStored, writeClientFile } from "@/lib/storage";
 
 export type IntakeActor = { clientId: string; enteredBy: "client" | "team"; canSubmit: boolean };
@@ -134,7 +135,7 @@ export async function serveClientFile(clientId: string, fileId: string, wantThum
 }
 
 export async function serveLibraryImage(key: string): Promise<Response> {
-  const img = await db.imageLibrary.findUnique({ where: { key } });
+  const img = await imageByKey(key);
   if (!img) return new Response("Not found", { status: 404 });
   return bytes(await readStored(img.storedPath), img.mimeType, `${key}.${img.storedPath.split(".").pop()}`);
 }

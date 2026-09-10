@@ -336,3 +336,29 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .tickrow input { width: 17px; height: 17px; flex: none; accent-color: var(--ember); cursor: pointer; }
 .tickrow span { font-family: var(--font-mono-stack); font-size: 10.5px; color: var(--faint); line-height: 1.5; }
 .p-shell .tickrow span { font-size: 11px; }
+
+/* On paper (criterion 15, checked 10 Sep 2026 with a real A4 print): a section
+   does not split across a page and a heading is never left at the foot of one. */
+@media print {
+  .doc-sec, .deliverables li, .pairs, tr { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+  p { orphans: 3; widows: 3; }
+}
+
+/* Paper is white. Every colour on the print routes comes from a token, so the
+   tokens themselves change for print, and nothing ends up near-white on white
+   when a print dialog has backgrounds off (criterion 15, 10 Sep 2026). */
+@media print {
+  html:root {
+    --ground: #ffffff;
+    --surface: #ffffff;
+    --ink: #141110;
+    --muted: #2e2925;
+    --faint: #55504a;
+    --rule: #ded5c8;
+    --rule-soft: #ece5da;
+    --ember: #b5661f;
+    --on-ember: #ffffff;
+  }
+  html, body, .c-page, .p-shell, .doc, .card { background: #fff !important; color: #141110; }
+}

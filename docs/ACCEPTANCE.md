@@ -3,7 +3,8 @@
 CLAUDE.md section 10 says the job is finished when every criterion in
 PORTAL-SPEC section 10 and INTAKE-SPEC section 14 has a passing test or a
 recorded manual check with the date. This is that list, written on 9 September
-2026 after step 11, and it is honest about the gaps.
+2026 after step 11 and kept true since, last on 10 September 2026, and it is
+honest about the gaps.
 
 Three columns of truth: **test** means an automated test asserts it and is
 green; **checked** means a person looked, with the date; **open** means
@@ -27,7 +28,7 @@ neither, and says what it would take.
 | 12 | Money in paise, words match the figure | test | `money.test.ts`, `e2e/invoices.spec.ts` |
 | 13 | One primary action above the fold, no navigation | test, reworded three times | `e2e/layout.spec.ts` walks every client page at both widths the suite runs. Two rewordings: QUESTIONS.md Q10, three pages have none and should; and Q11, the criterion names 375px and this is a web product, so the rule is tested at any width. Q15, 10 September: a quiet row of links and a Reach us control are on every page at Ayush's request, so "no navigation" is tested as "no loud navigation": text links only, no tabs. `e2e/navigation.spec.ts` covers the row itself. |
 | 14 | Both themes render with no invisible text | **dead** | There is one theme. You chose dark only on 5 September. The criterion needs rewriting or removing, and until then it cannot pass or fail. |
-| 15 | Both print routes on A4, no navigation, no internal cost | part | No navigation and no internal cost are tested (`e2e/agreement.spec.ts`, `e2e/leak-walk.spec.ts`). **Open**: A4 margins and page breaks, which need a person and a print dialog. |
+| 15 | Both print routes on A4, no navigation, no internal cost | test, and checked 10 Sep 2026 | No navigation and no internal cost are tested (`e2e/agreement.spec.ts`, `e2e/leak-walk.spec.ts`). A4 checked on 10 September by printing both routes to PDF with headless Chromium, with and without backgrounds, and reading every page: the agreement runs to two A4 pages with no heading left at the foot of one, the invoice to one. The check found the print palette was the screen palette, so with backgrounds off the text was near-white on white; fixed the same day by swapping the colour tokens for print. |
 | 16 | No code path deletes evidence rows | test | `append-only.test.ts` |
 | 17 | Marketing pages render with the database stopped | **restate** | The marketing site is no longer routed here (ADR 0012). The way-in page at `/` reads nothing, so the check as written still passes, but it is now about a different page. |
 | 18 | robots and noindex on the private zones | test | `e2e/leak-walk.spec.ts`. Stronger than written: the whole host is disallowed. |
@@ -52,8 +53,8 @@ neither, and says what it would take.
 | 6 | Guessing a file URL without the link or a session gives 404 | test | `e2e/onboarding.spec.ts`, including a real id under another project's token |
 | 7 | The agreement is blocked by an unsubmitted questionnaire, override recorded | test | `intake-gaps.test.ts` |
 | 8 | An answer typed by the team reads `entered_by: team` | test | `intake-gaps.test.ts` |
-| 9 | An image_choice shows its pictures and stores option ids | part | Storing is tested (`answers.test.ts`). Rendering is not. |
-| 10 | Every question type renders on a small screen | part | `e2e/layout.spec.ts` asserts the questionnaire does not scroll sideways and offers one action, at 375 and at 1440. That every one of the eight types renders and is answerable is still a person's job. |
+| 9 | An image_choice shows its pictures and stores option ids | test, and checked 10 Sep 2026 | Storing is tested (`answers.test.ts`). Rendering checked on 10 September at phone width on the seed questionnaire: the six logo directions show as a two-column grid of pictures with the caption beneath, and the chosen one is marked. |
+| 10 | Every question type renders on a small screen | test, and checked 10 Sep 2026 | `e2e/layout.spec.ts` asserts the questionnaire does not scroll sideways and offers one action, at 375 and at 1440. Checked on 10 September at phone width, every section of the seed questionnaire open in turn: all eight types render and are answerable, and no section scrolls sideways. |
 | 11 | Replacing a document keeps the answers that still have a question | test | `intake-gaps.test.ts`, including that a removed question hides its answer rather than losing it |
 | 12 | No admin control edits a question | part | True by construction: there is no such route or action, and CLAUDE.md 2 item 12 forbids one. Worth recording as checked with a date rather than left implied. |
 | 13 | Only the open section is interactive above the fold | test | `e2e/layout.spec.ts`, at both widths |
@@ -78,16 +79,9 @@ Three need rewriting, and only Rahul can say how:
 **17** is restated by ADR 0012 rather than broken: the way-in page at `/` reads
 nothing, so the check still passes, about a different page.
 
-Three still want a person, and none is a known defect:
-
-- **15**, the print routes on A4. Needs a print dialog, which no test has.
-- **INTAKE 9**, that an image_choice shows its pictures. Storing the ids is
-  tested; the pictures appearing on the page is not.
-- **INTAKE 10**, that all eight question types render and are answerable at
-  375px. The page is tested for one action and no sideways scroll; the eight
-  types are not each exercised.
-
-Twenty minutes with a phone and a print dialog closes all three.
+The three that wanted a person were checked on 10 September 2026 (15, INTAKE 9
+and INTAKE 10, above), with a headless print to A4 standing in for the print
+dialog. One of them found a defect, the print palette, fixed the same day.
 
 ## Checked against the live site
 
@@ -101,11 +95,13 @@ Twenty minutes with a phone and a print dialog closes all three.
 | `/p/anything` | 404 |
 | `/` | carries no internal cost or notes |
 
-Not yet checkable, and both need Ayush:
+Checked since, on 10 September 2026: a real one-time code arrived, once the
+six `SMTP_*` variables were set in hPanel and the app redeployed; `/healthz`
+reports `"mail":"smtp"` and names the six variables it sees.
+
+Not yet checkable, and it needs Ayush:
 
 - **The two hosts holding apart.** `portal.awtmforge.com` has no DNS record and
   `ADMIN_URL` is unset, so the app is running single-host. That is a valid way
   to deploy and nothing is wrong; the split simply is not on yet.
-- **A real one-time code arriving.** The only check that proves SMTP, and it
-  needs a mailbox Ayush controls.
 

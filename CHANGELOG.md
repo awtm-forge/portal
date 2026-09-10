@@ -28,4 +28,5 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-10 A quiet Back under the button on every questionnaire section after the first, because the way to an earlier section was tapping its title and nothing said so.
 - 2026-09-10 The questionnaire locks when sent. A change is asked for in a line, opened or declined by the team, and sent as the next version; admin reads every version with what changed marked (ADR 0016).
 - 2026-09-10 A usability pass on the client portal at Ayush's request: a quiet row of links to the pages that exist for the client, a Reach us control with WhatsApp and email on every page, a five-word where-you-are strip, an invoices page, a labelled code box that says where the code went, milestone dates written like the other dates, and the footer made into real links (Q15).
+- 2026-09-10 The three manual acceptance checks done and recorded: both print routes on A4, the picture question, all eight question types at phone width. The print check found the print palette was the screen one and fixed it. The image library moved into a module, so no admin page reads its table directly.
 
