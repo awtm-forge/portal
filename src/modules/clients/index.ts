@@ -121,3 +121,25 @@ export async function activeProjectFor(clientId: string) {
 export function projectsFor(clientId: string) {
   return db.project.findMany({ where: { clientId }, orderBy: { createdAt: "desc" } });
 }
+
+/**
+ * Which pages exist for a client, for the row of links under the header
+ * (QUESTIONS.md Q15). A page is listed once there is something on it, and
+ * the review only while one is open.
+ */
+export type ClientNav = { questionnaire: boolean; agreement: boolean; invoices: boolean; review: boolean };
+
+export async function navFor(clientId: string): Promise<ClientNav> {
+  const project = await activeProjectFor(clientId);
+  const [intake, invoices] = await Promise.all([
+    db.intake.findUnique({ where: { clientId }, select: { id: true } }),
+    project ? db.invoice.count({ where: { projectId: project.id } }) : Promise.resolve(0),
+  ]);
+  return {
+    questionnaire: intake !== null,
+    agreement: Boolean(project?.agreement?.sentAt),
+    invoices: invoices > 0,
+    review: project?.phase === Phase.IN_REVIEW,
+  };
+}
+

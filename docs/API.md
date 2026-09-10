@@ -33,6 +33,7 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 | `/p/[token]` | GET | link; a session shows the project | The one page whose content follows `project.phase`. Without a session it is the code screen. While building it carries the current week in full, the week counter, and the Book a sync button when a booking link is set. |
 | `/p/[token]` (code) | server action | link | Requesting a `login` code, then verifying it. Ten minutes, five attempts, single use, then a thirty-day cookie (criterion 5). |
 | `/p/[token]/intake` | GET | link and session | The questionnaire, one section at a time. |
+| `/p/[token]/invoices` | GET | link and session | Every invoice on the project, each opening its printable page (Q15). |
 | `/p/[token]/intake/api/[action]` | POST | link and session, same origin | `save`, `access`, `section-done`, `submit`, `upload`, `remove-file`, `ask-change`. The first `submit` moves a waiting project to `agreement_draft`, notifies the team and writes version 1. After that every write but `access` answers 409 until the team opens it; `ask-change` takes one line; `submit` then sends the changes as the next version and locks again (ADR 0016). |
 | `/p/[token]/file/[fileId]` | GET | link and session | An uploaded file, or its thumbnail with `?thumb`. 404 for a file on another project (INTAKE-SPEC 14.6). |
 | `/p/[token]/lib/[key]` | GET | link and session | An image library picture, for `image_choice`. |

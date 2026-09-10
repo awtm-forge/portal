@@ -19,7 +19,7 @@ export default async function ClientAgreementPage({ params }: { params: Promise<
   const open = project.phase === Phase.AGREEMENT_SENT;
 
   return (
-    <ClientShell businessName={client.businessName}>
+    <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "agreement" }}>
       <AgreementDocument view={view} projectName={project.name} businessName={client.businessName} />
 
       {open && <AgreeControls token={token} signoffPersonName={project.signoffPersonName} />}

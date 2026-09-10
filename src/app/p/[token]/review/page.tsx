@@ -25,7 +25,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
   const open = project.phase === Phase.IN_REVIEW && current !== null;
 
   return (
-    <ClientShell businessName={client.businessName}>
+    <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "review" }}>
       <div style={{ padding: "24px 20px 18px" }} className="stack">
         <p className="k">{open ? "Ready for you to check" : "The review"}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>{project.name}</h1>
@@ -49,8 +49,9 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
       </section>
 
       {current && (
-        <div style={{ padding: "18px 20px 0" }}>
-          <a className="btn-full ghost" href={current.finishedWorkUrl} target="_blank" rel="noopener">Open the finished work</a>
+        <div style={{ padding: "18px 20px 0" }} className="stack">
+          <a className="btn-full ghost" href={current.finishedWorkUrl} target="_blank" rel="noopener">Open the finished work ↗</a>
+          <p className="help" style={{ textAlign: "center", marginTop: 8 }}>It opens in a new tab. Come back here to say how it went.</p>
         </div>
       )}
 

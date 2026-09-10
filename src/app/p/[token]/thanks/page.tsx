@@ -19,7 +19,7 @@ export default async function ThanksPage({ params }: { params: Promise<{ token: 
   const answered = project.thanksSeenAt !== null;
 
   return (
-    <ClientShell businessName={client.businessName}>
+    <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "thanks" }}>
       <div style={{ padding: "38px 20px 20px" }} className="stack">
         <p className="k ember">Delivered {dayMonthYear(project.deliveredAt)}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>Thank you. It is delivered.</h1>

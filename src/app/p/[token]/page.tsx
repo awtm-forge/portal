@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
+import { InvoiceList } from "@/components/portal/InvoiceList";
+import { Journey, journeyFor } from "@/components/portal/Journey";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
-import { clientByToken, currentClientSession } from "@/modules/auth/client";
+import { clientByToken, currentClientSession, maskEmail } from "@/modules/auth/client";
 import { activeProjectFor } from "@/modules/clients";
 import { intakeProgress } from "@/modules/intake/progress";
 import { forProject as day30For, isUnlocked as day30Unlocked } from "@/modules/day30";
@@ -28,7 +30,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   if (!session) {
     return (
       <ClientShell businessName={client.businessName}>
-        <CodeScreen token={token} personName={client.contactName} />
+        <CodeScreen token={token} personName={client.contactName} maskedEmail={maskEmail(client.contactEmail)} />
       </ClientShell>
     );
   }
@@ -40,13 +42,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   const project = await activeProjectFor(client.id);
 
   if (!project) {
+    const journey = journeyFor(null, { intakeSubmitted: Boolean(intake?.submittedAt), day30Done: false });
     return (
-      <ClientShell businessName={client.businessName}>
+      <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "home" }}>
         <div style={{ padding: "22px 20px 18px" }} className="stack">
           <p className="k">Your page</p>
           <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{client.businessName}</h1>
+          {journey && <Journey state={journey} />}
         </div>
-        <div style={{ padding: "0 20px" }} className="stack">
+        <div style={{ padding: "0 20px", gap: 12 }} className="stack">
           {!intake && (
             <Card>
               <span className="sec-name" style={{ fontSize: 17 }}>Nothing for you to do yet</span>
@@ -98,15 +102,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   const updates = updateRows.map(updateToClientView);
   const latest = updates[0] ?? null;
   const phase = project.phase;
+  const journey = journeyFor(phase, { intakeSubmitted: Boolean(intake?.submittedAt), day30Done: day30?.metricAfterSubmittedAt !== null && day30 !== null });
 
   return (
-    <ClientShell businessName={client.businessName}>
+    <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "home" }}>
       <div style={{ padding: "22px 20px 18px" }} className="stack">
         <p className="k">Your project</p>
         <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{project.name}</h1>
+        {journey && <Journey state={journey} />}
       </div>
 
-      <div style={{ padding: "0 20px" }} className="stack">
+      <div style={{ padding: "0 20px", gap: 12 }} className="stack">
         {phase === Phase.CANCELLED && (
           <Card>
             <span className="sec-name" style={{ fontSize: 17 }}>This project was closed on {dayMonthYear(project.cancelledAt)}.</span>
@@ -218,12 +224,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
             </span>
             {project.afterDelivery === "RETAINER" ? (
               <div className="stack" style={{ gap: 6 }}>
-                <p className="c-sub">
-                  {project.retainerNamedPerson
-                    ? `${project.retainerNamedPerson} is your person from here.`
-                    : "We run it monthly from here."}
-                  {project.retainerResponseTime ? ` You will hear back within ${project.retainerResponseTime}.` : ""}
-                </p>
+                <p className="c-sub">{project.retainerNamedPerson ? `${project.retainerNamedPerson} is your person from here.` : "We run it monthly from here."}</p>
+                {project.retainerResponseTime && <p className="c-sub">Replies within: {project.retainerResponseTime.toLowerCase()}.</p>}
                 {project.retainerTier && <p className="help">{project.retainerTier}</p>}
               </div>
             ) : project.afterDelivery === "HANDOVER" ? (
@@ -237,7 +239,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
               <p className="c-sub">{agreement?.afterDeliveryOffer || "Rahul will confirm what happens from here."}</p>
             )}
             {!project.thanksSeenAt && !day30Due && (
-              <Link className="btn-full ghost" href={`/p/${token}/thanks`}>Say how it went, if you would like to</Link>
+              <Link className="btn-full ghost" href={`/p/${token}/thanks`}>Say how it went</Link>
             )}
           </Card>
         )}
@@ -270,26 +272,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
 
         {invoices.length > 0 && (
           <Collapsed summary={invoices.length === 1 ? "Your invoice" : "Your invoices"}>
-            <div className="stack" style={{ gap: 8 }}>
-              {invoices.map((raw) => {
-                const i = invoiceToClientView(raw);
-                return (
-                  <div key={i.id} className="between" style={{ padding: "12px 14px", border: "1px solid var(--rule)", borderRadius: 2 }}>
-                    <span className="stack" style={{ gap: 2 }}>
-                      <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 12 }}>{i.number}</span>
-                      <span className="help">{i.kindLabel} · {i.issuedAt}</span>
-                      {i.kind === "OTHER" && <span className="help" style={{ color: "var(--ink)" }}>{i.description}</span>}
-                    </span>
-                    <span className="stack" style={{ gap: 2, alignItems: "flex-end" }}>
-                      <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 13 }}>{i.total}</span>
-                      <a className="tag" href={`/invoice/${i.id}/print`} target="_blank" rel="noopener" style={{ color: "var(--ember)" }}>
-                        {i.statusLabel}, open it
-                      </a>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <InvoiceList invoices={invoices.map(invoiceToClientView)} />
           </Collapsed>
         )}
       </div>

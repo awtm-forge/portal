@@ -28,7 +28,7 @@ export default async function Day30Page({ params }: { params: Promise<{ token: s
   const draft = view.answered ? "" : await draftTextForClient(project.id);
 
   return (
-    <ClientShell businessName={client.businessName}>
+    <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "day30" }}>
       <div style={{ padding: "38px 20px 20px" }} className="stack">
         <p className="k ember">One month on</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>Two things, under a minute.</h1>

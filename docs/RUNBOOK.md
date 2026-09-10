@@ -121,7 +121,9 @@ raised, and a refund is a conversation, not a button. The client page says the
 project was closed, with the date. There is no way back.
 
 **Settings.** Company details, bank details, invoice prefix, GSTIN, booking
-URL, default advance percentage. Fill in the bank details before the first
+URL, default advance percentage. The company phone is the WhatsApp number
+clients reach from the Reach us control on every page and from the footer;
+until it is filled in, only the email is offered. Fill in the bank details before the first
 invoice is printed, or it goes out with no account number on it. The prefix
 refuses to change once invoices carry it.
 

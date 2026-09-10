@@ -84,6 +84,16 @@ Three defects found and fixed:
 
 Deferred: none. `docs/ARCHITECTURE.md`'s folder layout assigns testimonials and referrals to `day30/`, and they are there, with `review/` calling into it. That keeps a testimonial's whole life, drafted at delivery and approved at day 30, in one module.
 
+## A usability pass on the client portal: done
+
+10 Sep 2026, AI-assisted. Ayush, the same day: make the portal more intuitive without changing any logic, let the client move between their pages, and give them one constant way to reach us by WhatsApp or email. QUESTIONS.md Q15, because CLAUDE.md section 2 item 9 says no navigation and this overrides it.
+
+Built, all of it display: a quiet row of links under the header listing only the pages that exist for the client, the current one marked; a Reach us control on every page, with WhatsApp when the company phone is in Settings and email always; the footer line made into the same two links; a five-word where-you-are strip under the project name; a `/p/[token]/invoices` page, and invoice rows that are one link each; the code box labelled, with a hint in it, and the first screen saying which address the code goes to; milestone dates written like the other dates rather than as ISO; the review page saying the finished work opens in a new tab; the delivered card no longer putting a capital letter mid-sentence; a hint that finished questionnaire sections can be reopened; cards on the home page given room between them.
+
+Verified: the layout spec now checks the navigation is quiet rather than absent, and a new `e2e/navigation.spec.ts` checks the row, the current mark, the invoices page, the wordmark going home, the review link appearing only while a review is open, and Reach us on three pages, at both widths.
+
+Deferred: none. Needs Rahul: Q15, and the two lines it names.
+
 ## The questionnaire locks when sent, and a change is a version: done
 
 10 Sep 2026, AI-assisted. Ayush, the same day: "once client is done with the questionnaire it gets locked and they can request change after that. admin approves, then there would be another version of it, so admin can access the new version, and previous too." QUESTIONS.md Q14, ADR 0016. It overrides the last bullet of INTAKE-SPEC 11, which said any answer could be changed after sending, and Q14 says so for Rahul.

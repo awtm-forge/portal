@@ -256,7 +256,7 @@ export function IntakeRenderer(p: RendererProps) {
           <div className="progress"><div style={{ width: `${Math.round((doneCount / Math.max(1, sections.length)) * 100)}%` }} /></div>
           <span className="mono-sm" style={{ fontSize: "10.5px", flex: "none" }}>{doneCount} of {sections.length}</span>
         </div>
-        <p className="help" style={{ marginTop: 10 }}>{lastSavedText}</p>
+        <p className="help" style={{ marginTop: 10 }}>{lastSavedText}{doneCount > 0 ? ". Tap a finished section to change something in it" : ""}</p>
       </div>
 
       <div className="stack" style={{ gap: 12 }}>

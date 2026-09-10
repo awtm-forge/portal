@@ -102,15 +102,27 @@ const PAGES: { name: string; setUp: () => Promise<void>; path: () => string }[] 
   },
 ];
 
+/**
+ * Q15, 10 September: Ayush asked for a way between the client's pages and
+ * one control to reach the team, on every page. So a `nav` exists now, and
+ * the rule tested is that it is quiet: text links only, never a filled
+ * button, and no tabs. The one loud action stays in the body.
+ */
+async function navigationIsQuiet(page: import("@playwright/test").Page) {
+  await expect(page.locator("nav .btn-full")).toHaveCount(0);
+  await expect(page.locator("nav")).toHaveCount(1);
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+  await expect(page.locator(".reach summary")).toHaveText("Reach us");
+}
+
 for (const screen of PAGES) {
-  test(`${screen.name} shows one thing to do above the fold, and no navigation`, async ({ page }) => {
+  test(`${screen.name} shows one thing to do above the fold, and only quiet navigation`, async ({ page }) => {
     await screen.setUp();
     await signIn(page);
     await page.goto(screen.path());
 
-    // No navigation, no sidebar, no tabs. CLAUDE.md 2 item 9.
-    await expect(page.locator("nav")).toHaveCount(0);
-    await expect(page.getByRole("tablist")).toHaveCount(0);
+    // One column, no sidebar, no tabs; a quiet row of links (Q15). CLAUDE.md 2 item 9.
+    await navigationIsQuiet(page);
 
     const actions = await primaryActionsAboveFold(page);
     expect(actions.length, `${screen.name}: ${actions.join(" | ")}`).toBeLessThanOrEqual(1);
@@ -123,7 +135,7 @@ test("the questionnaire shows only the open section above the fold", async ({ pa
   await signIn(page);
   await page.goto(`/p/${token}/intake`);
 
-  await expect(page.locator("nav")).toHaveCount(0);
+  await navigationIsQuiet(page);
   const actions = await primaryActionsAboveFold(page);
   expect(actions.length, actions.join(" | ")).toBeLessThanOrEqual(1);
 });

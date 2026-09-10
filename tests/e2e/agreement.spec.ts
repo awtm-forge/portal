@@ -154,10 +154,12 @@ test("on a phone the questionnaire page shows one button above the fold", async 
   await backToSent(projectId);
   await signIn(page, token, projectId);
 
-  // Criterion 13: no navigation anywhere in the client zone.
-  await expect(page.locator("nav")).toHaveCount(0);
+  // Criterion 13, as reworded by Q15: the row of links under the header is
+  // quiet and is not a thing to do, so the count is of the page body.
+  await expect(page.locator("nav .btn-full")).toHaveCount(0);
   const viewport = page.viewportSize();
-  const buttons = page.getByRole("button").or(page.getByRole("link"));
+  const body = page.locator("main");
+  const buttons = body.getByRole("button").or(body.getByRole("link"));
   const count = await buttons.count();
   let aboveFold = 0;
   for (let i = 0; i < count; i++) {

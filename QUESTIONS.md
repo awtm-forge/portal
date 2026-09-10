@@ -190,3 +190,18 @@ Decided while building, none of which the ask covers:
 - A later sending moves no phase. Only the first one moves a project out of intake.
 
 Two lines in INTAKE-SPEC are now out of step and are yours to reword: the last bullet of section 11, and "nothing depends on it being pressed" in 13.1.
+
+## Q15. A row of the client's pages, and one control to reach the team, on every page
+
+Asked by Ayush on 10 Sep 2026: "client should be able to navigate from one tab to another. It should be extremely intuitive to them and should be extremely frictionless. And there should be one constant button, a reach out button, where they can reach out to us any time, mail us or WhatsApp us."
+
+CLAUDE.md section 2 item 9 says the opposite: "One column, no navigation, no sidebar, no tabs." So do PORTAL-SPEC section 6 and INTAKE-SPEC section 11. This is a departure from the specs, not a gap in them, and it is Rahul's to confirm. The case for it: a client who has been sent back to their agreement or their invoices by a WhatsApp message had no way to get there but the browser's back button, and nothing on the page said how to reach a person beyond one line of footer text that was not a link.
+
+- **A quiet row of links under the header, listing only the pages that exist for this client, with the current one marked; and one "Reach us" control on every page with WhatsApp and email.** Text links, never a filled button, so the one loud action on a page is still the only loud thing. The row is: Your page, Questionnaire, Agreement, Review while a review is open, Invoices once there is one. Costs a `nav` element, which criterion 13 said there would never be; the test now checks the nav is quiet instead of absent.
+- **A "Back to your page" link on each sub-page and nothing else.** Smaller. Rejected: it answers "how do I get back" and not "where are my invoices".
+- **Leave it.** Rejected: it is what was asked to change.
+
+Taking the first. Built on 10 Sep 2026, with a `/p/[token]/invoices` page so the row has somewhere to send them, a five-word "where you are" strip under the project name (questionnaire, agreement, build, delivery, a month on; not links), and the footer line made into real links. The WhatsApp half of Reach us appears once the company phone is filled in on Settings; the email half is always there.
+
+Two lines are now out of step and are yours to reword: CLAUDE.md section 2 item 9, and criterion 13 (again).
+

@@ -1,4 +1,5 @@
 import type { AgreementClientView } from "@/modules/serializers";
+import { dayMonthYear, fromIsoDate } from "@/lib/dates";
 
 /**
  * The agreement as the client reads it (PORTAL-SPEC 6.3). The same component
@@ -47,7 +48,7 @@ export function AgreementDocument({ view, projectName, businessName }: { view: A
           {view.startDate && <><dt>Start</dt><dd>{view.startDate}</dd></>}
           {view.launchTargetDate && <><dt>Launch target</dt><dd>{view.launchTargetDate}</dd></>}
           {view.milestones.map((m) => (
-            <span key={`${m.label}-${m.date}`} style={{ display: "contents" }}><dt>{m.label}</dt><dd>{m.date}</dd></span>
+            <span key={`${m.label}-${m.date}`} style={{ display: "contents" }}><dt>{m.label}</dt><dd>{prettyDate(m.date)}</dd></span>
           ))}
         </dl>
         <p className="help">Dates, not sign-offs. The only thing you sign off is the delivery.</p>
@@ -96,3 +97,10 @@ export function AgreementDocument({ view, projectName, businessName }: { view: A
     </article>
   );
 }
+
+/** A milestone is stored as an ISO day; the page says it the way the other dates are said. */
+function prettyDate(iso: string): string {
+  const d = fromIsoDate(iso);
+  return d ? dayMonthYear(d) : iso;
+}
+

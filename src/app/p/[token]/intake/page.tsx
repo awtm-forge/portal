@@ -21,7 +21,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
   const [files, requests, versions] = await Promise.all([fileInfoMap(client.id), requestsFor(client.id), versionsFor(client.id)]);
   const base = `/p/${token}`;
   return (
-    <ClientShell businessName={client.businessName} wide>
+    <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "questionnaire" }} wide>
       <IntakeRenderer
         doc={doc}
         initialAnswers={readAnswers(intake.answers)}
