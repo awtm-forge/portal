@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mailMode, mailVars } from "@/lib/mail";
 import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
-import { activatedAdminCount } from "@/modules/auth/admin";
+import { activatedAdminCount, listAdmins } from "@/modules/auth/admin";
 import { requestLogger, safeError } from "@/lib/logger";
 
 /**
@@ -24,7 +24,13 @@ export async function GET() {
     // a secret: the commit is a short hash of a private repo, and "claimed"
     // is what the first-run page already reveals by existing or not. Both
     // would have saved an afternoon of guessing on 9 September.
-    const claimed = (await activatedAdminCount()) > 0;
+    const activated = await activatedAdminCount();
+    const claimed = activated > 0;
+    // Numbers only, never an address: how many admin rows exist and how many
+    // can sign in. Two rows means both seats are taken and a third invite is
+    // refused (10 Sep 2026: this is how we tell a seat problem from a bad
+    // input without reaching into the database).
+    const adminRows = (await listAdmins()).length;
     return NextResponse.json(
       {
         status: "ok",
@@ -33,6 +39,7 @@ export async function GET() {
         mail: mailMode(),
         mailVars: mailVars(),
         links: { client: hostnameOf(clientBase()), admin: hostnameOf(adminBase()) },
+        admins: { rows: adminRows, activated },
       },
       { headers: NO_STORE },
     );
