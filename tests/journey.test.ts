@@ -37,6 +37,27 @@ describe("where things stand", () => {
     expect(s.detail).not.toMatch(/reason|why/i);
   });
 
+  it("tells a brand new client what is happening before the questionnaire is up", () => {
+    // The first screen most clients ever open: the project exists, the
+    // questionnaire does not. It used to fall through to a do-nothing line.
+    for (const phase of [null, Phase.INTAKE]) {
+      const s = standingStatus(phase, { hasIntake: false, intakeSubmitted: false });
+      expect(s.title).toBe("Nothing needed from you yet");
+      expect(s.detail).toMatch(/questionnaire/i);
+    }
+  });
+
+  it("never repeats the card's own label back as its heading", () => {
+    const seen = [
+      standingStatus(null, { hasIntake: false, intakeSubmitted: false }),
+      standingStatus(Phase.INTAKE, { hasIntake: false, intakeSubmitted: false }),
+      standingStatus(Phase.AGREEMENT_DRAFT, { hasIntake: true, intakeSubmitted: true }),
+      standingStatus(Phase.AGREED, { hasIntake: true, intakeSubmitted: true }),
+      standingStatus(Phase.BUILDING, { hasIntake: true, intakeSubmitted: true }),
+    ];
+    for (const s of seen) expect(s.title.toLowerCase()).not.toBe("where things stand");
+  });
+
   it("has a line for every phase that has no task", () => {
     for (const phase of [null, Phase.AGREEMENT_DRAFT, Phase.AGREED, Phase.BUILDING, Phase.DELIVERED, Phase.CLOSED]) {
       const s = standingStatus(phase, { hasIntake: true, intakeSubmitted: true });

@@ -131,7 +131,11 @@ export function standingStatus(
   phase: Phase | null,
   f: { hasIntake: boolean; intakeSubmitted: boolean; endedOn?: string },
 ): { title: string; detail: string } {
-  if (!f.hasIntake && phase === null) {
+  // Before the questionnaire is up, whether or not a project exists yet. This
+  // was gated on phase === null, so a client whose project had been created
+  // but whose questionnaire had not been uploaded, which is the first screen
+  // most clients ever open, got the do-nothing fallback instead.
+  if (!f.hasIntake && (phase === null || phase === Phase.INTAKE)) {
     return { title: "Nothing needed from you yet", detail: "We are writing your questionnaire from what you told us on the call, so it asks about your business and no one else’s. It turns up here when it is ready, and we will message you." };
   }
   if (phase === null || phase === Phase.AGREEMENT_DRAFT) {
