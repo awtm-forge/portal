@@ -223,3 +223,13 @@ This overrides the strict reading of CLAUDE.md 2 item 9 ("never more than one th
 
 Decided while building: the header carries the wordmark only, the client's identity is the body heading; a calm "Where things stand" card explains every state where nothing is on the client, so no screen is silent; "Book a meeting" always resolves to something (a booking link, else a message that asks for a time); the change request is a named action on the questionnaire and the agreement, not a folded summary. Rahul: confirm the wording and the departure from the one-thing rule.
 
+## Q18. A client can log in with their email, not only the link
+
+Ayush on 11 Sep 2026: refreshing landed on the not-found page, "there should be login option for them". The client zone is keyed by the token in the URL, so a lost or mangled link was a dead end whose only exit was messaging Rahul.
+
+- **A session-based entry.** The literal token "me" resolves the client from the session cookie, so /p/me and its sub-pages work without the token in the URL. A login page takes the email the client gave us, sends a one-time code to it, and on success lands them on /p/me. The not-found page leads with it. The emailed link stays the primary way in; this is the way back. Costs a resolveClient swap across the client routes and a login route.
+- **Rotate a fresh link on login.** Rejected: it breaks the other devices holding the old link, which is the exact loop we are fixing.
+- **Leave it.** Rejected: it was the reported problem.
+
+Taking the first. Built 11 September. Decided while building: the send step reads the same whether or not the email is on file, so a guess learns nothing; the notification emails (Q19) link to /p/me, which is why this came first.
+

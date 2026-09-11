@@ -3,13 +3,13 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { CodePurpose } from "@/generated/prisma/enums";
-import { clientByToken, requestCode, verifyCode } from "@/modules/auth/client";
+import { requestCode, resolveClient, verifyCode } from "@/modules/auth/client";
 
 export type CodeState = { step: "start" | "enter"; message?: string; sentTo?: string; locked?: boolean };
 
 export async function sendCodeAction(_prev: CodeState, formData: FormData): Promise<CodeState> {
   const token = String(formData.get("token") ?? "");
-  const client = await clientByToken(token);
+  const client = await resolveClient(token);
   if (!client) redirect("/p/not-found");
   const result = await requestCode({ client }, CodePurpose.LOGIN, await headers());
   if (!result.ok) {
@@ -26,7 +26,7 @@ export async function sendCodeAction(_prev: CodeState, formData: FormData): Prom
 export async function verifyCodeAction(prev: CodeState, formData: FormData): Promise<CodeState> {
   const token = String(formData.get("token") ?? "");
   const code = String(formData.get("code") ?? "");
-  const client = await clientByToken(token);
+  const client = await resolveClient(token);
   if (!client) redirect("/p/not-found");
   const result = await verifyCode({ client }, CodePurpose.LOGIN, code, await headers());
   if (result.ok) redirect(`/p/${token}`);

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { InvoiceList } from "@/components/portal/InvoiceList";
 import { Journey, journeyFor, pendingTask, standingStatus, type PendingTask } from "@/components/portal/Journey";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
-import { clientByToken, currentClientSession, maskEmail } from "@/modules/auth/client";
+import { currentClientSession, maskEmail, resolveClient } from "@/modules/auth/client";
 import { activeProjectFor } from "@/modules/clients";
 import { intakeProgress } from "@/modules/intake/progress";
 import { forProject as day30For, isUnlocked as day30Unlocked } from "@/modules/day30";
@@ -24,11 +24,15 @@ import { CodeScreen } from "./CodeScreen";
  */
 export default async function ProjectPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const client = await clientByToken(token);
-  if (!client) notFound();
+  const client = await resolveClient(token);
+  if (!client) {
+    if (token === "me") redirect("/p/login");
+    notFound();
+  }
 
   const session = await currentClientSession(client.id);
   if (!session) {
+    if (token === "me") redirect("/p/login");
     return (
       <ClientShell businessName={client.businessName}>
         <CodeScreen token={token} personName={client.contactName} maskedEmail={maskEmail(client.contactEmail)} />

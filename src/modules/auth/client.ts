@@ -41,21 +41,57 @@ function cookieOptions(maxAgeSeconds: number) {
 }
 
 /** PORTAL-SPEC 5.9: look up by hash, then compare the hash in constant time. */
+const CLIENT_INCLUDE = {
+  intake: { select: { id: true, submittedAt: true, lastSavedAt: true, document: true, answers: true, sectionsDone: true } },
+} as const;
+
 export async function clientByToken(token: string) {
   if (!token || token.length > 64 || !/^[A-Za-z0-9_-]+$/.test(token)) return null;
   const tokenHash = hashToken(token);
-  const client = await db.client.findUnique({
-    where: { accessTokenHash: tokenHash },
-    include: {
-      intake: { select: { id: true, submittedAt: true, lastSavedAt: true, document: true, answers: true, sectionsDone: true } },
-    },
-  });
+  const client = await db.client.findUnique({ where: { accessTokenHash: tokenHash }, include: CLIENT_INCLUDE });
   if (!client) return null;
   if (!safeEqualHex(client.accessTokenHash, tokenHash)) return null;
   return client;
 }
 
 export type ClientByToken = NonNullable<Awaited<ReturnType<typeof clientByToken>>>;
+
+/**
+ * The client this browser is signed in as, from the session cookie alone, so
+ * a page can be reached without the token in the URL (Q18). The cookie name
+ * carries the client id; the value is validated against the database, so a
+ * forged cookie resolves to nothing. When more than one client session is
+ * present, the most recently seen wins.
+ */
+export async function clientFromSession(): Promise<ClientByToken | null> {
+  const jar = await cookies();
+  let best: { clientId: string; lastSeenAt: Date } | null = null;
+  for (const c of jar.getAll()) {
+    if (!c.name.startsWith("awtm_c_")) continue;
+    const session = await db.clientSession.findUnique({ where: { tokenHash: hashToken(c.value) } });
+    if (!session || session.expiresAt < new Date() || sessionCookieName(session.clientId) !== c.name) continue;
+    if (!best || session.lastSeenAt > best.lastSeenAt) best = { clientId: session.clientId, lastSeenAt: session.lastSeenAt };
+  }
+  if (!best) return null;
+  return db.client.findUnique({ where: { id: best.clientId }, include: CLIENT_INCLUDE });
+}
+
+/**
+ * A client route's token is usually the bearer link, but the literal "me"
+ * means "resolve from the session" (Q18), which is what a client who logged
+ * in with their email lands on. No real token is two characters, so there is
+ * no collision.
+ */
+export async function resolveClient(token: string): Promise<ClientByToken | null> {
+  return token === "me" ? clientFromSession() : clientByToken(token);
+}
+
+/** A client whose contact email matches, for logging in without the link (Q18). */
+export async function clientByEmail(email: string): Promise<ClientByToken | null> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized.includes("@") || normalized.length > 200) return null;
+  return db.client.findFirst({ where: { contactEmail: normalized }, orderBy: { createdAt: "desc" }, include: CLIENT_INCLUDE });
+}
 
 /** The session this device holds for this client, or null. Touches lastSeenAt. */
 export async function currentClientSession(clientId: string) {

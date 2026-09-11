@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { clientByToken, currentClientSession, type ClientByToken } from "@/modules/auth/client";
+import { currentClientSession, resolveClient, type ClientByToken } from "@/modules/auth/client";
 import { activeProjectFor } from "@/modules/clients";
 
 /**
@@ -11,9 +11,12 @@ import { activeProjectFor } from "@/modules/clients";
 export type Scope = { client: ClientByToken; project: NonNullable<Awaited<ReturnType<typeof activeProjectFor>>> };
 
 export async function clientScope(token: string): Promise<ClientByToken> {
-  const client = await clientByToken(token);
-  if (!client) notFound();
-  if (!(await currentClientSession(client.id))) redirect(`/p/${token}`);
+  const client = await resolveClient(token);
+  if (!client) {
+    if (token === "me") redirect("/p/login");
+    notFound();
+  }
+  if (!(await currentClientSession(client.id))) redirect(token === "me" ? "/p/login" : `/p/${token}`);
   return client;
 }
 
