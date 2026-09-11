@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { requireAdmin } from "@/modules/auth/admin";
 import { deleteReferral } from "@/modules/day30";
@@ -39,7 +39,7 @@ export async function markReadyAction(_prev: MarkReadyState, formData: FormData)
     };
     return { message: why[result.reason] ?? "It did not go through.", values };
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }
 
 /**
@@ -51,8 +51,8 @@ export async function forgetReferralAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const id = String(formData.get("referralId") ?? "");
   const referral = await db.referral.findUnique({ where: { id } });
-  if (!referral) redirect("/admin");
+  if (!referral) refreshTo("/admin");
   await deleteReferral(id);
   await emit({ type: "referral.forgotten", projectId: referral.projectId, actor: admin.email, payload: {} });
-  redirect(`/admin/projects/${referral.projectId}`);
+  refreshTo(`/admin/projects/${referral.projectId}`);
 }

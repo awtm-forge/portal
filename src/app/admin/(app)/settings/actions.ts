@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/modules/auth/admin";
@@ -77,5 +77,5 @@ export async function saveSettingsAction(_prev: SettingsState, formData: FormDat
       defaultAdvancePct: d.defaultAdvancePct,
     },
   });
-  redirect("/admin/settings?saved=1");
+  refreshTo("/admin/settings?saved=1");
 }

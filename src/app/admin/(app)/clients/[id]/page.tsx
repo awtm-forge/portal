@@ -111,6 +111,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 </>
               )}
 
+              {state.kind === "locked" && (
+                <p className="help">Locked. To change an answer, {firstName} asks from their own page, and it turns up here for you to open or decline.</p>
+              )}
               {state.kind === "locked" && state.declined && (
                 <p className="help">Declined on {dayMonth(state.declined.decidedAt ?? state.declined.askedAt)}, to &ldquo;{state.declined.note}&rdquo;: {state.declined.reply}</p>
               )}
@@ -119,12 +122,6 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake`}>What they told us{versions.length > 1 ? `, ${versions.length} versions` : ""}</Link>
                 <a className="a-btn ghost" href={`/admin/clients/${client.id}/intake/answers.json`}>Download JSON</a>
                 <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/upload`}>Upload new JSON</Link>
-                {state.kind === "locked" && (
-                  <form action={openChangesAction}>
-                    <input type="hidden" name="clientId" value={client.id} />
-                    <button className="a-btn ghost" type="submit">Open it for changes</button>
-                  </form>
-                )}
               </div>
             </div>
           )}

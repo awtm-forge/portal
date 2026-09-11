@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { requireAdmin } from "@/modules/auth/admin";
 import { markPaid, raiseOther, type MarkPaidReason } from "@/modules/invoices";
@@ -36,7 +36,7 @@ export async function markPaidAction(_prev: InvoiceState, formData: FormData): P
     method: parsed.data.method,
   });
   if (!result.ok) return { message: WHY_NOT_PAID[result.reason], values };
-  redirect(`/admin/projects/${result.projectId}`);
+  refreshTo(`/admin/projects/${result.projectId}`);
 }
 
 /**
@@ -62,5 +62,5 @@ export async function raiseOtherAction(_prev: InvoiceState, formData: FormData):
     }[result.reason];
     return { message: why, values };
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }

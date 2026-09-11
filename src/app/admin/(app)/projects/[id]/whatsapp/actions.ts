@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { SignoffMethod } from "@/generated/prisma/enums";
 import { fromIsoDate } from "@/lib/dates";
@@ -40,7 +40,7 @@ export async function recordWhatsappAgreementAction(_prev: RecordState, formData
   }
 
   const project = await byId(projectId);
-  if (!project) redirect("/admin");
+  if (!project) refreshTo("/admin");
   if (at < project.createdAt) {
     return { message: "That is before the project existed. Check the date.", values };
   }
@@ -60,7 +60,7 @@ export async function recordWhatsappAgreementAction(_prev: RecordState, formData
     };
     return { message: why[result.reason] ?? "It did not go through.", values };
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }
 
 /**
@@ -79,7 +79,7 @@ export async function recordWhatsappDeliveryAction(_prev: RecordState, formData:
   if (at.getTime() > Date.now() + 24 * 60 * 60 * 1000) return { message: "That date is in the future.", values };
 
   const project = await byId(projectId);
-  if (!project) redirect("/admin");
+  if (!project) refreshTo("/admin");
   if (at < project.createdAt) return { message: "That is before the project existed. Check the date.", values };
 
   const result = await signOffDelivery({
@@ -98,5 +98,5 @@ export async function recordWhatsappDeliveryAction(_prev: RecordState, formData:
     };
     return { message: why[result.reason] ?? "It did not go through.", values };
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }

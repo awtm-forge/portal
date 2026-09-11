@@ -1,7 +1,7 @@
 # ADR 0016: the questionnaire locks when sent, and a change is a new version
 
 ## Status
-Accepted, 10 Sep 2026
+Accepted, 10 Sep 2026. Amended 11 Sep 2026: the team no longer opens the questionnaire for changes unasked from the admin UI (Ayush's call). A change is opened only in answer to a client request; the client can ask from their own page (item 8). The `openForChanges` unasked path stays in the module but has no button.
 
 ## Context
 INTAKE-SPEC section 11 ends: after submitting, the page shows the answers

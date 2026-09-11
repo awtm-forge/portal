@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
@@ -11,7 +11,7 @@ import "@/modules/notifications/register";
 
 export async function logoutAction(): Promise<void> {
   await adminLogout();
-  redirect("/admin/login");
+  refreshTo("/admin/login");
 }
 
 /**
@@ -78,7 +78,7 @@ export async function createClientAction(_prev: ClientFormState, formData: FormD
     contactEmail: d.contactEmail,
   });
   await setFlashLink(id, token);
-  redirect(`/admin/clients/${id}/link`);
+  refreshTo(`/admin/clients/${id}/link`);
 }
 
 export async function updateClientAction(formData: FormData): Promise<void> {
@@ -98,7 +98,7 @@ export async function updateClientAction(formData: FormData): Promise<void> {
       },
     });
   }
-  redirect(`/admin/clients/${clientId}`);
+  refreshTo(`/admin/clients/${clientId}`);
 }
 
 /**
@@ -111,7 +111,7 @@ export async function resendLinkAction(formData: FormData): Promise<void> {
   const clientId = String(formData.get("clientId") ?? "");
   const token = (await takeFlashLink(clientId)) ?? (await freshToken(clientId));
   await deliverLink(clientId, token);
-  redirect(`/admin/clients/${clientId}/link`);
+  refreshTo(`/admin/clients/${clientId}/link`);
 }
 
 async function freshToken(clientId: string): Promise<string> {
@@ -123,10 +123,10 @@ async function freshToken(clientId: string): Promise<string> {
 export async function rotateLinkAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const clientId = String(formData.get("clientId") ?? "");
-  if (!(await db.client.findUnique({ where: { id: clientId } }))) redirect("/admin/clients");
+  if (!(await db.client.findUnique({ where: { id: clientId } }))) refreshTo("/admin/clients");
   const token = await freshToken(clientId);
   await deliverLink(clientId, token);
-  redirect(`/admin/clients/${clientId}/link`);
+  refreshTo(`/admin/clients/${clientId}/link`);
 }
 
 /* -------------------------------------------------------------------------
@@ -170,7 +170,7 @@ export async function createProjectAction(_prev: NewProjectState, formData: Form
     const token = (await takeFlashLink(client.id)) ?? (await freshToken(client.id));
     await deliverLink(client.id, token);
   }
-  redirect(`/admin/projects/${result.id}`);
+  refreshTo(`/admin/projects/${result.id}`);
 }
 
 /**
@@ -184,7 +184,7 @@ export async function signoffDecisionAction(formData: FormData): Promise<void> {
   const projectId = String(formData.get("projectId") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const client = await db.client.findUnique({ where: { id: clientId } });
-  if (!client) redirect("/admin/clients");
+  if (!client) refreshTo("/admin/clients");
 
   if (decision === "use" && client.proposedSignoffEmail && projectId) {
     await db.project.update({
@@ -196,7 +196,7 @@ export async function signoffDecisionAction(formData: FormData): Promise<void> {
     where: { id: clientId },
     data: { proposedSignoffEmail: null, proposedSignoffName: null, proposedAt: null },
   });
-  redirect(projectId ? `/admin/projects/${projectId}` : `/admin/clients/${clientId}`);
+  refreshTo(projectId ? `/admin/projects/${projectId}` : `/admin/clients/${clientId}`);
 }
 
 const signoffSchema = z.object({
@@ -214,5 +214,5 @@ export async function updateSignoffAction(formData: FormData): Promise<void> {
       data: { signoffPersonName: parsed.data.signoffPersonName, signoffPersonEmail: parsed.data.signoffPersonEmail.toLowerCase() },
     });
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }

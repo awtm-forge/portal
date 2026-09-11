@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { requireAdmin } from "@/modules/auth/admin";
 import { deliverLink, sendQuestionnaire, withIntake } from "@/modules/clients";
 import { readAnswers } from "@/modules/intake/answers";
@@ -19,7 +19,7 @@ export async function importAction(_prev: ImportState, formData: FormData): Prom
   const admin = await requireAdmin();
   const clientId = String(formData.get("clientId") ?? "");
   const client = await withIntake(clientId);
-  if (!client) redirect("/admin/clients");
+  if (!client) refreshTo("/admin/clients");
 
   let text = String(formData.get("json") ?? "").trim();
   const file = formData.get("file");
@@ -47,5 +47,5 @@ export async function importAction(_prev: ImportState, formData: FormData): Prom
     const token = await takeFlashLink(client.id);
     if (token) await deliverLink(client.id, token);
   }
-  redirect(`/admin/clients/${client.id}`);
+  refreshTo(`/admin/clients/${client.id}`);
 }

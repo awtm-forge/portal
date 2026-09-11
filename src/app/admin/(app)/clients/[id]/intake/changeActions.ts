@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { IntakeParty } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/modules/auth/admin";
 import { withIntake } from "@/modules/clients";
@@ -19,7 +19,7 @@ export async function openChangesAction(formData: FormData): Promise<void> {
   const requestId = String(formData.get("requestId") ?? "") || null;
   const note = String(formData.get("note") ?? "");
   await openForChanges(clientId, admin.id, requestId, note);
-  redirect(`/admin/clients/${clientId}`);
+  refreshTo(`/admin/clients/${clientId}`);
 }
 
 export async function declineChangeAction(formData: FormData): Promise<void> {
@@ -28,7 +28,7 @@ export async function declineChangeAction(formData: FormData): Promise<void> {
   const requestId = String(formData.get("requestId") ?? "");
   const reply = String(formData.get("reply") ?? "");
   await declineChange(clientId, admin.id, requestId, reply);
-  redirect(`/admin/clients/${clientId}`);
+  refreshTo(`/admin/clients/${clientId}`);
 }
 
 export async function lockAgainAction(formData: FormData): Promise<void> {
@@ -36,5 +36,5 @@ export async function lockAgainAction(formData: FormData): Promise<void> {
   const clientId = String(formData.get("clientId") ?? "");
   const client = await withIntake(clientId);
   if (client?.intake) await submitIntake(client.intake.id, IntakeParty.TEAM);
-  redirect(`/admin/clients/${clientId}`);
+  refreshTo(`/admin/clients/${clientId}`);
 }

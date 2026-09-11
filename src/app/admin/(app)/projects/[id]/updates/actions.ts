@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { fromIsoDate } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
@@ -53,7 +53,7 @@ export async function saveUpdateAction(_prev: UpdateState, formData: FormData): 
     if (!result.ok) {
       return { message: result.reason === "already_sent" ? "That week was already sent." : "Nothing to send.", values };
     }
-    redirect(`/admin/projects/${projectId}`);
+    refreshTo(`/admin/projects/${projectId}`);
   }
   return { ok: "Saved as a draft. The client cannot see it yet.", values };
 }
@@ -62,5 +62,5 @@ export async function markKickoffAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await markKickoffDone(projectId);
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }

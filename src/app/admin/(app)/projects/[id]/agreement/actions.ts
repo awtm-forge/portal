@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { z } from "zod";
 import { AfterDelivery } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
@@ -47,7 +47,7 @@ export async function saveAgreementAction(_prev: EditorState, formData: FormData
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   const project = await db.project.findUnique({ where: { id: projectId } });
-  if (!project) redirect("/admin");
+  if (!project) refreshTo("/admin");
 
   const totalPaise = parseRupeesToPaise(String(formData.get("total") ?? ""));
   if (totalPaise === null) return { message: "The price needs to be a number of rupees, for example 4,80,000." };
@@ -118,7 +118,7 @@ export async function saveAgreementAction(_prev: EditorState, formData: FormData
       actor: "team",
       payload: { version: result.version, projectName: project.name },
     });
-    redirect(`/admin/projects/${projectId}`);
+    refreshTo(`/admin/projects/${projectId}`);
   }
 
   return { ok: "Saved." };
@@ -128,5 +128,5 @@ export async function overrideIntakeAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await overrideIntakeGate(projectId, admin.email);
-  redirect(`/admin/projects/${projectId}/agreement`);
+  refreshTo(`/admin/projects/${projectId}/agreement`);
 }

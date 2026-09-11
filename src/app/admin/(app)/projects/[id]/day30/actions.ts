@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { refreshTo } from "@/lib/admin-nav";
 import { SignoffMethod, TestimonialMoment } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/modules/auth/admin";
 import { approveTestimonial, setFrictionNotes } from "@/modules/day30";
@@ -12,7 +12,7 @@ export async function saveFrictionNotesAction(formData: FormData): Promise<void>
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await setFrictionNotes(projectId, String(formData.get("frictionNotes") ?? ""));
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }
 
 /**
@@ -27,7 +27,7 @@ export async function approveTestimonialAction(formData: FormData): Promise<void
   if (moment === TestimonialMoment.DELIVERY || moment === TestimonialMoment.DAY30) {
     await approveTestimonial(projectId, moment, SignoffMethod.WHATSAPP);
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }
 
 /** PORTAL-SPEC 5.2, the last move: delivered to closed, by hand. */
@@ -35,7 +35,7 @@ export async function closeProjectAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await closeProject(projectId);
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }
 
 export type CancelState = { message?: string };
@@ -58,5 +58,5 @@ export async function cancelProjectAction(_prev: CancelState, formData: FormData
       }[result.reason],
     };
   }
-  redirect(`/admin/projects/${projectId}`);
+  refreshTo(`/admin/projects/${projectId}`);
 }
