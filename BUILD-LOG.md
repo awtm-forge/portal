@@ -422,6 +422,18 @@ Deferred: none. Two notes. The old `/admin/projects/new` route is gone, since a 
 
 ---
 
+## UX overhaul, both portals, on the branch `ux-overhaul`: done, awaiting the merge decision
+
+11 Sep 2026, AI-assisted. Not a PORTAL-SPEC step: Ayush's brief of 11 Sep to make the whole product feel intuitive, run end to end on its own branch and never deployed on its own. The record is `docs/ux-overhaul/00` to `09`, with the before and after frames under `docs/ux-overhaul/audit/`.
+
+Built: a token layer for spacing, radius, motion and layers beside the colours; a 12 px reading floor and `--faint` at 4.8:1; eight primitives in `src/components/ui`; the client journey re-paced (one-line wordmark, steps, folds, a sticky bar that reaches the one action, the locked questionnaire without dead placeholders, honest cancelled and delivered states, grouped updates, the month-on notice, print buttons); the admin journey re-paced (phone bar, tables that become cards, a waiting-on line and column, the project page as folds by phase, confirms for the irreversible moves, a toast after every action). ADR 0018 (flash cookie) and ADR 0019 (lazy day-30 notice).
+
+Verified: 178 unit and 169 end-to-end tests green on the final build, on desktop Chrome and Pixel 7; types and lint clean; Lighthouse accessibility 100 on every screen, client LCP down by a third on the mobile profile; criteria 8, 9, 10, 13, 24 re-checked by the suite (`docs/ux-overhaul/08-summary.md`). Two product defects fixed (D-01, D-02) and four already-red tests on `main` repaired (D-04).
+
+Deferred: the client LCP target of 2.5 s on the throttled profile (2.9 to 3.3 s; the rest is fonts and payload, each a taste call); removing the URL-only `intake/fill` route; a light theme, by standing decision.
+
+Needs Rahul: none in QUESTIONS.md. The merge itself: the branch is six commits ahead of `main`, clean, and auto-deploys on push.
+
 ## Where the front half differs from CLAUDE.md §11, and where each is folded
 
 The front half was built on 5 September under a brief that predated the architecture document. Nothing below breaks a §2 non-negotiable, so none of it is reworked now. Each row names the step that takes it.
