@@ -81,7 +81,10 @@ textarea.fld { min-height: 88px; resize: vertical; }
 .a-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 20px; flex-wrap: wrap; }
 .a-head > .stack { min-width: 0; }
 .a-head-act { margin-left: auto; flex: none; }
-.a-head-act .link-mono { display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px; }
+/* An outlined button, not a text link: quiet next to the phase's filled
+   action, but unmistakably a control. Ayush could not find the text version
+   three times running (11 and 12 Sep). */
+.a-head-act .a-btn { min-height: 44px; display: inline-flex; align-items: center; }
 .a-title { font-family: var(--font-display-stack); margin: 0; font-size: 25px; font-weight: 600; letter-spacing: -0.02em; }
 .a-sub { font-family: var(--font-mono-stack); font-size: 12px; color: var(--muted); margin: 0; }
 .a-card { border: 1px solid var(--rule); background: var(--surface); border-radius: var(--r-1); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }

@@ -104,7 +104,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             {project.phase === Phase.DELIVERED ? (
               <Confirm
                 trigger="Close this project"
-                triggerClass="link-mono"
+                triggerClass="a-btn ghost"
                 title="Close this project?"
                 line="The record stays readable at the same link, for you and for the client. Nothing else changes, and nothing is invoiced."
                 confirmLabel="Close it"
@@ -115,7 +115,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             ) : (
               <Confirm
                 trigger="Cancel this project"
-                triggerClass="link-mono"
+                triggerClass="a-btn ghost"
                 title="Cancel this project?"
                 line="The client page will say it was closed, with the date. No invoice is created and no issued invoice changes. There is no way back from this."
                 confirmLabel="Cancel the project"
