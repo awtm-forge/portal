@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 
+// No optical-size axis: only the unrouted marketing stylesheet set it, and the
+// axis was 30 KB on the critical path of every client page.
 const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
-  axes: ["opsz"],
   display: "swap",
 });
 

@@ -136,7 +136,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             title="The agreement"
             ember={project.phase === Phase.AGREEMENT_DRAFT}
             open={!ended && !agreement?.isAgreed}
-            fact={agreement ? (agreement.isAgreed ? `agreed by ${agreement.agreedByName} on ${agreement.agreedAt}` : agreement.sentAt ? `sent, version ${agreement.version}` : "draft") : "not written yet"}
+            fact={agreement ? (agreement.isAgreed ? `agreed ${agreement.agreedAt}` : agreement.sentAt ? `sent, version ${agreement.version}` : "draft") : "not written yet"}
           >
             {!agreement && <p className="c-sub" style={{ fontSize: 14 }}>Not written yet. It is the one page the client agrees to, once.</p>}
             {agreement && (

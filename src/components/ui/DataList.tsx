@@ -22,7 +22,7 @@ export function DataList({ columns, rows, caption }: { columns: Column[]; rows: 
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.key} className={r.href ? "row link" : "row"}>
+          <tr key={r.key} className={r.href ? "dl-row dl-link" : "dl-row"}>
             {columns.map((c, i) => (
               <td key={c.key} className={`${i === 0 ? "t" : ""}${c.num ? " num" : ""}`.trim() || undefined} data-label={c.label}>
                 {i === 0 && r.href ? <Link className="cover" href={r.href}>{r.cells[c.key]}</Link> : r.cells[c.key]}
