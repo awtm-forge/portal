@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Fold } from "@/components/ui/Fold";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { withProjects } from "@/modules/clients";
@@ -16,6 +17,8 @@ import { declineChangeAction, lockAgainAction, openChangesAction } from "./intak
  * A client, before and after there is a project (ADR 0015, Q12). The loud
  * action follows the questionnaire: send it, then wait for it, then start the
  * project once it is in. Nothing on this page starts a project by itself.
+ * The explanations of how the link and the codes work sit in one closed fold
+ * (F-26); the details form is a fold whose summary shows the contact (F-27).
  */
 export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -78,17 +81,20 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               {state.kind === "asked" && (
                 <>
                   <p className="c-sub" style={{ fontSize: 14, color: "var(--ink)" }}>{firstName} asked on {dayMonth(state.request.askedAt)}: &ldquo;{state.request.note}&rdquo;</p>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <div className="stack" style={{ gap: 10 }}>
                     <form action={openChangesAction}>
                       <input type="hidden" name="clientId" value={client.id} />
                       <input type="hidden" name="requestId" value={state.request.id} />
                       <button className="a-btn" type="submit">Open it for them</button>
                     </form>
-                    <form action={declineChangeAction} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <form action={declineChangeAction} className="stack" style={{ gap: 8 }}>
                       <input type="hidden" name="clientId" value={client.id} />
                       <input type="hidden" name="requestId" value={state.request.id} />
-                      <input className="a-fld" name="reply" placeholder="Or the line they read if not" required style={{ minWidth: 260 }} />
-                      <button className="a-btn ghost" type="submit">Decline with that line</button>
+                      <label className="stack" style={{ gap: 6 }}>
+                        <span className="lbl">Or decline, with the line they will read</span>
+                        <input className="a-fld" name="reply" placeholder="Why not, in a line. They read this." required />
+                      </label>
+                      <div><button className="a-btn ghost" type="submit">Decline with that line</button></div>
                     </form>
                   </div>
                   <p className="help">Opening it lets them change answers until they press Send the changes; then it locks again and what changed is marked. Declining keeps it locked and shows them your line. They can ask again.</p>
@@ -149,9 +155,8 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
-          <details className="a-card" style={{ display: "block" }}>
-            <summary className="k" style={{ cursor: "pointer", listStyle: "none" }}>Edit client details</summary>
-            <form action={updateClientAction} className="stack" style={{ gap: 14, marginTop: 14 }}>
+          <Fold card title="Client details" fact={`${client.contactName} · ${client.contactPhone}`}>
+            <form action={updateClientAction} className="stack" style={{ gap: 14 }}>
               <input type="hidden" name="clientId" value={client.id} />
               <div className="grid2">
                 <label className="stack" style={{ gap: 6 }}><span className="lbl">Business name</span><input className="a-fld" name="businessName" defaultValue={client.businessName} required /></label>
@@ -162,20 +167,20 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               </div>
               <div><button className="a-btn ghost" type="submit">Save changes</button></div>
             </form>
-          </details>
+          </Fold>
         </div>
 
         <div className="aside">
           <div className={`a-card${client.linkEmailError ? " ember" : ""}`}>
             <span className={`k${client.linkEmailError ? " ember" : ""}`}>Their link</span>
             <p className="help" style={{ lineHeight: 1.6 }}>
-              One link, made when they were added, and it does not expire. Every project appears on it.
-              {client.linkEmailedAt ? ` Emailed ${dayMonth(client.linkEmailedAt)}.` : client.linkEmailError ? " The email did not go out." : " Not emailed yet; it goes with the questionnaire."}
+              {client.linkEmailedAt ? `Emailed ${dayMonth(client.linkEmailedAt)}.` : client.linkEmailError ? "The email did not go out." : "Not emailed yet; it goes with the questionnaire."}
+              {" "}No password exists: the link is the way in, and a code confirms each device.
             </p>
             <div><Link className="a-btn ghost" href={`/admin/clients/${client.id}/link`}>The link, and how to send it</Link></div>
           </div>
-          <div className={`a-card${client.proposedSignoffEmail ? " ember" : ""}`}>
-            <span className="k">Who says yes</span>
+
+          <Fold card title="Who says yes" ember={Boolean(client.proposedSignoffEmail)} open={Boolean(client.proposedSignoffEmail)} fact={client.proposedSignoffName ?? client.contactName}>
             {client.proposedSignoffEmail ? (
               <>
                 <p style={{ margin: 0, fontSize: 14 }}>{client.proposedSignoffName ?? "Unnamed"}</p>
@@ -185,9 +190,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             ) : (
               <p className="c-sub" style={{ fontSize: 14 }}>Asked on the questionnaire and set per project, so a brand job and a store rebuild can have different approvers. Until then, {client.contactName}.</p>
             )}
-          </div>
-          <div className="a-card">
-            <span className="k">How they get in</span>
+          </Fold>
+
+          <Fold card title="How they get in">
             <p className="help" style={{ lineHeight: 1.9 }}>
               One link per client, which does not expire.<br />
               A six digit code to {client.contactEmail} the first time on each device.<br />
@@ -195,9 +200,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               A fresh code to the sign-off person for each sign-off.
             </p>
             <p className="help" style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 12, lineHeight: 1.65 }}>
-              No password exists. If they ask you for one, the answer is that there is not one and there never was.
+              If they ask you for a password, the answer is that there is not one and there never was.
             </p>
-          </div>
+          </Fold>
         </div>
       </div>
     </AdminShell>

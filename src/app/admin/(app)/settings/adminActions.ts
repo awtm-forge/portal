@@ -1,7 +1,7 @@
 "use server";
 
 import { adminUrl } from "@/lib/request-origin";
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshWith } from "@/lib/admin-nav";
 import { inviteAdmin, removeUnusedAdmin, requireAdmin } from "@/modules/auth/admin";
 
 export type InviteState = { message?: string; link?: string; email?: string; values?: { email: string; name: string } };
@@ -28,6 +28,6 @@ export async function inviteAdminAction(_prev: InviteState, formData: FormData):
 export async function removeAdminAction(formData: FormData): Promise<void> {
   await requireAdmin();
   await removeUnusedAdmin(String(formData.get("email") ?? ""));
-  refreshTo("/admin/settings");
+  await refreshWith("/admin/settings", "Seat freed.");
 }
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { SignoffMethod } from "@/generated/prisma/enums";
 import { fromIsoDate } from "@/lib/dates";
@@ -60,7 +60,7 @@ export async function recordWhatsappAgreementAction(_prev: RecordState, formData
     };
     return { message: why[result.reason] ?? "It did not go through.", values };
   }
-  refreshTo(`/admin/projects/${projectId}`);
+  return refreshWith(`/admin/projects/${projectId}`, "Recorded as agreed on WhatsApp. The advance invoice is raised.");
 }
 
 /**
@@ -98,5 +98,5 @@ export async function recordWhatsappDeliveryAction(_prev: RecordState, formData:
     };
     return { message: why[result.reason] ?? "It did not go through.", values };
   }
-  refreshTo(`/admin/projects/${projectId}`);
+  return refreshWith(`/admin/projects/${projectId}`, "Delivery recorded from WhatsApp. The balance invoice is raised.");
 }

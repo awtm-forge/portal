@@ -133,11 +133,16 @@ export async function cancelProject(projectId: string, reason: string): Promise<
  * ---------------------------------------------------------------------- */
 
 /** The projects list, newest first, with what the list actually shows. */
+/** The dashboard's rows, with the few dates `waitingOn` reads to say who each one is waiting on. */
 export function listForAdmin() {
   return db.project.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      client: { include: { intake: { select: { submittedAt: true, lastSavedAt: true, document: true, answers: true, sectionsDone: true } } } },
+      client: { include: { intake: { select: { submittedAt: true, lastSavedAt: true, documentUploadedAt: true, document: true, answers: true, sectionsDone: true } } } },
+      agreement: { select: { sentAt: true, agreedAt: true } },
+      updates: { where: { sentAt: { not: null } }, orderBy: { sentAt: "desc" }, take: 1, select: { sentAt: true } },
+      reviewRounds: { where: { outcome: "OPEN" }, take: 1, select: { sentAt: true } },
+      day30: { select: { unlocksAt: true, metricAfterSubmittedAt: true } },
     },
   });
 }

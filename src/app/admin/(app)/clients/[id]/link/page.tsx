@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Confirm } from "@/components/ui/Confirm";
+import { Fold } from "@/components/ui/Fold";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { byId } from "@/modules/clients";
@@ -51,12 +53,20 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
             <div className="a-card">
               <span className="k">The link is not in hand</span>
               <p className="c-sub" style={{ fontSize: 14 }}>
-                It was shown when the project was made and only its hash was kept, so it cannot be shown again. Rotate it to make a new one, which stops the old link working at once.
+                It was shown when the client was added and only its hash was kept, so it cannot be shown again. Rotate it to make a new one, which stops the old link working at once.
               </p>
-              <form action={rotateLinkAction}>
-                <input type="hidden" name="clientId" value={client.id} />
-                <button className="a-btn" type="submit">Make a new link</button>
-              </form>
+              <div>
+                <Confirm
+                  trigger="Make a new link"
+                  triggerClass="a-btn"
+                  title="Make a new link?"
+                  line={`The link ${firstName} has stops working the moment this runs. The new one is shown once, here, and emailed to ${client.contactEmail}. Their signed-in phone stays signed in.`}
+                  confirmLabel="Make the new link"
+                  action={rotateLinkAction}
+                >
+                  <input type="hidden" name="clientId" value={client.id} />
+                </Confirm>
+              </div>
             </div>
           )}
 
@@ -96,18 +106,15 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="aside">
-          <div className="a-card ember">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-              <span className="k ember">There is nothing else to send</span>
-            </div>
-            <p className="c-sub" style={{ fontSize: 14 }}>No password, no username, no account to set up. The link is the way in and the code confirms the device.</p>
-            <p className="help" style={{ lineHeight: 1.65 }}>
-              If a client asks you for their password, the honest answer is that there is not one, and that is deliberate: a password we never hold is a password that cannot leak.
-            </p>
-          </div>
           <div className="a-card">
-            <span className="k">What they will see</span>
+            <span className="k">Next</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Link className="a-btn" href={`/admin/clients/${client.id}/intake/upload`}>Upload the questionnaire</Link>
+              <Link className="a-btn ghost" href={`/admin/clients/${client.id}`}>Back to the client</Link>
+            </div>
+          </div>
+          <Fold card title="What they will see">
+            <p className="c-sub" style={{ fontSize: 14 }}>No password, no username, no account to set up. The link is the way in and the code confirms the device.</p>
             <p className="help" style={{ lineHeight: 1.9 }}>
               They open the link on a phone.<br />
               It offers to email them a code.<br />
@@ -116,14 +123,10 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
               That phone stays signed in for thirty days.<br />
               Then: nothing to do yet, until the questionnaire is up.
             </p>
-          </div>
-          <div className="a-card">
-            <span className="k">Next</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <Link className="a-btn" href={`/admin/clients/${client.id}/intake/upload`}>Upload the questionnaire</Link>
-              <Link className="a-btn ghost" href={`/admin/clients/${client.id}`}>Go to the project</Link>
-            </div>
-          </div>
+            <p className="help" style={{ lineHeight: 1.65 }}>
+              If a client asks you for their password, the honest answer is that there is not one, and that is deliberate: a password we never hold is a password that cannot leak.
+            </p>
+          </Fold>
         </div>
       </div>
     </AdminShell>

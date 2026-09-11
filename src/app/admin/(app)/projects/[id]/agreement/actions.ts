@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { AfterDelivery } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
@@ -118,7 +118,7 @@ export async function saveAgreementAction(_prev: EditorState, formData: FormData
       actor: "team",
       payload: { version: result.version, projectName: project.name },
     });
-    refreshTo(`/admin/projects/${projectId}`);
+    return refreshWith(`/admin/projects/${projectId}`, `Agreement sent, version ${result.version}. They have been told.`);
   }
 
   return { ok: "Saved." };
@@ -128,5 +128,5 @@ export async function overrideIntakeAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await overrideIntakeGate(projectId, admin.email);
-  refreshTo(`/admin/projects/${projectId}/agreement`);
+  await refreshWith(`/admin/projects/${projectId}/agreement`, "Questionnaire gate overridden. The agreement can go.");
 }

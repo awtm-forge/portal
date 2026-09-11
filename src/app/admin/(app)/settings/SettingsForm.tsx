@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import type { CompanyView } from "@/modules/settings";
 import { saveSettingsAction, type SettingsState } from "./actions";
 
-export function SettingsForm({ company, saved }: { company: CompanyView; saved: boolean }) {
+export function SettingsForm({ company }: { company: CompanyView }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettingsAction, {});
   return (
     <form action={action} className="a-cols">
@@ -50,7 +50,6 @@ export function SettingsForm({ company, saved }: { company: CompanyView; saved: 
         </div>
 
         {state.message && <p className="help err">{state.message}</p>}
-        {saved && !state.message && <p className="help">Saved.</p>}
         <div><button className="a-btn" type="submit" disabled={pending}>{pending ? "Saving" : "Save settings"}</button></div>
       </div>
 

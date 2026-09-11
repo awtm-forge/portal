@@ -37,9 +37,10 @@ never went out, starting the first project sends it.
 screen, and never again: only its hash is stored. The screen holds it for
 fifteen minutes and then it is gone. Losing it is not a problem, rotating is.
 
-**Rotate the link.** Project page, Rotate. The old link stops working on the
-next request. Use it when a link went to the wrong person, or when nobody can
-find theirs. It emails the new one.
+**Rotate the link.** Client, The link and how to send it, Make a new link. It
+asks first. The old link stops working on the next request. Use it when a
+link went to the wrong person, or when nobody can find theirs. It emails the
+new one and shows it once.
 
 **Replace the questionnaire.** Client, Replace the document. Every failing
 rule is reported at once and nothing is saved, so a bad file changes nothing.
@@ -106,19 +107,24 @@ outside admin.
 **Friction notes.** Project page, day 30 card. Marked ADMIN ONLY in the schema
 and there is no client view with a field for them.
 
-**Forget a referral.** Project page, on a referral. The only delete in the
-system. Removes the row and writes an event saying it happened, so the fact
-survives without the details.
+**Forget a referral.** Project page, Someone they named, Forget them. It asks
+first. The only delete in the system. Removes the row and writes an event
+saying it happened, so the fact survives without the details.
 
-**Close a project.** Project page, day 30 card, while the phase is
-`delivered`. Tidies it away. The record stays readable at the same link, which
-does not expire.
+**Close a project.** Project page, Day 30, Close this project, while the phase
+is `delivered`. It asks first. Tidies it away. The record stays readable at
+the same link, which does not expire.
 
-**Cancel a project.** Project page, Ending it early. Available from any phase
-except delivered, closed and already cancelled. The reason is required. It
-creates no invoice and changes no issued one: whatever was raised stays
-raised, and a refund is a conversation, not a button. The client page says the
-project was closed, with the date. There is no way back.
+**Cancel a project.** Project page, the quiet "Cancel this project" link at
+the foot of the record. It opens a confirm that requires the reason. Available
+from any phase except delivered, closed and already cancelled. It creates no
+invoice and changes no issued one: whatever was raised stays raised, and a
+refund is a conversation, not a button. The client page says the project was
+closed, with the date. There is no way back.
+
+**After every action** a one-line confirmation appears at the foot of the
+screen for four seconds (ADR 0018). If it says "Not saved" or "Not
+cancelled", read the line: it names what was missing.
 
 **Settings.** Company details, bank details, invoice prefix, GSTIN, booking
 URL, default advance percentage. The company phone is the WhatsApp number

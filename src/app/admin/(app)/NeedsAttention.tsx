@@ -39,7 +39,6 @@ export function NeedsAttention({ items }: { items: Attention[] }) {
           </div>
         ))}
       </div>
-      <p className="help">Worked out when this page loads, from dates that are already there. Nothing is scheduled and nothing can go stale.</p>
     </div>
   );
 }

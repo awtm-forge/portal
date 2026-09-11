@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { fromIsoDate } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
@@ -53,7 +53,7 @@ export async function saveUpdateAction(_prev: UpdateState, formData: FormData): 
     if (!result.ok) {
       return { message: result.reason === "already_sent" ? "That week was already sent." : "Nothing to send.", values };
     }
-    refreshTo(`/admin/projects/${projectId}`);
+    return refreshWith(`/admin/projects/${projectId}`, `Week ${d.weekNumber} sent. It is on their page and in their inbox.`);
   }
   return { ok: "Saved as a draft. The client cannot see it yet.", values };
 }
@@ -62,5 +62,5 @@ export async function markKickoffAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await markKickoffDone(projectId);
-  refreshTo(`/admin/projects/${projectId}`);
+  await refreshWith(`/admin/projects/${projectId}`, "Build started. A weekly update is due from here.");
 }

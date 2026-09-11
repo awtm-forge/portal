@@ -12,6 +12,7 @@ export default async function LoginPage() {
         <p className="k">Signing in</p>
         <h1 className="c-title" style={{ fontSize: 24, marginTop: 8 }}>Two accounts, no sign-up</h1>
         <LoginForm />
+        <p className="help" style={{ marginTop: 22, lineHeight: 1.65 }}>Locked out? The other admin reissues a setup link from Settings, and you choose a new password from it. There is no reset by email.</p>
       </div>
     </div>
   );

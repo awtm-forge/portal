@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { requireAdmin } from "@/modules/auth/admin";
 import { deliverLink, sendQuestionnaire, withIntake } from "@/modules/clients";
 import { readAnswers } from "@/modules/intake/answers";
@@ -43,9 +43,10 @@ export async function importAction(_prev: ImportState, formData: FormData): Prom
   const firstTime = client.intake === null;
   await sendQuestionnaire(client.id, result.document, admin.id);
 
+  let emailed = false;
   if (firstTime && !client.linkEmailedAt) {
     const token = await takeFlashLink(client.id);
-    if (token) await deliverLink(client.id, token);
+    if (token) { await deliverLink(client.id, token); emailed = true; }
   }
-  refreshTo(`/admin/clients/${client.id}`);
+  return refreshWith(`/admin/clients/${client.id}`, firstTime ? (emailed ? "Questionnaire sent, and their link emailed." : "Questionnaire sent. It is on their page.") : "Questionnaire replaced. Every answer is kept.");
 }

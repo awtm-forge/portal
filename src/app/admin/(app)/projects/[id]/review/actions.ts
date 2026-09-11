@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { requireAdmin } from "@/modules/auth/admin";
 import { deleteReferral } from "@/modules/day30";
@@ -39,7 +39,7 @@ export async function markReadyAction(_prev: MarkReadyState, formData: FormData)
     };
     return { message: why[result.reason] ?? "It did not go through.", values };
   }
-  refreshTo(`/admin/projects/${projectId}`);
+  return refreshWith(`/admin/projects/${projectId}`, "Marked ready. They have been told to check it.");
 }
 
 /**
@@ -54,5 +54,5 @@ export async function forgetReferralAction(formData: FormData): Promise<void> {
   if (!referral) refreshTo("/admin");
   await deleteReferral(id);
   await emit({ type: "referral.forgotten", projectId: referral.projectId, actor: admin.email, payload: {} });
-  refreshTo(`/admin/projects/${referral.projectId}`);
+  await refreshWith(`/admin/projects/${referral.projectId}`, "Forgotten. Their details are gone.");
 }

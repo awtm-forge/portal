@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
@@ -97,8 +97,9 @@ export async function updateClientAction(formData: FormData): Promise<void> {
         contactEmail: d.contactEmail.toLowerCase(),
       },
     });
+    await refreshWith(`/admin/clients/${clientId}`, "Client details saved.");
   }
-  refreshTo(`/admin/clients/${clientId}`);
+  await refreshWith(`/admin/clients/${clientId}`, "Not saved: check the details. Every field but the place is needed, and the email must be one.");
 }
 
 /**
@@ -111,7 +112,7 @@ export async function resendLinkAction(formData: FormData): Promise<void> {
   const clientId = String(formData.get("clientId") ?? "");
   const token = (await takeFlashLink(clientId)) ?? (await freshToken(clientId));
   await deliverLink(clientId, token);
-  refreshTo(`/admin/clients/${clientId}/link`);
+  await refreshWith(`/admin/clients/${clientId}/link`, "Sending the link by email.");
 }
 
 async function freshToken(clientId: string): Promise<string> {
@@ -126,7 +127,7 @@ export async function rotateLinkAction(formData: FormData): Promise<void> {
   if (!(await db.client.findUnique({ where: { id: clientId } }))) refreshTo("/admin/clients");
   const token = await freshToken(clientId);
   await deliverLink(clientId, token);
-  refreshTo(`/admin/clients/${clientId}/link`);
+  await refreshWith(`/admin/clients/${clientId}/link`, "New link made. The old one has stopped working.");
 }
 
 /* -------------------------------------------------------------------------
@@ -196,7 +197,7 @@ export async function signoffDecisionAction(formData: FormData): Promise<void> {
     where: { id: clientId },
     data: { proposedSignoffEmail: null, proposedSignoffName: null, proposedAt: null },
   });
-  refreshTo(projectId ? `/admin/projects/${projectId}` : `/admin/clients/${clientId}`);
+  await refreshWith(projectId ? `/admin/projects/${projectId}` : `/admin/clients/${clientId}`, decision === "use" ? "Switched to the sign-off they named." : "Kept the sign-off as it was.");
 }
 
 const signoffSchema = z.object({
@@ -213,6 +214,7 @@ export async function updateSignoffAction(formData: FormData): Promise<void> {
       where: { id: projectId },
       data: { signoffPersonName: parsed.data.signoffPersonName, signoffPersonEmail: parsed.data.signoffPersonEmail.toLowerCase() },
     });
+    await refreshWith(`/admin/projects/${projectId}`, "Sign-off person saved. Codes go to the new address from now.");
   }
-  refreshTo(`/admin/projects/${projectId}`);
+  await refreshWith(`/admin/projects/${projectId}`, "Not saved: a name and a real email are needed.");
 }

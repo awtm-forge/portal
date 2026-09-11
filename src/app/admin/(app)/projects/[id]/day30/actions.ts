@@ -1,6 +1,6 @@
 "use server";
 
-import { refreshTo } from "@/lib/admin-nav";
+import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { SignoffMethod, TestimonialMoment } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/modules/auth/admin";
 import { approveTestimonial, setFrictionNotes } from "@/modules/day30";
@@ -12,7 +12,7 @@ export async function saveFrictionNotesAction(formData: FormData): Promise<void>
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await setFrictionNotes(projectId, String(formData.get("frictionNotes") ?? ""));
-  refreshTo(`/admin/projects/${projectId}`);
+  await refreshWith(`/admin/projects/${projectId}`, "Notes saved.");
 }
 
 /**
@@ -26,6 +26,7 @@ export async function approveTestimonialAction(formData: FormData): Promise<void
   const moment = String(formData.get("moment") ?? "");
   if (moment === TestimonialMoment.DELIVERY || moment === TestimonialMoment.DAY30) {
     await approveTestimonial(projectId, moment, SignoffMethod.WHATSAPP);
+    await refreshWith(`/admin/projects/${projectId}`, "Approved, recorded as said on WhatsApp.");
   }
   refreshTo(`/admin/projects/${projectId}`);
 }
@@ -35,28 +36,26 @@ export async function closeProjectAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   await closeProject(projectId);
-  refreshTo(`/admin/projects/${projectId}`);
+  await refreshWith(`/admin/projects/${projectId}`, "Closed. The record stays readable.");
 }
 
-export type CancelState = { message?: string };
-
 /**
- * CLAUDE.md 5. Kept behind its own confirmation in the UI, and the reason is
- * required: this is the one move that ends a project without a delivery.
+ * CLAUDE.md 5. Behind a confirm dialog with a required reason: this is the one
+ * move that ends a project without a delivery. A refusal comes back as a toast
+ * rather than a form state, because the dialog has already closed by then.
  */
-export async function cancelProjectAction(_prev: CancelState, formData: FormData): Promise<CancelState> {
+export async function cancelProjectAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = String(formData.get("projectId") ?? "");
   const result = await cancelProject(projectId, String(formData.get("reason") ?? ""));
   if (!result.ok) {
-    return {
-      message: {
-        no_reason: "Say why. It is the only thing anyone will have to go on later.",
-        wrong_phase: "A delivered or closed project cannot be cancelled.",
-        not_found: "That project is not there any more.",
-        raced: "The project moved while you were typing. Look at it again.",
-      }[result.reason],
-    };
+    const why = {
+      no_reason: "Not cancelled: say why. It is the only thing anyone will have to go on later.",
+      wrong_phase: "Not cancelled: a delivered or closed project cannot be cancelled.",
+      not_found: "That project is not there any more.",
+      raced: "Not cancelled: the project moved while you were typing. Look at it again.",
+    }[result.reason];
+    await refreshWith(result.reason === "not_found" ? "/admin" : `/admin/projects/${projectId}`, why);
   }
-  refreshTo(`/admin/projects/${projectId}`);
+  await refreshWith(`/admin/projects/${projectId}`, "Cancelled. The client page says it was closed, with the date.");
 }

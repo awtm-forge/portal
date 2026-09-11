@@ -1,9 +1,12 @@
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Confirm } from "@/components/ui/Confirm";
+import { Empty } from "@/components/ui/Empty";
 import { requireAdmin } from "@/modules/auth/admin";
 import { libraryUsage, listImages } from "@/modules/library";
 import { deleteImageAction } from "./actions";
 import { UploadImageForm } from "./UploadImageForm";
 
+/** The pictures an image_choice question can name. Two across on a phone, three on a laptop; delete asks first (F-32, F-34). */
 export default async function LibraryPage() {
   const admin = await requireAdmin();
   const [images, usage] = await Promise.all([listImages(), libraryUsage()]);
@@ -17,21 +20,29 @@ export default async function LibraryPage() {
         <div className="main">
           <div className="a-card">
             <span className="k">Library</span>
-            {images.length === 0 && <p className="c-sub" style={{ fontSize: 14 }}>Empty. The seed adds the six logo directions.</p>}
-            <div className="grid3">
+            {images.length === 0 && <Empty title="Empty" line="The seed adds the six logo directions. Upload one on the right." />}
+            <div className="lib-grid">
               {images.map((img) => {
                 const used = usage.get(img.key) ?? 0;
                 return (
-                  <div key={img.key} style={{ border: "1px solid var(--rule)", borderRadius: 2, background: "var(--ground)", padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div key={img.key} className="lib-cell">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/admin/lib/${encodeURIComponent(img.key)}`} alt="" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block", borderRadius: 2 }} />
-                    <span className="mono-sm" style={{ color: "var(--ink)", fontSize: 11.5 }}>{img.key}</span>
-                    <span className="help">{img.caption} · {used === 0 ? "not used yet" : `used by ${used} ${used === 1 ? "questionnaire" : "questionnaires"}`}</span>
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      {used === 0 ? (
-                        <form action={deleteImageAction}><input type="hidden" name="key" value={img.key} /><button className="link-mono" type="submit" style={{ padding: 0, fontSize: "10.5px" }}>Delete</button></form>
-                      ) : (
-                        <span className="mono-sm" style={{ fontSize: "10.5px", color: "var(--faint)" }}>Delete, in use</span>
+                    <img src={`/admin/lib/${encodeURIComponent(img.key)}`} alt="" />
+                    <span className="mono-sm" style={{ color: "var(--ink)" }}>{img.key}</span>
+                    <span className="help">{img.caption}</span>
+                    <div className="between" style={{ marginTop: "auto", paddingTop: 4 }}>
+                      <span className="tag" style={{ color: used === 0 ? "var(--faint)" : "var(--muted)" }}>{used === 0 ? "not used yet" : `in ${used} ${used === 1 ? "questionnaire" : "questionnaires"}`}</span>
+                      {used === 0 && (
+                        <Confirm
+                          trigger="Delete"
+                          triggerClass="link-mono"
+                          title={`Delete ${img.key}?`}
+                          line="The picture is removed from the library for good. Nothing else refers to it."
+                          confirmLabel="Delete it"
+                          action={deleteImageAction}
+                        >
+                          <input type="hidden" name="key" value={img.key} />
+                        </Confirm>
                       )}
                     </div>
                   </div>
