@@ -82,15 +82,16 @@ test("cancelling needs a reason, ends the project and says so to the client", as
   await signInAdmin(page);
   await page.goto(`/admin/projects/${projectId}`);
 
-  await page.getByText(/cancel this project/i).click();
+  // The cancel control is shown, not folded (Q). The reason is required, and
+  // the browser stops an empty submit before the action does.
+  await expect(page.getByText(/ending it early/i)).toBeVisible();
   await page.getByRole("button", { name: /cancel it/i }).click();
-  // Required, and the browser stops it before the action does.
   expect(await page.locator('input[name="reason"]:invalid').count()).toBe(1);
 
   await page.locator('input[name="reason"]').fill("They paused the whole programme.");
   await page.getByRole("button", { name: /cancel it/i }).click();
 
-  await expect(page.getByText(/cancel this project/i)).toHaveCount(0);
+  await expect(page.getByText(/ending it early/i)).toHaveCount(0);
   const [p] = await query<{ phase: string; cancelReason: string }>(
     "SELECT phase, cancelReason FROM Project WHERE id = ?", [projectId],
   );

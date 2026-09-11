@@ -34,4 +34,6 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-11 A client can log in with their email, not only the link: /p/me resolves them from the session, a login page sends a one-time code, and the not-found page leads with it (Q18).
 - 2026-09-11 Admin actions refresh the page after they act, so a change shows instead of re-serving a cached render: cancel, close, and every other admin mutation stop feeling like dead buttons (refreshTo, the same fix as the settings Remove).
 - 2026-09-11 The team opens the questionnaire for changes only when the client asks; the unasked open button is gone, and a hint says a change comes from the client's own page (amends ADR 0016).
+- 2026-09-11 A cancelled or closed project's admin page shows it plainly and stops offering active actions: a banner with the date and reason, no "write the agreement", no "raise an extra invoice". The record stays readable.
+- 2026-09-11 The cancel control on an active project is shown, not folded: a visible reason box and a Cancel it button under "Ending it early", so it can be found. The required reason is the confirmation.
 

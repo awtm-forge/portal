@@ -52,6 +52,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
   const intake = project.client.intake;
   const doc = intake ? parseDocumentLoose(intake.document) : null;
   const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
+  const ended = project.phase === Phase.CANCELLED || project.phase === Phase.CLOSED;
   const answers = intake && intake.answers && typeof intake.answers === "object" ? (intake.answers as Record<string, { entered_by?: string }>) : {};
   const byClient = Object.values(answers).filter((a) => a.entered_by !== "team").length;
   const byTeam = Object.values(answers).length - byClient;
@@ -64,6 +65,16 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
       </div>
       <div className="a-cols">
         <div className="main">
+          {ended && (
+            <div className="a-card">
+              <span className="k">{project.phase === Phase.CANCELLED ? "Cancelled" : "Closed"}</span>
+              <p className="c-sub" style={{ fontSize: 14 }}>
+                This project was {project.phase === Phase.CANCELLED ? "cancelled" : "closed"}{project.cancelledAt ? ` on ${dayMonth(project.cancelledAt)}` : ""}.
+                {project.phase === Phase.CANCELLED && project.cancelReason ? ` Why, ours only: ${project.cancelReason}` : ""}
+              </p>
+              <p className="help">Nothing new is raised or written from here. Everything below is the record, as it stood. The client page says it was closed, with the date.</p>
+            </div>
+          )}
           <div className={`a-card${project.phase === "AGREEMENT_DRAFT" ? " ember" : ""}`}>
             <div className="between">
               <span className={`k${project.phase === "AGREEMENT_DRAFT" ? " ember" : ""}`}>The agreement</span>
@@ -79,7 +90,9 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             )}
             {noteCount > 0 && <p className="help" style={{ color: "var(--ember)" }}>{noteCount} {noteCount === 1 ? "note" : "notes"} from the client on what was off.</p>}
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Link className="a-btn" href={`/admin/projects/${project.id}/agreement`}>{agreement ? (agreement.isAgreed ? "Read the agreement" : "Edit and send") : "Write the agreement"}</Link>
+              {ended
+                ? agreement && <Link className="a-btn ghost" href={`/admin/projects/${project.id}/agreement`}>Read the agreement</Link>
+                : <Link className="a-btn" href={`/admin/projects/${project.id}/agreement`}>{agreement ? (agreement.isAgreed ? "Read the agreement" : "Edit and send") : "Write the agreement"}</Link>}
               {agreement?.sentAt && <a className="a-btn ghost" href={`/agreement/${project.id}/print`} target="_blank" rel="noopener">Print view</a>}
               {project.phase === "AGREEMENT_SENT" && (
                 <a
@@ -346,7 +359,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
                   No bank details in <Link href="/admin/settings">settings</Link>, so a printed invoice has nowhere to pay it.
                 </p>
               )}
-              <RaiseOther projectId={project.id} />
+              {!ended && <RaiseOther projectId={project.id} />}
               <p className="help">Raised by a sign-off and by nothing else, apart from an extra. An issued invoice keeps its number, and only its payment moves.</p>
             </div>
 
