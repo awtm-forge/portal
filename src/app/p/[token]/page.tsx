@@ -181,7 +181,9 @@ function ToDo({ token, task }: { token: string; task: PendingTask }) {
   return (
     <div className="card now todo">
       <div className="todo-head">
-        <p className="k ember">What we need from you</p>
+        {/* Ayush's word for it, 12 Sep. Singular on purpose: the phases are
+            sequential, so there is never more than one. */}
+        <p className="k ember">Pending task</p>
         {task.meta && <span className="help">{task.meta}</span>}
       </div>
       <h2>{task.title}</h2>

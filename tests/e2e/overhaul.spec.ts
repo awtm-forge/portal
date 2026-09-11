@@ -49,7 +49,7 @@ test("a cancelled project says it was closed, with the date, and asks for nothin
 
   await signInClient(page, token, projectId);
   await expect(page.getByText(/this project was closed on/i)).toBeVisible();
-  await expect(page.getByText(/what we need from you/i)).toHaveCount(0);
+  await expect(page.getByText(/pending task/i)).toHaveCount(0);
   await expect(page.getByText(/month-on check-in/i)).toHaveCount(0);
   await expect(page.locator(".steps")).toHaveCount(0);
   // The reason is ours and never reaches the page.
