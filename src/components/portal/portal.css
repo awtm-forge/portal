@@ -432,7 +432,9 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 @media (prefers-reduced-motion: reduce) { .nav-progress.on { animation: none; transform: scaleX(0.5); } }
 
 /* Confirm: a native dialog around the real form. */
-.dlg { border: 1px solid var(--rule); border-radius: var(--r-2); background: var(--surface); color: var(--ink); padding: 0; width: min(92vw, 440px); box-shadow: var(--shadow-float); }
+/* margin: auto is what centres a modal dialog, and Tailwind's preflight zeroes
+   it on every element, which pinned this to the top left corner. */
+.dlg { border: 1px solid var(--rule); border-radius: var(--r-2); background: var(--surface); color: var(--ink); padding: 0; margin: auto; width: min(92vw, 440px); box-shadow: var(--shadow-float); }
 .dlg::backdrop { background: rgba(0, 0, 0, 0.55); }
 .dlg[open] { animation: rise var(--t-base) var(--ease); }
 .dlg-in { padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 12px; }
