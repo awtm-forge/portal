@@ -1,6 +1,7 @@
 "use server";
 
 import { adminUrl } from "@/lib/request-origin";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { inviteAdmin, removeUnusedAdmin, requireAdmin } from "@/modules/auth/admin";
 
@@ -28,6 +29,10 @@ export async function inviteAdminAction(_prev: InviteState, formData: FormData):
 export async function removeAdminAction(formData: FormData): Promise<void> {
   await requireAdmin();
   await removeUnusedAdmin(String(formData.get("email") ?? ""));
+  // Bust the router cache so the redirect shows the row actually gone: without
+  // this the delete lands in the database but the same-path redirect re-serves
+  // the stale render, which reads as a dead button (10 Sep 2026).
+  revalidatePath("/admin/settings");
   redirect("/admin/settings");
 }
 
