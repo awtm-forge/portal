@@ -1,0 +1,196 @@
+[
+  {
+    "name": "way-in",
+    "url": "/",
+    "mode": "mobile",
+    "perf": 85,
+    "a11y": 95,
+    "bp": 100,
+    "fcp": 905,
+    "lcp": 4355,
+    "tbt": 18,
+    "cls": 0,
+    "si": 905,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "client-login",
+    "url": "/p/login",
+    "mode": "mobile",
+    "perf": 85,
+    "a11y": 95,
+    "bp": 96,
+    "fcp": 909,
+    "lcp": 4359,
+    "tbt": 0,
+    "cls": 0,
+    "si": 909,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "client-code",
+    "url": "/p/2vOQpcoUa6Eh31gtgFBMl4d3PJu2OxFezE1Gckr94GI",
+    "mode": "mobile",
+    "perf": 86,
+    "a11y": 95,
+    "bp": 96,
+    "fcp": 905,
+    "lcp": 4205,
+    "tbt": 7,
+    "cls": 0,
+    "si": 905,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "client-home",
+    "url": "/p/2vOQpcoUa6Eh31gtgFBMl4d3PJu2OxFezE1Gckr94GI",
+    "mode": "mobile",
+    "perf": 83,
+    "a11y": 96,
+    "bp": 100,
+    "fcp": 908,
+    "lcp": 4658,
+    "tbt": 8,
+    "cls": 0,
+    "si": 908,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "client-agreement",
+    "url": "/p/2vOQpcoUa6Eh31gtgFBMl4d3PJu2OxFezE1Gckr94GI/agreement",
+    "mode": "mobile",
+    "perf": 87,
+    "a11y": 88,
+    "bp": 100,
+    "fcp": 908,
+    "lcp": 4058,
+    "tbt": 7,
+    "cls": 0,
+    "si": 908,
+    "a11yFailing": [
+      "color-contrast",
+      "definition-list",
+      "dlitem"
+    ]
+  },
+  {
+    "name": "client-questionnaire",
+    "url": "/p/2vOQpcoUa6Eh31gtgFBMl4d3PJu2OxFezE1Gckr94GI/intake",
+    "mode": "mobile",
+    "perf": 86,
+    "a11y": 96,
+    "bp": 100,
+    "fcp": 907,
+    "lcp": 4207,
+    "tbt": 11,
+    "cls": 0,
+    "si": 907,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "client-invoices",
+    "url": "/p/2vOQpcoUa6Eh31gtgFBMl4d3PJu2OxFezE1Gckr94GI/invoices",
+    "mode": "mobile",
+    "perf": 86,
+    "a11y": 95,
+    "bp": 96,
+    "fcp": 909,
+    "lcp": 4209,
+    "tbt": 11,
+    "cls": 0,
+    "si": 909,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "admin-login",
+    "url": "/admin/login",
+    "mode": "desktop",
+    "perf": 100,
+    "a11y": 95,
+    "bp": 100,
+    "fcp": 248,
+    "lcp": 808,
+    "tbt": 0,
+    "cls": 0,
+    "si": 248,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "admin-dashboard",
+    "url": "/admin",
+    "mode": "desktop",
+    "perf": 100,
+    "a11y": 95,
+    "bp": 100,
+    "fcp": 246,
+    "lcp": 766,
+    "tbt": 0,
+    "cls": 0,
+    "si": 246,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "admin-project",
+    "url": "/admin/projects/cmtsefy4a0004dns4vlqzl810",
+    "mode": "desktop",
+    "perf": 99,
+    "a11y": 95,
+    "bp": 100,
+    "fcp": 248,
+    "lcp": 888,
+    "tbt": 0,
+    "cls": 0,
+    "si": 248,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "admin-client",
+    "url": "/admin/clients/cmtsefy490003dns4hnmub4xp",
+    "mode": "desktop",
+    "perf": 100,
+    "a11y": 95,
+    "bp": 100,
+    "fcp": 246,
+    "lcp": 806,
+    "tbt": 0,
+    "cls": 0,
+    "si": 246,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  },
+  {
+    "name": "admin-agreement-editor",
+    "url": "/admin/projects/cmtsefy4a0004dns4vlqzl810/agreement",
+    "mode": "desktop",
+    "perf": 100,
+    "a11y": 95,
+    "bp": 100,
+    "fcp": 246,
+    "lcp": 766,
+    "tbt": 0,
+    "cls": 0,
+    "si": 246,
+    "a11yFailing": [
+      "color-contrast"
+    ]
+  }
+]
