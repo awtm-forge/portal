@@ -45,6 +45,12 @@ async function signInClient(page: import("@playwright/test").Page, forToken: str
   await expect(page.getByText("Your project", { exact: true })).toBeVisible();
 }
 
+/** The invoices sit in a fold that opens by itself only while one is unpaid; a test opens it either way. */
+async function openInvoices(page: import("@playwright/test").Page) {
+  const fold = page.locator("details.a-fold").filter({ has: page.locator(".fold-t", { hasText: "Invoices" }) });
+  if (!(await fold.evaluate((d) => (d as HTMLDetailsElement).open))) await fold.locator(":scope > summary").click();
+}
+
 /** The block on the admin page for one invoice, found by its number. */
 function invoiceRow(page: import("@playwright/test").Page, number: string) {
   return page.locator(".row").filter({ hasText: number });
@@ -101,6 +107,7 @@ test("an extra invoice is the only kind that can be raised by hand", async ({ pa
   expect(body).not.toContain("raise the advance");
   expect(body).not.toContain("raise the balance");
 
+  await openInvoices(page);
   await page.getByText(/raise an extra invoice/i).click();
   await page.getByLabel(/what it is for/i).fill("Two extra product photography sets");
   await page.getByLabel(/amount, in rupees/i).fill("18500");
@@ -121,6 +128,7 @@ test("it refuses an amount that is not money, and says why", async ({ page }) =>
   await page.goto(`/admin/projects/${projectId}`);
   const before = await query<{ n: number }>("SELECT COUNT(*) AS n FROM Invoice WHERE projectId = ?", [projectId]);
 
+  await openInvoices(page);
   await page.getByText(/raise an extra invoice/i).click();
   await page.getByLabel(/what it is for/i).fill("A thing");
   await page.getByLabel(/amount, in rupees/i).fill("nine hundred");
@@ -136,11 +144,15 @@ test("marking one paid records the day and the reference, and cannot happen twic
   await signInAdmin(page);
   await page.goto(`/admin/projects/${projectId}`);
 
+  await openInvoices(page);
   const row = invoiceRow(page, invoice.number);
   await row.getByText(/mark it paid/i).click();
   await row.getByLabel(/reference/i).fill("NEFT/778812");
   await row.getByRole("button", { name: /paid$/i }).click();
 
+  // The page refreshes and says so; only then is the fold's state settled.
+  await expect(page.getByRole("status")).toContainText(/marked paid/i);
+  await openInvoices(page);
   await expect(invoiceRow(page, invoice.number).getByText(/^paid/i)).toBeVisible();
   const rows = await query<{ status: string; paidReference: string; paidAt: string }>(
     "SELECT status, paidReference, paidAt FROM Invoice WHERE id = ?", [invoice.id],
@@ -151,6 +163,7 @@ test("marking one paid records the day and the reference, and cannot happen twic
 
   // The control is gone, because there is nothing left to move.
   await page.reload();
+  await openInvoices(page);
   await expect(invoiceRow(page, invoice.number).getByText(/mark it paid/i)).toHaveCount(0);
 });
 

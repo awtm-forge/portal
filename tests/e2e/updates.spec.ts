@@ -108,13 +108,15 @@ test("the booking button appears only when a booking link is set", async ({ page
     "INSERT INTO `Update` (id, projectId, weekNumber, moved, nextUp, needFromYou, risks, sentAt, createdAt, updatedAt) VALUES (?, ?, 1, ?, ?, ?, ?, NOW(3), NOW(3), NOW(3))",
     [`ub${Date.now()}`, projectId, "Something moved.", "Something next.", "", "None this week."],
   );
+  // Item 9 (11 Sep): "Book a meeting" is on every page. Without a booking link
+  // it asks for a time over WhatsApp; with one it opens the calendar.
   await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
   await signInClient(page);
-  await expect(page.getByRole("link", { name: /book a sync/i })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveAttribute("href", /wa\.me|^mailto:/);
 
   await query("UPDATE Company SET bookingUrl = 'https://calendar.example/awtm' WHERE id = 'company'");
   await page.reload();
-  await expect(page.getByRole("link", { name: /book a sync/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveAttribute("href", "https://calendar.example/awtm");
 });
 
 test("marking the kickoff done is the one action that starts the build", async ({ page }) => {

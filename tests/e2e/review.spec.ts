@@ -86,8 +86,10 @@ test("the client sees what they agreed to, with how to check each one", async ({
   await openRoundDirect(projectId);
   await signInClient(page);
 
-  await expect(page.getByText(/ready for you to check/i).first()).toBeVisible();
+  // The one task on the home page, then the review itself.
+  await expect(page.getByText(/check the finished work/i).first()).toBeVisible();
   await page.getByRole("link", { name: /check the work/i }).click();
+  await expect(page.getByText(/ready for you to check/i).first()).toBeVisible();
 
   await expect(page.getByText(/a storefront on the new template/i)).toBeVisible();
   await expect(page.getByText(/open three product pages on your phone/i)).toBeVisible();

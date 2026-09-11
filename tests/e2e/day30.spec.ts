@@ -59,7 +59,7 @@ test("the page is not there before the month is up", async ({ page }) => {
   await signInClient(page);
 
   // Criterion 10: no way in, and nothing on the project page pointing at one.
-  await expect(page.getByRole("link", { name: /open it/i })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /open the check-in/i })).toHaveCount(0);
   const response = await page.goto(`/p/${token}/day30`);
   expect(response?.status()).toBe(404);
 });
@@ -68,8 +68,8 @@ test("on the day it is the one thing to do, and it opens", async ({ page }) => {
   await day30Open(projectId);
   await signInClient(page);
 
-  await expect(page.getByText("One month in. Two things, under a minute.")).toBeVisible();
-  await page.getByRole("link", { name: /open it/i }).click();
+  await expect(page.getByText(/a quick month-on check-in/i)).toBeVisible();
+  await page.getByRole("link", { name: /open the check-in/i }).click();
   await expect(page.getByRole("heading", { name: /two things, under a minute/i })).toBeVisible();
   await expect(page.getByText(/checkout completion, and now\?/i)).toBeVisible();
   await expect(page.getByText(/it was 41 percent when we started/i)).toBeVisible();
@@ -182,7 +182,9 @@ test("closing a delivered project leaves the record readable at the same link", 
   await signInAdmin(page);
   await page.goto(`/admin/projects/${projectId}`);
 
+  // Closing asks first (F-34); the record stays.
   await page.getByRole("button", { name: /close this project/i }).click();
+  await page.getByRole("dialog").getByRole("button", { name: /^close it$/i }).click();
   await expect(page.getByRole("button", { name: /close this project/i })).toHaveCount(0);
 
   const [p] = await query<{ phase: string }>("SELECT phase FROM Project WHERE id = ?", [projectId]);

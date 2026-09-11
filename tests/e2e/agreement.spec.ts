@@ -102,9 +102,11 @@ test("pushing back needs no code, records a note and sends it back to draft", as
   await signIn(page, token, projectId);
 
   await page.goto(`/p/${token}/agreement`);
-  await page.getByText(/something is off/i).click();
+  // CLAUDE.md 5.1, "Something is off": the quieter second action under I
+  // agree. Visible, not folded (item 8), so there is nothing to open first.
+  await expect(page.getByText(/something not right/i)).toBeVisible();
   await page.getByPlaceholder(/the launch date does not work/i).fill("The launch date lands in our stock week. Can we move it a fortnight?");
-  await page.getByRole("button", { name: /^send$/i }).click();
+  await page.getByRole("button", { name: /^request a change$/i }).click();
 
   await expect(page.getByText(/thank you, we have it/i)).toBeVisible();
 
@@ -131,7 +133,9 @@ test("an agreed agreement is frozen: no button, and the record is stamped", asyn
   await signIn(page, token, projectId);
 
   await page.goto(`/p/${token}/agreement`);
-  await expect(page.getByText(/agreed by arjun sundaram/i)).toBeVisible();
+  // Said twice on purpose: a line under the title (F-19) and the record at the foot.
+  await expect(page.getByText(/agreed by arjun sundaram/i)).toHaveCount(2);
+  await expect(page.getByText(/agreed by arjun sundaram/i).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /^i agree$/i })).toHaveCount(0);
   await expect(page.getByText(/something is off/i)).toHaveCount(0);
 });
@@ -144,7 +148,7 @@ test("the printable agreement carries the stamp and no navigation", async ({ pag
 
   await page.goto(`/agreement/${token}/print`);
   await expect(page.getByRole("heading", { name: /what we are building/i })).toBeVisible();
-  await expect(page.getByText(/agreed by arjun sundaram/i)).toBeVisible();
+  await expect(page.getByText(/agreed by arjun sundaram/i).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /save it as a pdf/i })).toHaveCount(0);
 });
 

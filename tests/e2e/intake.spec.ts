@@ -127,13 +127,15 @@ test.describe("after sending, the questionnaire is locked", () => {
     await expect(page.getByText(/It is locked now/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Save and carry on" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Home textiles/ })).toHaveCount(0);
-    await expect(page.getByLabel(/what needs changing/i)).toBeHidden();
+    // No dead placeholders on a locked page (F-07), and the ask is in view at
+    // the top, not folded and not at the foot (F-08).
+    await expect(page.getByText(/tap to add/i)).toHaveCount(0);
+    await expect(page.getByLabel(/what needs changing/i)).toBeVisible();
 
-    await page.locator("summary", { hasText: "Something needs changing" }).click();
     await page.getByLabel(/what needs changing/i).fill("The platform is WooCommerce, not Shopify.");
-    await page.getByRole("button", { name: "Ask us to open it" }).click();
+    await page.getByRole("button", { name: "Request a change" }).click();
     await expect(page.getByText(/You asked on .* to change something/)).toBeVisible();
-    await expect(page.locator("summary", { hasText: "Something needs changing" })).toHaveCount(0);
+    await expect(page.getByLabel(/what needs changing/i)).toHaveCount(0);
     const asked = await query<{ status: string; note: string }>("SELECT status, note FROM IntakeChangeRequest WHERE clientId = ?", [seedClient]);
     expect(asked).toEqual([{ status: "ASKED", note: "The platform is WooCommerce, not Shopify." }]);
 

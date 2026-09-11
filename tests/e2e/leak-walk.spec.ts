@@ -63,20 +63,40 @@ test.describe("the leak walk", () => {
 
     const routes = [
       `/p/${token}`,
+      `/p/me`,
       `/p/${token}/intake`,
       `/p/${token}/agreement`,
       `/p/${token}/review`,
       `/p/${token}/thanks`,
+      `/p/${token}/invoices`,
+      `/p/${token}/updates`,
+      `/p/${token}/day30`,
       `/agreement/${token}/print`,
       ...invoiceRoutes,
       `/admin/clients/${clientId}/intake/answers.json`,
     ];
 
+    // Raw response bodies, not the rendered DOM: this is the API layer, and it
+    // is where the serializer either held or did not.
     for (const route of routes) {
       const response = await request.get(route, { headers: { cookie: header } });
       const body = await response.text();
       for (const secret of forbidden) {
         expect(body, `${route} leaked ${secret.slice(0, 24)}`).not.toContain(secret);
+      }
+    }
+
+    // The one JSON API a client talks to. Its answers are the questionnaire's,
+    // and nothing of the agreement can be in them.
+    const origin = new URL(page.url()).origin;
+    for (const action of ["save", "section-done", "ask-change"]) {
+      const response = await request.post(`/p/${token}/intake/api/${action}`, {
+        headers: { cookie: header, origin, "content-type": "application/json" },
+        data: action === "save" ? { key: "nope", value: "x" } : action === "section-done" ? { section: "nope" } : { note: "" },
+      });
+      const body = await response.text();
+      for (const secret of forbidden) {
+        expect(body, `intake api ${action} leaked ${secret.slice(0, 24)}`).not.toContain(secret);
       }
     }
   });
@@ -147,7 +167,7 @@ test.describe("the leak walk", () => {
     // ADR 0012: this host serves the portal and the admin. The marketing site
     // is kept in components/marketing and is not routed here.
     const body = await (await request.get("/")).text();
-    expect(body).toContain("Open the link we sent you");
+    expect(body).toContain("Your page is one code away");
     expect(body).not.toContain("The same loop, once.");
     expect(body).not.toContain("Start the two weeks");
   });

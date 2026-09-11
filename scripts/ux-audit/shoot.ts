@@ -220,21 +220,29 @@ async function adminShots(browser: Browser, w: (typeof WIDTHS)[number], kavya: A
   await ctx.close();
 }
 
+/** The seed's value for the open questionnaire (scripts/seed.ts): the before and after frames start from the same place. */
+const KAVYA_SECTIONS_DONE = ["business"];
+
 async function main() {
   mkdirSync(out, { recursive: true });
   const kavya = await freshLink(INTAKE_SLUG);
   const sundara = await freshLink(SEED_SLUG);
-  const kavyaDone = await query<{ sectionsDone: unknown }>("SELECT sectionsDone FROM Intake WHERE clientId = ?", [kavya.clientId]);
+  // Set, not snapshotted: a run that was killed halfway once left extra
+  // sections marked done, and a snapshot would have carried that forward.
+  await query("UPDATE Intake SET sectionsDone = ? WHERE clientId = ?", [JSON.stringify(KAVYA_SECTIONS_DONE), kavya.clientId]);
   const browser = await chromium.launch();
-  for (const w of WIDTHS) {
-    await clientShots(browser, w, kavya, sundara);
-    await adminShots(browser, w, kavya, sundara);
+  try {
+    for (const w of WIDTHS) {
+      await clientShots(browser, w, kavya, sundara);
+      await adminShots(browser, w, kavya, sundara);
+    }
+  } finally {
+    await browser.close();
+    await query("UPDATE Intake SET sectionsDone = ? WHERE clientId = ?", [JSON.stringify(KAVYA_SECTIONS_DONE), kavya.clientId]);
+    await query("DELETE FROM AdminSession WHERE adminUserId IN (SELECT id FROM AdminUser WHERE email = ?)", [ADMIN_EMAIL]);
+    await query("DELETE FROM AdminUser WHERE email = ?", [ADMIN_EMAIL]);
+    await closeDb();
   }
-  await browser.close();
-  await query("UPDATE Intake SET sectionsDone = ? WHERE clientId = ?", [JSON.stringify(kavyaDone[0]?.sectionsDone ?? []), kavya.clientId]);
-  await query("DELETE FROM AdminSession WHERE adminUserId IN (SELECT id FROM AdminUser WHERE email = ?)", [ADMIN_EMAIL]);
-  await query("DELETE FROM AdminUser WHERE email = ?", [ADMIN_EMAIL]);
-  await closeDb();
   console.log(`done, ${failures.length} failure(s)`);
   for (const f of failures) console.log("  " + f);
 }

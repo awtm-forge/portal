@@ -26,7 +26,7 @@ Decided 11 Sep 2026 from `02-friction-log.md` and the before set. Each entry is 
 | Primitive | What it is | Used for |
 |---|---|---|
 | `Toast` | `role="status"`, bottom centre, one at a time, auto-dismisses in 4 s, pauses on hover. Fed by a one-shot `awtm_flash` cookie that server actions set through `flash(message)` and the shell reads and clears. | every admin action; client actions that stay on the page (saved, sent, code re-sent) [F-30] |
-| `Skeleton` | grey bars in the shape of the shell's content, shown by a `loading.tsx` in each zone | the pause between tap and page [F-01] |
+| `NavProgress` | a thin ember line along the top from the tap on a link until the next page lands; a safety timer ends it. Not a `loading.tsx` skeleton: that streams the page, and a `notFound()` thrown after the shell has gone out answers 200, which broke the real 404s of `/thanks` and `/day30` (criteria 10 and 24) | the pause between tap and page [F-01] |
 | `Confirm` | a native `<dialog>` wrapping the real form; a title, one line, the dangerous button in ember, "Keep it" as the safe default; optional reason field | rotate link, cancel project, delete a referral, delete an image, lock the questionnaire again [F-24, F-34] |
 | `Empty` | a title, one line, an optional action; same measure and tone everywhere | no updates, no invoices, no clients, no images, no notes [F-37] |
 | `Fold` | `<details>` with a chevron that rotates, a summary line that can carry a fact ("agreed 11 September"), 44 px hit area | the client's record rows; admin secondary cards [F-17, F-27] |

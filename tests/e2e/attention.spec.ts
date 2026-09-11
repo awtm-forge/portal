@@ -78,20 +78,26 @@ test("an unpaid invoice is named, so it can be chased from the list", async ({ p
   await expect(page.getByText(new RegExp(`${invoice.number.replace(/\//g, "\\/")} unpaid after 8 days`, "i"))).toBeVisible();
 });
 
-test("cancelling needs a reason, ends the project and says so to the client", async ({ page }) => {
+test("cancelling asks first, needs a reason, ends the project and says so", async ({ page }) => {
   await signInAdmin(page);
   await page.goto(`/admin/projects/${projectId}`);
 
-  // The cancel control is shown, not folded (Q). The reason is required, and
-  // the browser stops an empty submit before the action does.
-  await expect(page.getByText(/ending it early/i)).toBeVisible();
-  await page.getByRole("button", { name: /cancel it/i }).click();
-  expect(await page.locator('input[name="reason"]:invalid').count()).toBe(1);
+  // The one irreversible move is a quiet link that opens a confirm (F-24).
+  // The reason is required, and the browser stops an empty submit before
+  // the action does.
+  await page.getByRole("button", { name: /cancel this project/i }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: /cancel the project/i }).click();
+  expect(await dialog.locator('input[name="reason"]:invalid').count()).toBe(1);
 
-  await page.locator('input[name="reason"]').fill("They paused the whole programme.");
-  await page.getByRole("button", { name: /cancel it/i }).click();
+  await dialog.locator('input[name="reason"]').fill("They paused the whole programme.");
+  await dialog.getByRole("button", { name: /cancel the project/i }).click();
 
-  await expect(page.getByText(/ending it early/i)).toHaveCount(0);
+  // The page says so, the toast says so, and the link to cancel is gone.
+  await expect(page.getByText(/^cancelled on /i)).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(/cancelled/i);
+  await expect(page.getByRole("button", { name: /cancel this project/i })).toHaveCount(0);
   const [p] = await query<{ phase: string; cancelReason: string }>(
     "SELECT phase, cancelReason FROM Project WHERE id = ?", [projectId],
   );

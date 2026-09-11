@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientNotice } from "@/modules/notifications/client";
+import { clientNotice, DAY30_DUE } from "@/modules/notifications/client";
 
 /**
  * Q19: the client is told about the moments that concern them, and only those.
@@ -19,4 +19,10 @@ describe("what the client is notified about", () => {
       expect(clientNotice(t, {})).toBeNull();
     }
   });
-})
+
+  it("includes the month-on page opening, which is a date rather than an event (F-16)", () => {
+    expect(DAY30_DUE.path).toBe("/day30");
+    expect(DAY30_DUE.email).toBe(true);
+    expect(DAY30_DUE.title).toMatch(/month/i);
+  });
+});
