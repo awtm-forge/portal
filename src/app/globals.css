@@ -2,14 +2,20 @@
 
 /* awtm forge design tokens. One set, used by the marketing site and the portal.
    Dark is the only theme for now, by decision on 5 Sep 2026. Every colour is
-   defined on bare :root so nothing exists only inside a media query. */
+   defined on bare :root so nothing exists only inside a media query.
+
+   The non-colour tokens (spacing, radius, motion, elevation, layers) were added
+   in the UX overhaul of 11 Sep 2026 (docs/ux-overhaul/04-design-decisions.md)
+   so that every component paces and spaces itself the same way. */
 :root {
   --ground: #141110;
   --surface: #1b1715;
   --surface-2: #221d1a;
   --ink: #ede7dc;
   --muted: #a69c8e;
-  --faint: #7a7166;
+  /* 4.8:1 on every surface. The earlier #7a7166 was 3.9:1 and failed contrast
+     on every kicker, help line and label (03-baseline-metrics.md). */
+  --faint: #948a7e;
   --rule: #2e2925;
   --rule-soft: #252019;
   --ember: #e08536;
@@ -20,7 +26,42 @@
   --font-display-stack: var(--font-display), "Helvetica Neue", Arial, sans-serif;
   --font-body-stack: var(--font-body), Georgia, serif;
   --font-mono-stack: var(--font-mono), ui-monospace, Menlo, monospace;
+
+  /* Spacing: a 4 px scale. Card padding is --s-5, stack gaps --s-3 and --s-4,
+     page gutters --s-5. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+
+  /* Radius: cards, fields and buttons stay square-cornered; only floating
+     things (dialog, toast) round off. */
+  --r-1: 2px;
+  --r-2: 6px;
+  --r-pill: 999px;
+
+  /* Motion: short and eased, never decorative. Zeroed under reduced motion. */
+  --t-fast: 120ms;
+  --t-base: 200ms;
+  --t-slow: 320ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --shadow-float: 0 10px 28px rgba(0, 0, 0, 0.4);
+
+  --z-sticky: 30;
+  --z-menu: 40;
+  --z-toast: 50;
+  --z-dialog: 60;
+
   color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 0ms; --t-base: 0ms; --t-slow: 0ms; }
 }
 
 @theme inline {
@@ -54,7 +95,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; }
-a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 3px;
 }
@@ -83,6 +124,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   border: 1px solid var(--ember);
   background: transparent;
   color: var(--ink);
+  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
 .btn.solid { background: var(--ember); color: var(--on-ember); }
 .btn.solid:hover { background: #ec934b; }
@@ -93,8 +135,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 .field {
   font-family: var(--font-mono-stack);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
   display: flex;

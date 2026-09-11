@@ -9,11 +9,12 @@ const display = Bricolage_Grotesque({
   display: "swap",
 });
 
+// Upright only, no optical-size axis: nothing in the product sets italic, and
+// the two extra files were 273 KB preloaded ahead of every client page's text
+// (docs/ux-overhaul/03-baseline-metrics.md).
 const body = Newsreader({
   variable: "--font-body",
   subsets: ["latin"],
-  style: ["normal", "italic"],
-  axes: ["opsz"],
   display: "swap",
 });
 

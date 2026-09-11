@@ -4,6 +4,9 @@ import { phoneDigits } from "@/lib/format";
 import { navFor } from "@/modules/clients";
 import { unreadCount } from "@/modules/notifications/client";
 import { company } from "@/modules/settings";
+import { NavProgress } from "@/components/ui/NavProgress";
+import { Toast } from "@/components/ui/Toast";
+import { NavScroll } from "./NavScroll";
 
 export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates";
 
@@ -57,6 +60,7 @@ export async function ClientShell({
 
   return (
     <div className={`p-shell${wide ? " p-wide" : ""}`}>
+      <NavProgress />
       <span className="visually-hidden">{businessName}</span>
       <header className="p-head">
         <div className="p-head-in">
@@ -74,7 +78,10 @@ export async function ClientShell({
             )}
             <a className="p-pill" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>Book a meeting</a>
             <details className="reach">
-              <summary className="p-pill">Reach us</summary>
+              <summary className="p-pill reach-pill" aria-label="Reach us">
+                <svg className="reach-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 3 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 9 8.4Z" /></svg>
+                <span className="reach-txt">Reach us</span>
+              </summary>
               <div className="reach-menu">
                 {whatsapp && <a href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}
                 <a href={`mailto:${c.email}`}>Email {c.email}</a>
@@ -90,10 +97,12 @@ export async function ClientShell({
                 <Link key={l.key} href={l.href} aria-current={l.key === nav?.current ? "page" : undefined}>{l.label}</Link>
               ))}
             </div>
+            <NavScroll />
           </nav>
         )}
       </header>
       <main className="p-body">{children}</main>
+      <Toast />
       <footer className="p-foot">
         <div className="p-foot-in">
           <p>

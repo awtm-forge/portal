@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { flash } from "@/lib/flash";
 
 /**
  * Redirect after a mutation, refreshing the target page first. A server action
@@ -11,4 +12,10 @@ import { redirect } from "next/navigation";
 export function refreshTo(path: string): never {
   revalidatePath(path);
   redirect(path);
+}
+
+/** The same, with a one-line confirmation the next page shows as a toast. */
+export async function refreshWith(path: string, message: string): Promise<never> {
+  await flash(message);
+  refreshTo(path);
 }

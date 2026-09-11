@@ -70,7 +70,7 @@ src/app/                 routes only: validate, call a module, render
   agreement/[id]/print   print views
   invoice/[id]/print
   api/                   the few JSON endpoints (enquiry, code request, code verify)
-src/components/          React only, grouped by zone: marketing (kept, unrouted), portal, admin, intake
+src/components/          React only, grouped by zone: marketing (kept, unrouted), portal, admin, intake; ui holds the primitives both zones share (toast, confirm, fold, empty, sticky action, data list, file pick, nav progress)
 src/modules/             domain, one folder per bounded area, no HTTP, no React
   auth/                  tokens, codes, sessions, admin passwords
   projects/              project CRUD, phase.ts (the transition table), needs-attention
@@ -86,7 +86,7 @@ src/modules/             domain, one folder per bounded area, no HTTP, no React
 src/lib/                 prisma client wrapper, mailer, money, dates, files, rate limit, logger
 src/generated/           Prisma client output, gitignored
 prisma/                  schema, migrations, seed
-scripts/                 seed, admin creation, migrate-if-configured
+scripts/                 seed, admin creation, migrate-if-configured; ux-audit (the screenshot camera, Lighthouse runner and before-after page, docs/ux-overhaul)
 tests/                   unit (vitest) and e2e (playwright)
 docs/                    this folder
 ```
