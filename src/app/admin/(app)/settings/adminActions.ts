@@ -1,7 +1,8 @@
 "use server";
 
 import { adminUrl } from "@/lib/request-origin";
-import { inviteAdmin, requireAdmin } from "@/modules/auth/admin";
+import { redirect } from "next/navigation";
+import { inviteAdmin, removeUnusedAdmin, requireAdmin } from "@/modules/auth/admin";
 
 export type InviteState = { message?: string; link?: string; email?: string; values?: { email: string; name: string } };
 
@@ -22,3 +23,11 @@ export async function inviteAdminAction(_prev: InviteState, formData: FormData):
   }
   return { link: await adminUrl(`/admin/setup/${result.token}`), email: result.email };
 }
+
+/** Clears a stale seat: an account that never set a password. Refuses an active one. */
+export async function removeAdminAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  await removeUnusedAdmin(String(formData.get("email") ?? ""));
+  redirect("/admin/settings");
+}
+

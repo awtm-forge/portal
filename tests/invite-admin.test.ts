@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
-import { inviteAdmin } from "@/modules/auth/admin";
+import { inviteAdmin, removeUnusedAdmin } from "@/modules/auth/admin";
 
 /**
  * PORTAL-SPEC 6.6: two accounts, no self-registration. The second is made by
@@ -57,5 +57,39 @@ describe("inviting the other admin", () => {
   it("refuses nonsense", async () => {
     expect(await inviteAdmin({ email: "nope", name: "X" })).toEqual({ ok: false, reason: "invalid" });
     expect(await inviteAdmin({ email: A, name: "" })).toEqual({ ok: false, reason: "invalid" });
+  });
+});
+
+describe("clearing a stale seat", () => {
+  it("removes an account that never set a password, and refuses one that can sign in", async () => {
+    // A stale invite: created by inviting, never activated.
+    if ((await othersBesides(A)) >= 2) return;
+    const invited = await inviteAdmin({ email: A, name: "Stale" });
+    expect(invited.ok).toBe(true);
+    expect(await removeUnusedAdmin(A.toUpperCase())).toEqual({ ok: true });
+    expect(await db.adminUser.findUnique({ where: { email: A } })).toBeNull();
+
+    // An activated account is never removable this way, so nobody is locked out.
+    const active = await db.adminUser.create({ data: { email: B, name: "Active", passwordHash: "x" } });
+    expect(await removeUnusedAdmin(B)).toEqual({ ok: false, reason: "active" });
+    expect(await db.adminUser.findUnique({ where: { id: active.id } })).not.toBeNull();
+    expect(await removeUnusedAdmin("nobody@example.invalid")).toEqual({ ok: false, reason: "not_found" });
+  });
+
+  it("frees the seat, so an invite that was at the limit goes through again", async () => {
+    // Fill both seats with stale invites, past what the seed left.
+    const free = 2 - Math.min(2, await othersBesides(A, B, C));
+    if (free >= 1) await inviteAdmin({ email: A, name: "A" });
+    if (free >= 2) await inviteAdmin({ email: B, name: "B" });
+    // With both seats taken, a third is refused.
+    if ((await othersBesides(A, B, C)) >= 2) {
+      expect(await inviteAdmin({ email: C, name: "C" })).toEqual({ ok: false, reason: "limit" });
+      // Clear one stale seat and it goes through.
+      const toClear = (await db.adminUser.findFirst({ where: { email: { in: [A, B] }, passwordHash: null } }))?.email;
+      if (toClear) {
+        expect(await removeUnusedAdmin(toClear)).toEqual({ ok: true });
+        expect((await inviteAdmin({ email: C, name: "C" })).ok).toBe(true);
+      }
+    }
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { inviteAdminAction, type InviteState } from "./adminActions";
+import { inviteAdminAction, removeAdminAction, type InviteState } from "./adminActions";
 
 type Existing = { email: string; name: string; hasPassword: boolean };
 
@@ -20,8 +20,16 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
               <span style={{ fontSize: 14.5 }}>{a.name}</span>
               <span className="mono-sm">{a.email}</span>
             </span>
-            <span className="tag" style={{ color: a.hasPassword ? "var(--muted)" : "var(--ember)" }}>
-              {a.hasPassword ? "can sign in" : "link not used yet"}
+            <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span className="tag" style={{ color: a.hasPassword ? "var(--muted)" : "var(--ember)" }}>
+                {a.hasPassword ? "can sign in" : "link not used yet"}
+              </span>
+              {!a.hasPassword && (
+                <form action={removeAdminAction}>
+                  <input type="hidden" name="email" value={a.email} />
+                  <button className="link-mono" type="submit" style={{ padding: 0, fontSize: "10.5px", color: "var(--faint)" }}>Remove</button>
+                </form>
+              )}
             </span>
           </div>
         ))}
@@ -43,7 +51,7 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
           <form action={action} className="stack" style={{ gap: 10, paddingTop: 10 }}>
             <p className="help" style={{ lineHeight: 1.65 }}>
               {full
-                ? "Both seats are taken. Enter one of the two addresses to give that person a fresh setup link, which is also how a forgotten password is reset."
+                ? "Both seats are taken. If one of the rows above says \u201clink not used yet\u201d, it is an unused invite: Remove it to free the seat, then add the person you want. Otherwise enter an existing address to reissue its setup link, which is also how a forgotten password is reset."
                 : "Two accounts is the limit. This makes the second, or refreshes an existing one. It never sets a password: they choose their own."}
             </p>
             <div className="grid2">

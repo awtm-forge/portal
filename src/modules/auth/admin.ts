@@ -216,3 +216,30 @@ export async function inviteAdmin(args: { email: string; name: string }): Promis
   logger.info("admin invited", { email });
   return { ok: true, token, email };
 }
+
+/**
+ * Removes an admin account that was never used, i.e. one that cannot sign in
+ * because it has no password. This is how a stale seat is cleared: the
+ * first-run troubleshooting on 10 Sep 2026 left two such rows on production,
+ * and with three rows the two-seat limit refused every new invite.
+ *
+ * It refuses to remove an account that can sign in, so it can never lock the
+ * team out or delete a colleague's real account: that is a different action,
+ * deliberately not built here.
+ */
+export async function removeUnusedAdmin(email: string): Promise<{ ok: boolean; reason?: "not_found" | "active" | "in_use" }> {
+  const normalized = email.trim().toLowerCase();
+  const row = await db.adminUser.findUnique({ where: { email: normalized } });
+  if (!row) return { ok: false, reason: "not_found" };
+  if (row.passwordHash !== null) return { ok: false, reason: "active" };
+  try {
+    await db.adminSession.deleteMany({ where: { adminUserId: row.id } });
+    await db.adminUser.delete({ where: { id: row.id } });
+  } catch {
+    // A row that has uploaded a questionnaire is referenced and cannot be
+    // dropped; that is not a stale seat, so leave it and say so.
+    return { ok: false, reason: "in_use" };
+  }
+  logger.info("unused admin removed", { email: normalized });
+  return { ok: true };
+}
