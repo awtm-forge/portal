@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { flash } from "@/lib/flash";
 import { CodePurpose } from "@/generated/prisma/enums";
 import { SignoffMethod } from "@/generated/prisma/enums";
 import { clientIp } from "@/lib/rate-limit";
@@ -79,6 +80,7 @@ export async function confirmAgreeAction(prev: AgreeState, formData: FormData): 
     };
     return { step: "idle", message: why[result.reason] ?? "It did not go through." };
   }
+  await flash("Agreed, and on the record. Your advance invoice is on your page.");
   redirect(`/p/${token}/agreement`);
 }
 

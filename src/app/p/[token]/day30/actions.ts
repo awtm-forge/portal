@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { flash } from "@/lib/flash";
 import { projectScope } from "../scope";
 import { submit } from "@/modules/day30";
 import "@/modules/notifications/register";
@@ -34,5 +35,6 @@ export async function submitDay30Action(_prev: Day30State, formData: FormData): 
     }[result.reason];
     return { message: why, values };
   }
+  await flash("Thank you. That is everything we needed.");
   redirect(`/p/${token}`);
 }

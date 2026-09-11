@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { flash } from "@/lib/flash";
 import { projectScope } from "../scope";
 import { recordThanks, skipThanks } from "@/modules/review";
 import "@/modules/notifications/register";
@@ -21,6 +22,7 @@ export async function sendThanksAction(_prev: ThanksState, formData: FormData): 
 
   if (String(formData.get("intent")) === "skip") {
     await skipThanks(project.id);
+    await flash("No problem. Everything is still on your page.");
     redirect(`/p/${token}`);
   }
 
@@ -37,5 +39,6 @@ export async function sendThanksAction(_prev: ThanksState, formData: FormData): 
   }
 
   await recordThanks(project.id, { quote, referralName: name, referralContact: contact });
+  await flash("Thank you, we have it.");
   redirect(`/p/${token}`);
 }

@@ -26,7 +26,7 @@ Decided 11 Sep 2026 from `02-friction-log.md` and the before set. Each entry is 
 
 | Primitive | What it is | Used for |
 |---|---|---|
-| `Toast` | `role="status"`, bottom centre, one at a time, auto-dismisses in 4 s, pauses on hover. Fed by a one-shot `awtm_flash` cookie that server actions set through `flash(message)` and the shell reads and clears. | every admin action; client actions that stay on the page (saved, sent, code re-sent) [F-30] |
+| `Toast` | `role="status"`, bottom centre, one at a time, auto-dismisses in 4 s, pauses on hover. Fed by a one-shot `awtm_flash` cookie that server actions set through `flash(message)` and the shell reads and clears. Mounted in both shells. | every admin action; every client action that ends in a redirect (agreed, signed off, thank-you sent or skipped, month-on answered). A client action that stays on the page keeps its own inline confirmation, which persists, rather than gaining a second one [F-30] |
 | `NavProgress` | a thin ember line along the top from the tap on a link until the next page lands; a safety timer ends it. Not a `loading.tsx` skeleton: that streams the page, and a `notFound()` thrown after the shell has gone out answers 200, which broke the real 404s of `/thanks` and `/day30` (criteria 10 and 24) | the pause between tap and page [F-01] |
 | `Confirm` | a native `<dialog>` wrapping the real form; a title, one line, the dangerous button in ember, "Keep it" as the safe default; optional reason field | rotate link, cancel project, delete a referral, delete an image, lock the questionnaire again [F-24, F-34] |
 | `Empty` | a title, one line, an optional action; same measure and tone everywhere | no updates, no invoices, no clients, no images, no notes [F-37] |
@@ -57,6 +57,8 @@ Nothing else. No modal system, no component library.
 **Updates.** Grouped by day (Today, Yesterday, then the date). Unread: ember dot and ink title; read: muted. Opening the page marks all read, as now. Only the last 60 show, with a fold for older ones. [F-14]
 
 **Day 30.** A `day30.due` notice (in-portal and email) is written once, lazily, the first time the client's home is rendered after the unlock date; no scheduler exists and none is added. Text: "One month on: two things, under a minute." linking to `/day30`. [F-16]
+
+**Every client action confirms itself.** The ones that stay on the page already did: the questionnaire's "Saved a moment ago", its completion screen, the "Thank you, we have it" card after a push-back or a send-back. The four that redirect said nothing at all, so agreeing, signing off, sending or skipping the thank-you, and answering the month-on question now set a flash and the page they land on says it. Added 12 Sep at Ayush's ask.
 
 **Print views.** A "Print or save as PDF" button that calls `window.print()`, hidden on paper. [F-18]
 

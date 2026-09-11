@@ -133,6 +133,31 @@ test("the month-on notice is written once, and the updates page groups by day (F
   await backToBuilding(projectId);
 });
 
+test("the client hears back after an action that ends in a redirect", async ({ page }) => {
+  // Every client action confirms itself: the ones that stay on the page do it
+  // in the page, the ones that redirect do it with a toast on the page they
+  // land on. Before this, sending a testimonial or the month-on answer landed
+  // the client back home with nothing said at all (Ayush, 12 Sep).
+  const { token, projectId } = await freshLink(SEED_SLUG);
+  await backToBuilding(projectId);
+  await day30Open(projectId);
+  await query("UPDATE Project SET thanksSeenAt = NULL WHERE id = ?", [projectId]);
+  await query("DELETE FROM Testimonial WHERE projectId = ?", [projectId]);
+  await signInClient(page, token, projectId);
+
+  await page.goto(`/p/${token}/thanks`);
+  await page.getByRole("button", { name: /^send$/i }).click();
+  await expect(page.getByRole("status")).toContainText(/thank you, we have it/i);
+
+  await page.goto(`/p/${token}/day30`);
+  await page.locator('input[name="metricAfter"]').fill("58 percent");
+  await page.getByRole("button", { name: /approve and send/i }).click();
+  await expect(page.getByRole("status")).toContainText(/that is everything/i);
+
+  await query("DELETE FROM Testimonial WHERE projectId = ?", [projectId]);
+  await backToBuilding(projectId);
+});
+
 test("an admin action says it worked, and the irreversible ones ask first (F-30, F-34)", async ({ page }) => {
   const { projectId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);

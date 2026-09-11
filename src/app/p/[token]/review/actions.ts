@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { flash } from "@/lib/flash";
 import { CodePurpose, SignoffMethod } from "@/generated/prisma/enums";
 import { clientIp } from "@/lib/rate-limit";
 import { requestCode, verifyCode } from "@/modules/auth/client";
@@ -76,6 +77,7 @@ export async function confirmSignOffAction(prev: ReviewState, formData: FormData
     };
     return { step: "idle", message: why[result.reason] ?? "It did not go through." };
   }
+  await flash("Signed off. The balance invoice is on your page.");
   // docs/SEQUENCES.md 3: once, straight after the sign-off.
   redirect(`/p/${token}/thanks`);
 }
