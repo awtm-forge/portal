@@ -75,6 +75,13 @@ textarea.fld { min-height: 88px; resize: vertical; }
 .a-side .signed { margin-top: auto; padding: 0 4px; display: flex; flex-direction: column; gap: 3px; }
 .a-side .signout { padding: 0; font-size: 12px; color: var(--faint); text-align: left; }
 .a-main { flex: 1; min-width: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 22px; }
+/* The page's title row, with the page-level action at its right. Ending a
+   project lives here whatever the phase, so it is in one findable place and
+   never competes with the phase's own card (Ayush, 12 Sep). */
+.a-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 20px; flex-wrap: wrap; }
+.a-head > .stack { min-width: 0; }
+.a-head-act { margin-left: auto; flex: none; }
+.a-head-act .link-mono { display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px; }
 .a-title { font-family: var(--font-display-stack); margin: 0; font-size: 25px; font-weight: 600; letter-spacing: -0.02em; }
 .a-sub { font-family: var(--font-mono-stack); font-size: 12px; color: var(--muted); margin: 0; }
 .a-card { border: 1px solid var(--rule); background: var(--surface); border-radius: var(--r-1); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }

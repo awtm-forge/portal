@@ -164,6 +164,24 @@ test("an admin action says it worked, and the irreversible ones ask first (F-30,
   await backToBuilding(projectId);
 });
 
+test("ending a project is one tap from the top, in one slot whatever the phase", async ({ page }) => {
+  // Ayush asked twice where the cancel control was (11 and 12 Sep). It is a
+  // quiet link, but it is in the title row, not at the foot of the record.
+  const { projectId } = await freshLink(SEED_SLUG);
+  await backToBuilding(projectId);
+  await signInAdmin(page);
+  await page.goto(`/admin/projects/${projectId}`);
+  await expect(page.getByRole("button", { name: /cancel this project/i })).toBeInViewport();
+
+  // Delivered: the same slot carries Close, and Cancel is gone.
+  await day30Open(projectId);
+  await page.reload();
+  await expect(page.getByRole("button", { name: /cancel this project/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /close this project/i })).toBeInViewport();
+
+  await backToBuilding(projectId);
+});
+
 test("the dashboard says who each project is waiting on (F-20)", async ({ page }) => {
   const { projectId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);

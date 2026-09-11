@@ -111,12 +111,13 @@ and there is no client view with a field for them.
 first. The only delete in the system. Removes the row and writes an event
 saying it happened, so the fact survives without the details.
 
-**Close a project.** Project page, Day 30, Close this project, while the phase
-is `delivered`. It asks first. Tidies it away. The record stays readable at
-the same link, which does not expire.
+**Close a project.** Project page, top right under the header, Close this
+project, while the phase is `delivered`. It asks first. Tidies it away. The
+record stays readable at the same link, which does not expire.
 
-**Cancel a project.** Project page, the quiet "Cancel this project" link at
-the foot of the record. It opens a confirm that requires the reason. Available
+**Cancel a project.** Project page, top right under the header: the quiet
+"Cancel this project" link, in the same slot Close uses once a project is
+delivered. It opens a confirm that requires the reason. Available
 from any phase except delivered, closed and already cancelled. It creates no
 invoice and changes no issued one: whatever was raised stays raised, and a
 refund is a conversation, not a button. The client page says the project was

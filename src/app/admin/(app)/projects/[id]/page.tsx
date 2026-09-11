@@ -85,13 +85,51 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
 
   return (
     <AdminShell active="projects" adminName={admin.name}>
-      <div className="stack" style={{ gap: 6 }}>
-        <h1 className="a-title">{project.name}</h1>
-        <p className="a-sub">{c.businessName} · {TYPE_LABEL[project.typeOfWork]} · {PHASE_LABEL[project.phase]} · created {dayMonth(project.createdAt)}</p>
+      <div className="a-head">
+        <div className="stack" style={{ gap: 6 }}>
+          <h1 className="a-title">{project.name}</h1>
+          <p className="a-sub">{c.businessName} · {TYPE_LABEL[project.typeOfWork]} · {PHASE_LABEL[project.phase]} · created {dayMonth(project.createdAt)}</p>
+          {!ended && (
+            <p className="a-sub" style={{ color: waiting.on === "client" ? "var(--ember)" : "var(--ink)" }}>
+              Waiting on {WAITING_LABEL[waiting.on]}{waiting.on !== "nobody" ? ` for ${waiting.what}` : `: ${waiting.what}`}{waiting.since ? `, since ${dayMonth(waiting.since)}` : ""}.
+            </p>
+          )}
+        </div>
+        {/* Ending it: the same place on every project, at the top right under
+            the header, whatever the phase (Ayush, 12 Sep). It stays a quiet
+            link, because it must never compete with the phase's own card, and
+            it asks before it acts. */}
         {!ended && (
-          <p className="a-sub" style={{ color: waiting.on === "client" ? "var(--ember)" : "var(--ink)" }}>
-            Waiting on {WAITING_LABEL[waiting.on]}{waiting.on !== "nobody" ? ` for ${waiting.what}` : `: ${waiting.what}`}{waiting.since ? `, since ${dayMonth(waiting.since)}` : ""}.
-          </p>
+          <div className="a-head-act">
+            {project.phase === Phase.DELIVERED ? (
+              <Confirm
+                trigger="Close this project"
+                triggerClass="link-mono"
+                title="Close this project?"
+                line="The record stays readable at the same link, for you and for the client. Nothing else changes, and nothing is invoiced."
+                confirmLabel="Close it"
+                action={closeProjectAction}
+              >
+                <input type="hidden" name="projectId" value={project.id} />
+              </Confirm>
+            ) : (
+              <Confirm
+                trigger="Cancel this project"
+                triggerClass="link-mono"
+                title="Cancel this project?"
+                line="The client page will say it was closed, with the date. No invoice is created and no issued invoice changes. There is no way back from this."
+                confirmLabel="Cancel the project"
+                keepLabel="Keep it going"
+                action={cancelProjectAction}
+              >
+                <input type="hidden" name="projectId" value={project.id} />
+                <label className="stack" style={{ gap: 6 }}>
+                  <span className="lbl">Why, in a line. Required, and only we ever read it.</span>
+                  <input className="a-fld" name="reason" maxLength={500} required />
+                </label>
+              </Confirm>
+            )}
+          </div>
         )}
       </div>
       <div className="a-cols">
@@ -328,20 +366,6 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
                   <div><button className="a-btn ghost" type="submit">Save the notes</button></div>
                 </form>
               )}
-              {project.phase === Phase.DELIVERED && (
-                <div style={{ paddingTop: 8, borderTop: "1px solid var(--rule-soft)" }}>
-                  <Confirm
-                    trigger="Close this project"
-                    triggerClass="link-mono"
-                    title="Close this project?"
-                    line="The record stays readable at the same link, for you and for the client. Nothing else changes, and nothing is invoiced."
-                    confirmLabel="Close it"
-                    action={closeProjectAction}
-                  >
-                    <input type="hidden" name="projectId" value={project.id} />
-                  </Confirm>
-                </div>
-              )}
             </Fold>
           )}
 
@@ -437,25 +461,6 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             <div><Link className="a-btn ghost" href={`/admin/clients/${c.id}`}>Open the client</Link></div>
           </Fold>
 
-          {!ended && project.phase !== Phase.DELIVERED && (
-            <div style={{ paddingTop: 6 }}>
-              <Confirm
-                trigger="Cancel this project"
-                triggerClass="link-mono"
-                title="Cancel this project?"
-                line="The client page will say it was closed, with the date. No invoice is created and no issued invoice changes. There is no way back from this."
-                confirmLabel="Cancel the project"
-                keepLabel="Keep it going"
-                action={cancelProjectAction}
-              >
-                <input type="hidden" name="projectId" value={project.id} />
-                <label className="stack" style={{ gap: 6 }}>
-                  <span className="lbl">Why, in a line. Required, and only we ever read it.</span>
-                  <input className="a-fld" name="reason" maxLength={500} required />
-                </label>
-              </Confirm>
-            </div>
-          )}
         </div>
 
         <div className="aside">

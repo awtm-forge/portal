@@ -36,8 +36,11 @@ async function shot(page: Page, name: string, width: string) {
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${out}/${name}--${width}.png`, fullPage: true, timeout: 15_000 });
 }
+/** Steps the other frames depend on: a filtered rerun still has to sign in. */
+const ALWAYS = new Set(["admin-signin"]);
+
 async function attempt(label: string, fn: () => Promise<void>) {
-  if (only.length > 0 && !only.includes(label)) return;
+  if (only.length > 0 && !only.includes(label) && !ALWAYS.has(label)) return;
   log(`begin ${label}`);
   try { await fn(); } catch (e) { const m = `${label}: ${String(e).split("\n")[0].slice(0, 160)}`; failures.push(m); log(`FAIL ${m}`); }
 }
