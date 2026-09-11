@@ -75,6 +75,7 @@ model Client {
   files        IntakeFile[]
   intakeVersions IntakeVersion[]
   intakeChanges  IntakeChangeRequest[]
+  notifications  ClientNotification[]
 }
 
 enum TypeOfWork {
@@ -268,6 +269,24 @@ enum IntakeChangeStatus {
   OPEN
   DECLINED
   SENT
+}
+
+/// What the client is told (Q19): a record of the moments that concern them,
+/// shown in the portal with an unread mark and, for the ones that ask them to
+/// look or act, emailed too. Written by the notifications subscriber from
+/// activity events, so it never carries an internal amount.
+model ClientNotification {
+  id        String    @id @default(cuid())
+  clientId  String
+  client    Client    @relation(fields: [clientId], references: [id])
+  kind      String
+  title     String    @db.VarChar(300)
+  body      String    @db.Text
+  path      String    @db.VarChar(120)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([clientId, createdAt])
 }
 
 model ImageLibrary {

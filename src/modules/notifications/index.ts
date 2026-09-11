@@ -10,6 +10,7 @@ import { adminBase } from "@/lib/hosts";
 import { requestLogger, safeError } from "@/lib/logger";
 import { sendPlain, teamNotifyAddress } from "@/lib/mail";
 import { subscribe, type Activity } from "@/modules/events";
+import { tellClient } from "@/modules/notifications/client";
 
 /** Team links go to the team host, which is a different name from the
  *  client's when the two are split (ADR 0013). */
@@ -127,6 +128,9 @@ export async function sendLinkEmail(args: {
 }
 
 /** Import for the side effect of registering subscribers. */
+/** The client's own notifications and emails (Q19), a second subscriber. */
+subscribe(tellClient);
+
 export function ready(): true {
   return true;
 }

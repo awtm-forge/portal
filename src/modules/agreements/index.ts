@@ -66,7 +66,7 @@ export type SendResult = { ok: true; version: number } | { ok: false; reason: "n
  * increments the version, which is what a client's push-back leads to.
  */
 export async function send(projectId: string): Promise<SendResult> {
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const project = await tx.project.findUnique({
       where: { id: projectId },
       include: { client: { include: { intake: true } }, agreement: true },
@@ -83,8 +83,14 @@ export async function send(projectId: string): Promise<SendResult> {
     const version = resent ? project.agreement.version + 1 : project.agreement.version;
     await tx.agreement.update({ where: { projectId }, data: { sentAt: new Date(), version } });
     await transition(tx, project, "agreement_sent");
-    return { ok: true, version } as const;
+    return { ok: true as const, version, clientId: project.clientId, businessName: project.client.businessName, projectName: project.name };
   });
+  if (result.ok) {
+    // The client is told their agreement is ready (Q19). Never carries the
+    // internal cost: the payload is names and a version only.
+    await emit({ type: "agreement.sent", projectId, actor: "team", payload: { clientId: result.clientId, businessName: result.businessName, projectName: result.projectName, version: result.version } });
+  }
+  return result.ok ? { ok: true, version: result.version } : result;
 }
 
 /** INTAKE-SPEC 13.3: the override records who and when. */

@@ -323,6 +323,17 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 /* The questionnaire completion badge (item 6). */
 .done-mark { width: 52px; height: 52px; border-radius: 50%; background: var(--ember); display: inline-flex; align-items: center; justify-content: center; }
 
+/* The notifications bell (Q19) and the updates list. */
+.p-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); text-decoration: none; flex: none; }
+.p-bell:hover, .p-bell[aria-current="page"] { border-color: var(--ember); color: var(--ember); }
+.p-bell-dot { position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--ember); color: var(--on-ember); font-family: var(--font-mono-stack); font-size: 9px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.notice { display: block; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 2px; background: var(--surface); text-decoration: none; color: inherit; }
+.notice:hover { border-color: var(--ember); }
+.notice.unread { border-left: 3px solid var(--ember); }
+.notice-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.notice-title { font-family: var(--font-display-stack); font-weight: 600; font-size: 15px; color: var(--ink); }
+.notice-body { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
 /* A list of options is a set to scan, not a queue to scroll. */
 .opts { display: flex; flex-direction: column; gap: 6px; }
 

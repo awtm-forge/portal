@@ -2,9 +2,10 @@ import Link from "next/link";
 import "./portal.css";
 import { phoneDigits } from "@/lib/format";
 import { navFor } from "@/modules/clients";
+import { unreadCount } from "@/modules/notifications/client";
 import { company } from "@/modules/settings";
 
-export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30";
+export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates";
 
 /**
  * Every client page sits in this. The shell spans the window and the content
@@ -33,6 +34,7 @@ export async function ClientShell({
 }) {
   const c = await company();
   const has = nav ? await navFor(nav.clientId) : null;
+  const unread = nav ? await unreadCount(nav.clientId) : 0;
   const home = nav ? `/p/${nav.token}` : null;
   const links: { key: ClientPage; label: string; href: string }[] = home && has
     ? [
@@ -64,6 +66,12 @@ export async function ClientShell({
             <span className="c-brand">awtm <b>forge</b></span>
           )}
           <div className="p-head-actions">
+            {home && (
+              <Link className="p-bell" href={`${home}/updates`} aria-label={unread > 0 ? `Updates, ${unread} new` : "Updates"} aria-current={nav?.current === "updates" ? "page" : undefined}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+                {unread > 0 && <span className="p-bell-dot">{unread > 9 ? "9+" : unread}</span>}
+              </Link>
+            )}
             <a className="p-pill" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>Book a meeting</a>
             <details className="reach">
               <summary className="p-pill">Reach us</summary>
