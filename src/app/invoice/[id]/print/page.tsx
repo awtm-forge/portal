@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { InvoiceDocument } from "@/components/portal/InvoiceDocument";
+import { PrintButton } from "@/components/portal/PrintButton";
 import { currentAdmin } from "@/modules/auth/admin";
 import { currentClientSession } from "@/modules/auth/client";
 import { forPrint } from "@/modules/invoices";
@@ -37,7 +38,8 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         }}
         projectName={invoice.project.name}
       />
-      <p className="help no-print" style={{ padding: "0 20px 24px" }}>Print this page, and choose Save as PDF.</p>
+      <PrintButton />
+      <p className="help no-print" style={{ padding: "12px 20px 24px" }}>In the print dialog, choose Save as PDF to keep a copy.</p>
     </div>
   );
 }

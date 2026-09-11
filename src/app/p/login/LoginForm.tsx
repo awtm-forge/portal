@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ResendButton } from "@/components/portal/ResendButton";
 import { sendLoginCodeAction, verifyLoginCodeAction, type LoginState } from "./actions";
 
 export function LoginForm() {
@@ -20,8 +21,8 @@ export function LoginForm() {
         <form action={action} className="stack" style={{ gap: 12 }}>
           <label className="visually-hidden" htmlFor="login-email">Your email</label>
           <input id="login-email" className="fld" name="email" type="email" autoComplete="email" defaultValue={state.email} placeholder="you@yourbusiness.com" required autoFocus />
-          <button className="btn-full" type="submit" disabled={pending}>{pending ? "Sending" : "Email me a code"}</button>
-          {state.message && <p className="help err">{state.message}</p>}
+          {state.message && <p className="msg">{state.message}</p>}
+          <button className="btn-full" type="submit" disabled={pending}>{pending ? "Sending" : state.message ? "Try again" : "Email me a code"}</button>
         </form>
       </div>
     );
@@ -36,12 +37,13 @@ export function LoginForm() {
       </div>
       <form action={action} className="stack" style={{ gap: 12 }}>
         <input type="hidden" name="email" value={state.email ?? ""} />
+        <label className="k" htmlFor="login-code" style={{ color: "var(--muted)" }}>The six digit code from the email</label>
         <div className="code-boxes">
-          <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required autoFocus disabled={state.locked || pending} aria-label="Six digit code" />
+          <input id="login-code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} placeholder="000000" required autoFocus disabled={state.locked || pending} aria-describedby={state.message ? "login-msg" : undefined} />
         </div>
-        {state.message && <p className="help err">{state.message}</p>}
+        {state.message && <p className="msg" id="login-msg">{state.message}</p>}
         <button className="btn-full" type="submit" disabled={state.locked || pending}>{pending ? "Checking" : "Log in"}</button>
-        <button className="link-mono" type="submit" name="intent" value="resend" disabled={pending} style={{ textAlign: "center" }}>Send it again</button>
+        <ResendButton pending={pending} />
       </form>
     </div>
   );

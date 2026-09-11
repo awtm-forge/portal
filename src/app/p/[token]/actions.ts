@@ -17,7 +17,7 @@ export async function sendCodeAction(_prev: CodeState, formData: FormData): Prom
       step: "start",
       message: result.reason === "rate_limited"
         ? "Too many codes asked for. Wait a few minutes and try again."
-        : "The email did not go out. Message Rahul on WhatsApp and we will sort it.",
+        : "The email did not go out. Try again in a moment, and message Rahul on WhatsApp if it keeps happening.",
     };
   }
   return { step: "enter", sentTo: result.sentTo };

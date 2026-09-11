@@ -44,7 +44,7 @@ export function Day30Form({ token, view, draft }: { token: string; view: Day30Cl
             ? "This is what you wrote on the day we delivered. Change anything you like, or leave it."
             : "Optional. A line or two in your own words."}
         </p>
-        <textarea className="fld" name="quote" rows={5} maxLength={4000} defaultValue={v?.quote ?? draft} />
+        <textarea className="fld" name="quote" rows={3} maxLength={4000} defaultValue={v?.quote ?? draft} />
       </div>
 
       <div className="stack" style={{ gap: 10 }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ResendButton } from "@/components/portal/ResendButton";
 import { sendCodeAction, verifyCodeAction, type CodeState } from "./actions";
 
 export function CodeScreen({ token, personName, maskedEmail }: { token: string; personName: string; maskedEmail: string }) {
@@ -22,8 +23,8 @@ export function CodeScreen({ token, personName, maskedEmail }: { token: string; 
         </div>
         <form action={action} className="stack" style={{ gap: 12 }}>
           <input type="hidden" name="token" value={token} />
-          <button className="btn-full" type="submit" disabled={pending}>{pending ? "Sending" : "Email me a code"}</button>
-          {state.message && <p className="help err">{state.message}</p>}
+          {state.message && <p className="msg">{state.message}</p>}
+          <button className="btn-full" type="submit" disabled={pending}>{pending ? "Sending" : state.message ? "Try again" : "Email me a code"}</button>
         </form>
       </div>
     );
@@ -51,11 +52,12 @@ export function CodeScreen({ token, personName, maskedEmail }: { token: string; 
             required
             autoFocus
             disabled={state.locked || pending}
+            aria-describedby={state.message ? "code-msg" : undefined}
           />
         </div>
-        {state.message && <p className="help err">{state.message}</p>}
+        {state.message && <p className="msg" id="code-msg">{state.message}</p>}
         <button className="btn-full" type="submit" disabled={state.locked || pending}>{pending ? "Checking" : "Open my page"}</button>
-        <button className="link-mono" type="submit" name="intent" value="resend" disabled={pending} style={{ textAlign: "center" }}>Send it again</button>
+        <ResendButton pending={pending} />
       </form>
     </div>
   );

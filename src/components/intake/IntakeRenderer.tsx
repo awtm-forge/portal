@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { StickyAction } from "@/components/ui/StickyAction";
 import type { IntakeDocument, Question, Section } from "@/modules/intake/document";
 import type { Answers } from "@/modules/intake/answers";
 import type { IntakeStateClientView } from "@/modules/serializers";
@@ -58,6 +59,7 @@ export function IntakeRenderer(p: RendererProps) {
     return idx === -1 ? sections.length - 1 : idx;
   }, [sections, p.initialDone]);
   const [open, setOpen] = useState<number>(firstOpen);
+  const [signedOut, setSignedOut] = useState(false);
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
   const post = useCallback(async (action: string, body: unknown): Promise<{ ok: boolean; message?: string; at?: string }> => {
@@ -65,6 +67,13 @@ export function IntakeRenderer(p: RendererProps) {
     try {
       const res = await fetch(`${p.apiBase}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string; at?: string };
+      // The session ran out under them (F-06): say so, and that nothing typed
+      // so far is lost, rather than blaming the connection.
+      if (res.status === 401) {
+        setSignedOut(true);
+        setStatus({ kind: "error", message: "You were signed out. Everything saved so far is kept." });
+        return { ok: false, message: "You were signed out." };
+      }
       if (!res.ok || !data.ok) {
         setStatus({ kind: "error", message: data.message ?? "Could not save. Check the connection." });
         return { ok: false, message: data.message };
@@ -167,6 +176,12 @@ export function IntakeRenderer(p: RendererProps) {
 
   const doneCount = sections.filter((s) => done.has(s.key)).length;
   const lastSavedText = statusText(status);
+  const signedOutNote = signedOut && p.mode === "client" ? (
+    <p className="msg" style={{ marginTop: 8 }}>
+      You were signed out. Your answers are saved.{" "}
+      <a href={p.homeHref ?? "."} style={{ color: "inherit" }}>Open your page again</a> to carry on; it asks for a code first.
+    </p>
+  ) : null;
 
   // The completion screen (item 6): a clear "you have submitted it" moment,
   // shown once after the first send, before the read-only answers.
@@ -196,19 +211,35 @@ export function IntakeRenderer(p: RendererProps) {
     const editable = state.kind === "changing";
     const sentLine = `Sent on ${formatDay(submitted)}.${lastSentAt && lastSentAt !== submitted ? ` Changes sent ${formatDay(lastSentAt)}.` : ""}`;
     const accessToggle = (k: string, v: boolean) => { setAccess((a) => ({ ...a, [k]: v })); void post("access", { key: k, granted: v }); };
+    // The ask lives at the top, beside the status that explains the lock
+    // (F-08); a line at the foot points back up for whoever read to the end.
+    const askForm = p.mode === "client" && state.kind === "locked" ? (
+      <div className="card" style={{ margin: "14px 20px 0", padding: "16px" }} id="ask-change">
+        <div className="stack" style={{ gap: 10 }}>
+          <p className="sec-name" style={{ fontSize: 15 }}>Need to change an answer?</p>
+          <p className="c-sub">Tell us what needs changing, in a line, and we open it for you.</p>
+          <form className="stack" style={{ gap: 10 }} onSubmit={askToOpen}>
+            <label className="visually-hidden" htmlFor="ask-note">What needs changing, in a line</label>
+            <textarea id="ask-note" className="fld" name="note" rows={2} maxLength={2000} placeholder="The platform has changed since we spoke." required />
+            {message && <p className="msg">{message}</p>}
+            <button className="btn-full ghost" type="submit" disabled={status.kind === "saving"}>Request a change</button>
+          </form>
+        </div>
+      </div>
+    ) : null;
     return (
       <div>
-        <div style={{ padding: "24px 20px 18px" }} className="stack">
+        <div style={{ padding: "24px 20px 0" }} className="stack">
           <p className="k">{p.doc.title}</p>
           <h1 className="c-title" style={{ marginTop: 10 }}>{p.mode === "client" ? "Your answers" : "Their answers"}</h1>
           {p.mode === "client" && state.kind === "changing" && (
-            <p className="c-sub" style={{ marginTop: 10 }}>Open for changes. Tap an answer to change it, then press Send the changes at the bottom.</p>
+            <p className="c-sub" style={{ marginTop: 10 }}>Open for changes. Tap an answer to change it, then press Send the changes.</p>
           )}
           {p.mode === "client" && state.kind === "asked" && (
             <p className="c-sub" style={{ marginTop: 10 }}>{sentLine} You asked on {formatDay(state.askedAt)} to change something. We will open it and message you.</p>
           )}
           {p.mode === "client" && state.kind === "locked" && (
-            <p className="c-sub" style={{ marginTop: 10 }}>{sentLine} It is locked now, so nothing changes by accident. If something needs changing, ask at the bottom.</p>
+            <p className="c-sub" style={{ marginTop: 10 }}>{sentLine} It is locked now, so nothing changes by accident.</p>
           )}
           {p.mode === "client" && state.kind === "locked" && state.declinedReply && (
             <p className="c-sub" style={{ marginTop: 8, color: "var(--ember)" }}>We could not open it this time: {state.declinedReply}</p>
@@ -216,53 +247,58 @@ export function IntakeRenderer(p: RendererProps) {
           {p.mode === "team" && (
             <p className="c-sub" style={{ marginTop: 10 }}>{sentLine}{editable ? " Open for changes. What you type here is marked as taken on a call." : " Locked. Open it for changes from their page to type into it."}</p>
           )}
-          <p className="help" style={{ marginTop: 8 }}>{lastSavedText}</p>
+          {(editable || status.kind !== "idle") && <p className="help" style={{ marginTop: 8 }}>{lastSavedText}</p>}
+          {signedOutNote}
         </div>
-        <div className="stack" style={{ gap: 12 }}>
-          {sections.map((s) => (
-            <div key={s.key} className="card" style={{ margin: "0 20px" }}>
-              <div className="card-h open"><span className="sec-name">{s.title}</span><span className={`tag${editable ? " ember" : ""}`}>{editable ? "Open" : "Done"}</span></div>
-              <div className="card-b">
-                {s.access_items && <AccessBlock items={s.access_items} access={access} kickoff={p.kickoffDateText} onToggle={accessToggle} />}
-                {s.questions.map((q) => (
-                  <div key={q.key} className="stack" style={{ gap: 6 }}>
-                    <p className="q">{q.text}</p>
-                    {editable && editingKey === q.key ? (
-                      <>
-                        <Field q={q} answers={answers} files={files} p={p} setLocal={setLocal} saveNow={saveNow} saveDebounced={saveDebounced} setFiles={setFiles} setStatus={setStatus} post={post} />
-                        <button className="btn-full ghost" type="button" onClick={() => setEditingKey(null)}>Done with this answer</button>
-                      </>
-                    ) : editable ? (
-                      <button type="button" className="fld" style={{ textAlign: "left", cursor: "pointer", minHeight: 44 }} onClick={() => setEditingKey(q.key)}>
-                        <ReadOnlyValue q={q} answers={answers} files={files} />
-                      </button>
-                    ) : (
-                      <div className="fld" style={{ minHeight: 44 }}><ReadOnlyValue q={q} answers={answers} files={files} /></div>
-                    )}
-                  </div>
-                ))}
+        {askForm}
+        <div className="stack" style={{ gap: 12, marginTop: 18 }}>
+          {sections.map((s) => {
+            // Read-only: only what they answered, and one line for the rest,
+            // instead of a placeholder per question that nothing can act on (F-07).
+            const shown = editable ? s.questions : s.questions.filter((q) => !isEmptyAnswer(q, answers));
+            const unanswered = s.questions.length - shown.length;
+            return (
+              <div key={s.key} className="card" style={{ margin: "0 20px" }}>
+                <div className="card-h open"><span className="sec-name">{s.title}</span><span className={`tag${editable ? " ember" : ""}`}>{editable ? "Open" : "Done"}</span></div>
+                <div className="card-b">
+                  {s.access_items && <AccessBlock items={s.access_items} access={access} kickoff={p.kickoffDateText} onToggle={accessToggle} />}
+                  {shown.map((q) => (
+                    <div key={q.key} className="stack" style={{ gap: 6 }}>
+                      <p className="q">{q.text}</p>
+                      {editable && editingKey === q.key ? (
+                        <>
+                          <Field q={q} answers={answers} files={files} p={p} setLocal={setLocal} saveNow={saveNow} saveDebounced={saveDebounced} setFiles={setFiles} setStatus={setStatus} post={post} />
+                          <button className="btn-full ghost" type="button" onClick={() => setEditingKey(null)}>Done with this answer</button>
+                        </>
+                      ) : editable ? (
+                        <button type="button" className="fld" style={{ textAlign: "left", cursor: "pointer", minHeight: 44 }} onClick={() => setEditingKey(q.key)}>
+                          <ReadOnlyValue q={q} answers={answers} files={files} editable />
+                        </button>
+                      ) : (
+                        <div className="fld" style={{ minHeight: 44 }}><ReadOnlyValue q={q} answers={answers} files={files} /></div>
+                      )}
+                    </div>
+                  ))}
+                  {!editable && unanswered > 0 && (
+                    <p className="help">{shown.length === 0 && !s.access_items ? "Nothing answered in this section." : `${unanswered} not answered.`}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         {p.mode === "client" && editable && (
           <div style={{ padding: "16px 20px 0" }} className="stack">
-            {message && <p className="help err">{message}</p>}
-            <button className="btn-full" type="button" onClick={sendChanges} disabled={status.kind === "saving"}>Send the changes</button>
+            {message && <p className="msg">{message}</p>}
+            <button id="send-changes" className="btn-full" type="button" onClick={sendChanges} disabled={status.kind === "saving"}>Send the changes</button>
             <p className="help" style={{ textAlign: "center" }}>It locks again after this, and we see what changed.</p>
+            <StickyAction targetId="send-changes" label="Send the changes" hint="Done changing?" />
           </div>
         )}
         {p.mode === "client" && state.kind === "locked" && (
-          <div className="stack" style={{ padding: "16px 20px 0", gap: 10 }}>
-            <p className="sec-name" style={{ fontSize: 15 }}>Need to change an answer?</p>
-            <p className="c-sub">The questionnaire is locked so nothing changes by accident. Tell us what needs changing and we open it for you.</p>
-            <form className="stack" style={{ gap: 10 }} onSubmit={askToOpen}>
-              <label className="visually-hidden" htmlFor="ask-note">What needs changing, in a line</label>
-              <textarea id="ask-note" className="fld" name="note" rows={3} maxLength={2000} placeholder="What needs changing, in a line" required />
-              {message && <p className="help err">{message}</p>}
-              <button className="btn-full ghost" type="submit" disabled={status.kind === "saving"}>Request a change</button>
-            </form>
-          </div>
+          <p className="help" style={{ padding: "16px 20px 0", textAlign: "center" }}>
+            Need to change an answer? <a href="#ask-change" style={{ color: "var(--ember)" }}>Ask at the top of this page</a>.
+          </p>
         )}
         <RuleBlock />
       </div>
@@ -278,9 +314,10 @@ export function IntakeRenderer(p: RendererProps) {
         {p.mode === "team" && <p className="help" style={{ marginTop: 8, color: "var(--ember)" }}>Every answer typed here is marked as taken on a call, not entered by the client.</p>}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16 }}>
           <div className="progress"><div style={{ width: `${Math.round((doneCount / Math.max(1, sections.length)) * 100)}%` }} /></div>
-          <span className="mono-sm" style={{ fontSize: "10.5px", flex: "none" }}>{doneCount} of {sections.length}</span>
+          <span className="mono-sm" style={{ flex: "none" }}>{doneCount} of {sections.length}</span>
         </div>
         <p className="help" style={{ marginTop: 10 }}>{lastSavedText}{doneCount > 0 ? ". Tap a finished section to change something in it" : ""}</p>
+        {signedOutNote}
       </div>
 
       <div className="stack" style={{ gap: 12 }}>
@@ -311,13 +348,16 @@ export function IntakeRenderer(p: RendererProps) {
                       )}
                     </div>
                   ))}
-                  {message && <p className="help err">{message}</p>}
+                  {message && <p className="msg">{message}</p>}
                   {i < sections.length - 1 ? (
-                    <button className="btn-full" type="button" onClick={saveAndCarryOn} disabled={status.kind === "saving"}>Save and carry on</button>
+                    <button id="section-action" className="btn-full" type="button" onClick={saveAndCarryOn} disabled={status.kind === "saving"}>Save and carry on</button>
                   ) : p.mode === "client" ? (
-                    <button className="btn-full" type="button" onClick={finishAndSend} disabled={status.kind === "saving"}>Finish and send</button>
+                    <button id="section-action" className="btn-full" type="button" onClick={finishAndSend} disabled={status.kind === "saving"}>Finish and send</button>
                   ) : (
-                    <button className="btn-full ghost" type="button" onClick={saveAndCarryOn} disabled={status.kind === "saving"}>Save. The client sends it.</button>
+                    <button id="section-action" className="btn-full ghost" type="button" onClick={saveAndCarryOn} disabled={status.kind === "saving"}>Save. The client sends it.</button>
+                  )}
+                  {p.mode === "client" && (
+                    <StickyAction key={s.key} targetId="section-action" label={i < sections.length - 1 ? "Save and carry on" : "Finish and send"} hint={`Section ${i + 1} of ${sections.length}`} />
                   )}
                   {i === sections.length - 1 && p.mode === "client" && <p className="help" style={{ textAlign: "center" }}>After sending it locks. If something needs changing later, you can ask us to open it from this page.</p>}
                   {i > 0 && (
@@ -598,9 +638,30 @@ function UploadField({ q, ids, files, p, setFiles, setLocal, setStatus, post }: 
   );
 }
 
-function ReadOnlyValue({ q, answers, files }: { q: Question; answers: Answers; files: Record<string, FileInfo> }) {
+/** True when nothing usable was answered, by the same reading ReadOnlyValue gives it. */
+function isEmptyAnswer(q: Question, answers: Answers): boolean {
   const a = answers[q.key];
-  const empty = <span style={{ color: "var(--faint)" }}>Not answered. Tap to add.</span>;
+  if (!a) return true;
+  switch (q.type) {
+    case "short_text": case "long_text": case "link":
+      return !(typeof a.value === "string" && a.value);
+    case "yes_no":
+      return a.value === undefined;
+    case "pick_one":
+      return !q.options.some((o) => o.id === a.value);
+    case "pick_many": case "image_choice": {
+      const ids = Array.isArray(a.value) ? (a.value as string[]) : [];
+      return !q.options.some((o) => ids.includes(o.id));
+    }
+    case "upload":
+      return (a.files?.length ?? 0) === 0;
+  }
+}
+
+/** "Tap to add" only where a tap does something (F-07). */
+function ReadOnlyValue({ q, answers, files, editable = false }: { q: Question; answers: Answers; files: Record<string, FileInfo>; editable?: boolean }) {
+  const a = answers[q.key];
+  const empty = <span style={{ color: "var(--faint)" }}>{editable ? "Not answered. Tap to add." : "Not answered."}</span>;
   if (!a) return empty;
   switch (q.type) {
     case "short_text": case "long_text": case "link":

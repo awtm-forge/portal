@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
+import { StickyAction } from "@/components/ui/StickyAction";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { projectScope } from "../scope";
@@ -55,7 +56,13 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
         </div>
       )}
 
-      {open && <div style={{ marginTop: 22 }}><ReviewControls token={token} signoffPersonName={project.signoffPersonName} /></div>}
+      {open && (
+        <div id="review-choice" tabIndex={-1} style={{ marginTop: 22, outline: "none" }}>
+          <ReviewControls token={token} signoffPersonName={project.signoffPersonName} />
+        </div>
+      )}
+      {/* Both choices, kept within reach while they read (F-05). The bar scrolls to them; it never signs off for them. */}
+      {open && <StickyAction targetId="review-choice" label="Say how it went" hint="Checked it? Then" />}
 
       {earlier.length > 0 && (
         <div style={{ padding: "22px 20px 0" }}>

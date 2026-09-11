@@ -15,6 +15,7 @@ export function AgreementDocument({ view, projectName, businessName }: { view: A
           <p className="k">What we agreed</p>
           <h1 className="c-title">{projectName}</h1>
           <p className="c-sub">for {businessName}</p>
+          {view.isAgreed && <p className="doc-stamp-line">Agreed by {view.agreedByName} on {view.agreedAt}</p>}
         </div>
       </header>
 
@@ -45,10 +46,10 @@ export function AgreementDocument({ view, projectName, businessName }: { view: A
       <section className="doc-sec">
         <h2>Dates</h2>
         <dl className="pairs">
-          {view.startDate && <><dt>Start</dt><dd>{view.startDate}</dd></>}
-          {view.launchTargetDate && <><dt>Launch target</dt><dd>{view.launchTargetDate}</dd></>}
+          {view.startDate && <div className="pair"><dt>Start</dt><dd>{view.startDate}</dd></div>}
+          {view.launchTargetDate && <div className="pair"><dt>Launch target</dt><dd>{view.launchTargetDate}</dd></div>}
           {view.milestones.map((m) => (
-            <span key={`${m.label}-${m.date}`} style={{ display: "contents" }}><dt>{m.label}</dt><dd>{prettyDate(m.date)}</dd></span>
+            <div className="pair" key={`${m.label}-${m.date}`}><dt>{m.label}</dt><dd>{prettyDate(m.date)}</dd></div>
           ))}
         </dl>
         <p className="help">Dates, not sign-offs. The only thing you sign off is the delivery.</p>
@@ -57,9 +58,9 @@ export function AgreementDocument({ view, projectName, businessName }: { view: A
       <section className="doc-sec">
         <h2>The price</h2>
         <dl className="pairs">
-          <dt>Total, fixed</dt><dd>{view.total}</dd>
-          <dt>Advance, on agreeing</dt><dd>{view.advance}</dd>
-          <dt>Balance, when you sign off the delivery</dt><dd>{view.balance}</dd>
+          <div className="pair"><dt>Total, fixed</dt><dd>{view.total}</dd></div>
+          <div className="pair"><dt>Advance, on agreeing</dt><dd>{view.advance}</dd></div>
+          <div className="pair"><dt>Balance, when you sign off the delivery</dt><dd>{view.balance}</dd></div>
         </dl>
         <p className="help">Two invoices, and only two. Nothing is invoiced for work you have not accepted.</p>
       </section>

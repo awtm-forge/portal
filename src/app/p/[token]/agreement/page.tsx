@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AgreementDocument } from "@/components/portal/AgreementDocument";
 import { ClientShell } from "@/components/portal/ClientShell";
+import { StickyAction } from "@/components/ui/StickyAction";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { projectScope } from "../scope";
@@ -23,6 +24,8 @@ export default async function ClientAgreementPage({ params }: { params: Promise<
       <AgreementDocument view={view} projectName={project.name} businessName={client.businessName} />
 
       {open && <AgreeControls token={token} signoffPersonName={project.signoffPersonName} />}
+      {/* The one action stays within reach while they read (F-05). It scrolls to the real button; it never agrees for them. */}
+      {open && <StickyAction targetId="agree-btn" label="I agree" hint="Read it through, then" />}
 
       {!open && !view.isAgreed && (
         <div className="card" style={{ margin: "0 20px", padding: "18px 16px" }}>

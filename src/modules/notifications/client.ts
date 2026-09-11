@@ -4,6 +4,10 @@
  * row, shown in the portal with an unread mark, and for the ones that ask them
  * to look or act it also emails them, linking to their page. The payloads are
  * serialized (ADR 0009), so an internal amount can never reach here.
+ *
+ * One notice is not an event: the month-on page opening is a date, not an
+ * action, and there is no scheduler by design. `tellDay30Due` is written once,
+ * the first time the client's page renders after the unlock.
  */
 import { db } from "@/lib/db";
 import { clientUrl } from "@/lib/request-origin";
@@ -11,7 +15,7 @@ import { requestLogger, safeError } from "@/lib/logger";
 import { sendPlain } from "@/lib/mail";
 import type { Activity, ActivityPayload, EventType } from "@/modules/events";
 
-type Notice = { subject: string; title: string; body: string; path: string; email: boolean };
+export type Notice = { subject: string; title: string; body: string; path: string; email: boolean };
 
 /** Pure: the client-facing notice for an event, or null when it is not the client's concern. */
 export function clientNotice(type: EventType, payload: ActivityPayload): Notice | null {
@@ -62,6 +66,15 @@ export function clientNotice(type: EventType, payload: ActivityPayload): Notice 
   }
 }
 
+/** Pure: the month-on notice, so the wording is testable beside the others. */
+export const DAY30_DUE: Notice = {
+  subject: "One month on",
+  title: "One month on: two things, under a minute",
+  body: "How is the number now, and a line in your words. Then we leave you alone.",
+  path: "/day30",
+  email: true,
+};
+
 async function clientIdFor(activity: Activity): Promise<string | null> {
   const fromPayload = activity.payload.clientId;
   if (typeof fromPayload === "string" && fromPayload) return fromPayload;
@@ -72,6 +85,33 @@ async function clientIdFor(activity: Activity): Promise<string | null> {
   return null;
 }
 
+/** Writes the row, and emails when the notice asks for it. Throws; callers decide how loud. */
+async function deliver(clientId: string, kind: string, notice: Notice): Promise<void> {
+  const client = await db.client.findUnique({ where: { id: clientId }, select: { contactEmail: true, contactName: true, businessName: true } });
+  if (!client) return;
+
+  await db.clientNotification.create({ data: { clientId, kind, title: notice.title, body: notice.body, path: notice.path } });
+
+  if (notice.email) {
+    const link = await clientUrl("/p/me");
+    const firstName = client.contactName.trim().split(/\s+/)[0] || client.contactName;
+    const text = [
+      `Hello ${firstName},`,
+      "",
+      notice.body,
+      "",
+      "Open your page:",
+      link,
+      "",
+      "It will ask for a six digit code the first time on a new phone or laptop. That code comes to this address. There is no password, and there never will be one.",
+      "",
+      "Rahul",
+      "awtm forge",
+    ].join("\n");
+    await sendPlain(client.contactEmail, `awtm forge, ${notice.subject}`, text);
+  }
+}
+
 /** The subscriber. Best effort: a failure to tell the client never breaks the change that caused it. */
 export async function tellClient(activity: Activity): Promise<void> {
   const notice = clientNotice(activity.type, activity.payload);
@@ -79,31 +119,23 @@ export async function tellClient(activity: Activity): Promise<void> {
   try {
     const clientId = await clientIdFor(activity);
     if (!clientId) return;
-    const client = await db.client.findUnique({ where: { id: clientId }, select: { contactEmail: true, contactName: true, businessName: true } });
-    if (!client) return;
-
-    await db.clientNotification.create({ data: { clientId, kind: activity.type, title: notice.title, body: notice.body, path: notice.path } });
-
-    if (notice.email) {
-      const link = await clientUrl("/p/me");
-      const firstName = client.contactName.trim().split(/\s+/)[0] || client.contactName;
-      const text = [
-        `Hello ${firstName},`,
-        "",
-        notice.body,
-        "",
-        "Open your page:",
-        link,
-        "",
-        "It will ask for a six digit code the first time on a new phone or laptop. That code comes to this address. There is no password, and there never will be one.",
-        "",
-        "Rahul",
-        "awtm forge",
-      ].join("\n");
-      await sendPlain(client.contactEmail, `awtm forge, ${notice.subject}`, text);
-    }
+    await deliver(clientId, activity.type, notice);
   } catch (error) {
     await requestLogger.error("client notification not sent", { type: activity.type, error: safeError(error) });
+  }
+}
+
+/**
+ * The month-on page has opened (F-16). Once per client: a second render while
+ * the first is still writing could double it, which is harmless and rare.
+ */
+export async function tellDay30Due(clientId: string): Promise<void> {
+  try {
+    const already = await db.clientNotification.findFirst({ where: { clientId, kind: "day30.due" }, select: { id: true } });
+    if (already) return;
+    await deliver(clientId, "day30.due", DAY30_DUE);
+  } catch (error) {
+    await requestLogger.error("client notification not sent", { type: "day30.due", error: safeError(error) });
   }
 }
 

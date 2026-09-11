@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ResendButton } from "@/components/portal/ResendButton";
 import { confirmSignOffAction, requestChangesAction, startSignOffAction, type ReviewState } from "./actions";
 
 /**
@@ -45,12 +46,12 @@ export function ReviewControls({ token, signoffPersonName }: { token: string; si
           <div className="code-boxes">
             <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required autoFocus disabled={state.locked || pending} aria-label="Six digit code" />
           </div>
-          {state.message && <p className="help err">{state.message}</p>}
+          {state.message && <p className="msg">{state.message}</p>}
           <button className="btn-full" type="submit" disabled={state.locked || pending}>{pending ? "Checking" : "Confirm and sign off"}</button>
         </form>
         <form action={action}>
           <input type="hidden" name="token" value={token} />
-          <button className="link-mono" type="submit" name="intent" value="start" disabled={pending} style={{ display: "block", width: "100%", textAlign: "center", padding: "12px 0" }}>Send it again</button>
+          <ResendButton pending={pending} value="start" block />
         </form>
       </div>
     );
@@ -75,7 +76,7 @@ export function ReviewControls({ token, signoffPersonName }: { token: string; si
           {pending ? "One moment" : "It holds. Sign off the delivery."}
         </button>
       </form>
-      {state.message && <p className="help err" style={{ marginTop: 10 }}>{state.message}</p>}
+      {state.message && <p className="msg" style={{ marginTop: 10 }}>{state.message}</p>}
       <p className="help" style={{ marginTop: 14 }}>
         Signing off asks for a six digit code, so the record shows who signed and when. It is also what raises the final invoice.
       </p>

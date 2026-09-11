@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { InvoiceList } from "@/components/portal/InvoiceList";
 import { Journey, journeyFor, pendingTask, standingStatus, type PendingTask } from "@/components/portal/Journey";
+import { WeeklyUpdate } from "@/components/portal/WeeklyUpdate";
+import { Fold } from "@/components/ui/Fold";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
@@ -10,9 +12,9 @@ import { currentClientSession, maskEmail, resolveClient } from "@/modules/auth/c
 import { activeProjectFor } from "@/modules/clients";
 import { intakeProgress } from "@/modules/intake/progress";
 import { forProject as day30For, isUnlocked as day30Unlocked } from "@/modules/day30";
+import { tellDay30Due } from "@/modules/notifications/client";
 import { invoiceToClientView, updateToClientView } from "@/modules/serializers";
 import { sentForProject } from "@/modules/updates";
-import { WeeklyUpdate } from "@/components/portal/WeeklyUpdate";
 import { CodeScreen } from "./CodeScreen";
 
 /**
@@ -21,6 +23,10 @@ import { CodeScreen } from "./CodeScreen";
  * calm "here is where things stand" when the ball is in our court. The journey
  * row says where they are; the record is folded below; a person is one tap
  * away in the header. Never a screen without a next step or an explanation.
+ *
+ * A delivered project has one card, "Delivered on [date]", which carries the
+ * thank-you ask until it has been seen (F-12). A cancelled project says it
+ * was closed, with the date, and asks for nothing (D-01).
  */
 export default async function ProjectPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -54,7 +60,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
       ])
     : [null, [], [], null];
 
-  const day30Due = day30 !== null && day30Unlocked(day30) && day30.metricAfterSubmittedAt === null;
+  const ended = phase === Phase.CANCELLED || phase === Phase.CLOSED;
+  const day30Due = !ended && day30 !== null && day30Unlocked(day30) && day30.metricAfterSubmittedAt === null;
+  // The month-on page has opened: say so once, in the portal and by email.
+  // There is no scheduler; the first render after the unlock is the moment.
+  if (day30Due) await tellDay30Due(client.id);
+
   const updates = updateRows.map(updateToClientView);
   const latest = updates[0] ?? null;
 
@@ -66,7 +77,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
     sectionsTotal: progress?.total ?? 0,
     day30Due,
   });
-  const standing = standingStatus(phase, facts);
+  const standing = standingStatus(phase, { ...facts, endedOn: project?.cancelledAt ? dayMonthYear(project.cancelledAt) : undefined });
+  const delivered = phase === Phase.DELIVERED || phase === Phase.CLOSED;
+  const unpaid = invoices.filter((i) => i.status === "ISSUED").length;
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "home" }}>
@@ -77,7 +90,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
       </div>
 
       <div style={{ padding: "0 20px", gap: 12 }} className="stack">
-        {task ? <ToDo token={token} task={task} /> : <Standing title={standing.title} detail={standing.detail} />}
+        {task ? (
+          <ToDo token={token} task={task} />
+        ) : delivered ? null : (
+          <Standing title={standing.title} detail={standing.detail} />
+        )}
 
         {phase === Phase.BUILDING && latest && (
           <div className="card">
@@ -89,68 +106,72 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           </div>
         )}
 
-        {(phase === Phase.DELIVERED || phase === Phase.CLOSED) && (
-          <div className="card stand">
-            <p className="k">Delivered {dayMonthYear(project?.deliveredAt)}</p>
-            {project?.afterDelivery === "RETAINER" ? (
+        {delivered && project && (
+          <div className={`card stand${!task && !project.thanksSeenAt ? " now" : ""}`}>
+            <p className="k ember">Delivered on {dayMonthYear(project.deliveredAt)}</p>
+            <h2>{phase === Phase.CLOSED ? "Done, and closed" : "It is done"}</h2>
+            {project.afterDelivery === "RETAINER" ? (
               <>
                 <p>{project.retainerNamedPerson ? `${project.retainerNamedPerson} is your person from here.` : "We run it monthly from here."}{project.retainerResponseTime ? ` You will hear back within ${project.retainerResponseTime.toLowerCase()}.` : ""}</p>
                 {project.retainerTier && <p className="help">{project.retainerTier}</p>}
               </>
-            ) : project?.afterDelivery === "HANDOVER" ? (
+            ) : project.afterDelivery === "HANDOVER" ? (
               <>
                 <p>Everything is documented and every access is yours.</p>
-                {project.handoverDocUrl && <a className="btn-full ghost" href={project.handoverDocUrl} target="_blank" rel="noopener" style={{ marginTop: 6 }}>Open the handover document</a>}
+                {project.handoverDocUrl && <a className="btn-full ghost" href={project.handoverDocUrl} target="_blank" rel="noopener">Open the handover document</a>}
               </>
             ) : (
               <p>{agreement?.afterDeliveryOffer || "Rahul will confirm what happens from here."}</p>
             )}
-            {project && !project.thanksSeenAt && !day30Due && (
-              <Link className="btn-full ghost" href={`/p/${token}/thanks`} style={{ marginTop: 6 }}>Say how it went, if you would like to</Link>
+            {!task && !project.thanksSeenAt && (
+              <>
+                <p>Two optional lines, if you would like to: how this went, in your words, and anyone you know with the same problem.</p>
+                <Link className="btn-full" href={`/p/${token}/thanks`}>Say how it went</Link>
+              </>
             )}
           </div>
         )}
 
         {/* The record, folded below. */}
-        {updates.length > 1 && (
-          <Collapsed summary={`Earlier weeks, ${updates.length - 1}`}>
-            <div className="stack">
+        <div className="stack" style={{ marginTop: 8 }}>
+          {updates.length > 1 && (
+            <Fold title="Earlier weeks" fact={String(updates.length - 1)}>
               {updates.slice(1).map((u) => (
                 <details key={u.id} className="pushback" style={{ borderTop: "none", paddingTop: 0, marginTop: 0 }}>
                   <summary>Week {u.weekNumber}, {u.sentAt}</summary>
                   <div style={{ paddingTop: 10 }}><WeeklyUpdate update={u} full /></div>
                 </details>
               ))}
-            </div>
-          </Collapsed>
-        )}
+            </Fold>
+          )}
 
-        {intake?.submittedAt && phase !== Phase.INTAKE && (
-          <Collapsed summary="What you told us">
-            <Link className="btn-full ghost" href={`/p/${token}/intake`}>Read it back</Link>
-          </Collapsed>
-        )}
+          {intake?.submittedAt && phase !== Phase.INTAKE && (
+            <Fold title="What you told us" fact={`sent ${dayMonthYear(intake.submittedAt)}`}>
+              <Link className="btn-full ghost" href={`/p/${token}/intake`}>Read it back</Link>
+            </Fold>
+          )}
 
-        {agreement?.sentAt && phase !== Phase.AGREEMENT_SENT && (
-          <Collapsed summary={agreement.agreedAt ? `Your agreement, agreed ${dayMonthYear(agreement.agreedAt)}` : "Your agreement"}>
-            <Link className="btn-full ghost" href={`/p/${token}/agreement`}>Read it again</Link>
-          </Collapsed>
-        )}
+          {agreement?.sentAt && phase !== Phase.AGREEMENT_SENT && (
+            <Fold title="Your agreement" fact={agreement.agreedAt ? `agreed ${dayMonthYear(agreement.agreedAt)}` : "being changed"}>
+              <Link className="btn-full ghost" href={`/p/${token}/agreement`}>Read it again</Link>
+            </Fold>
+          )}
 
-        {invoices.length > 0 && (
-          <Collapsed summary={invoices.length === 1 ? "Your invoice" : "Your invoices"}>
-            <InvoiceList invoices={invoices.map(invoiceToClientView)} />
-          </Collapsed>
-        )}
+          {invoices.length > 0 && (
+            <Fold title={invoices.length === 1 ? "Your invoice" : "Your invoices"} fact={unpaid === 0 ? "all paid" : unpaid === 1 ? "1 to pay" : `${unpaid} to pay`}>
+              <InvoiceList invoices={invoices.map(invoiceToClientView)} />
+            </Fold>
+          )}
 
-        <Collapsed summary="How this works">
-          <ol className="how">
-            <li><b>Agree the shape.</b> You read one page, what we will build and how you will check it, and agree to it once. Nothing is invoiced until you do.</li>
-            <li><b>Something you can open.</b> By about day ten there is a real link, not a screenshot. It will be rough, and that is the point.</li>
-            <li><b>The build.</b> A short written update here every week, and a call every two weeks that either of us can book.</li>
-            <li><b>Delivery.</b> You check the work against what you agreed to. If something is off, you say so and we keep going. When it holds, you sign off and we invoice the balance.</li>
-          </ol>
-        </Collapsed>
+          <Fold title="How this works">
+            <ol className="how">
+              <li><b>Agree the shape.</b> You read one page, what we will build and how you will check it, and agree to it once. Nothing is invoiced until you do.</li>
+              <li><b>Something you can open.</b> By about day ten there is a real link, not a screenshot. It will be rough, and that is the point.</li>
+              <li><b>The build.</b> A short written update here every week, and a call every two weeks that either of us can book.</li>
+              <li><b>Delivery.</b> You check the work against what you agreed to. If something is off, you say so and we keep going. When it holds, you sign off and we invoice the balance.</li>
+            </ol>
+          </Fold>
+        </div>
       </div>
     </ClientShell>
   );
@@ -177,14 +198,5 @@ function Standing({ title, detail }: { title: string; detail: string }) {
       <h2>{title}</h2>
       <p>{detail}</p>
     </div>
-  );
-}
-
-function Collapsed({ summary, children }: { summary: string; children: React.ReactNode }) {
-  return (
-    <details className="pushback" style={{ borderTop: "1px solid var(--rule-soft)", marginTop: 4 }}>
-      <summary>{summary}</summary>
-      <div style={{ paddingTop: 12 }}>{children}</div>
-    </details>
   );
 }

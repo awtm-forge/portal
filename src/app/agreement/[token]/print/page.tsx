@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { AgreementDocument } from "@/components/portal/AgreementDocument";
+import { PrintButton } from "@/components/portal/PrintButton";
 import { db } from "@/lib/db";
 import { clientByToken, currentClientSession } from "@/modules/auth/client";
 import { activeProjectFor } from "@/modules/clients";
@@ -41,7 +42,8 @@ export default async function AgreementPrintPage({ params }: { params: Promise<{
         projectName={project.name}
         businessName={project.client.businessName}
       />
-      <p className="help no-print" style={{ padding: "0 20px 24px" }}>Print this page, and choose Save as PDF.</p>
+      <PrintButton />
+      <p className="help no-print" style={{ padding: "12px 20px 24px" }}>In the print dialog, choose Save as PDF to keep a copy.</p>
     </div>
   );
 }

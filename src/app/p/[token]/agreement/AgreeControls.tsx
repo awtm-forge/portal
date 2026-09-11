@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ResendButton } from "@/components/portal/ResendButton";
 import { confirmAgreeAction, pushBackAction, startAgreeAction, type AgreeState } from "./actions";
 
 /**
@@ -44,12 +45,12 @@ export function AgreeControls({ token, signoffPersonName }: { token: string; sig
           <div className="code-boxes">
             <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required autoFocus disabled={state.locked || pending} aria-label="Six digit code" />
           </div>
-          {state.message && <p className="help err">{state.message}</p>}
+          {state.message && <p className="msg">{state.message}</p>}
           <button className="btn-full" type="submit" disabled={state.locked || pending}>{pending ? "Checking" : "Confirm and agree"}</button>
         </form>
         <form action={action}>
           <input type="hidden" name="token" value={token} />
-          <button className="link-mono" type="submit" name="intent" value="start" disabled={pending} style={{ display: "block", width: "100%", textAlign: "center", padding: "12px 0" }}>Send it again</button>
+          <ResendButton pending={pending} value="start" block />
         </form>
       </div>
     );
@@ -59,9 +60,9 @@ export function AgreeControls({ token, signoffPersonName }: { token: string; sig
     <div style={{ padding: "0 20px" }} className="stack">
       <form action={action}>
         <input type="hidden" name="token" value={token} />
-        <button className="btn-full" type="submit" name="intent" value="start" disabled={pending}>{pending ? "One moment" : "I agree"}</button>
+        <button id="agree-btn" className="btn-full" type="submit" name="intent" value="start" disabled={pending}>{pending ? "One moment" : "I agree"}</button>
       </form>
-      {state.message && <p className="help err" style={{ marginTop: 10 }}>{state.message}</p>}
+      {state.message && <p className="msg" style={{ marginTop: 10 }}>{state.message}</p>}
       <div className="stack" style={{ gap: 10, marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--rule-soft)" }}>
         <p className="sec-name" style={{ fontSize: 15 }}>Something not right?</p>
         <p className="c-sub">You do not have to agree as it stands. Tell us what is off and we will change it and send it again. No code needed, and nothing is invoiced until you agree.</p>
