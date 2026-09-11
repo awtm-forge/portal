@@ -61,8 +61,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               <p className="c-sub" style={{ fontSize: 14 }}>Sent {dayMonth(intake.documentUploadedAt)}. Waiting on them. The agreement cannot go until this is in, or until you override it on the project.</p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake`}>What they have said so far</Link>
-                <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/fill`}>Type answers from a call</Link>
-                <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/upload`}>Replace the document</Link>
+                <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/upload`}>Upload new JSON</Link>
               </div>
             </div>
           )}
@@ -104,7 +103,6 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                   </p>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <a className="a-btn" href={waLink(client.contactPhone, questionnaireOpenMessage({ contactName: firstName, asked: state.request.askedBy === "CLIENT" }))} target="_blank" rel="noopener">Tell them on WhatsApp</a>
-                    <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/fill`}>Type the change yourself</Link>
                     <form action={lockAgainAction}>
                       <input type="hidden" name="clientId" value={client.id} />
                       <button className="a-btn ghost" type="submit">Lock it again</button>
@@ -117,9 +115,10 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 <p className="help">Declined on {dayMonth(state.declined.decidedAt ?? state.declined.askedAt)}, to &ldquo;{state.declined.note}&rdquo;: {state.declined.reply}</p>
               )}
 
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", borderTop: "1px solid var(--rule-soft)", paddingTop: 14 }}>
                 <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake`}>What they told us{versions.length > 1 ? `, ${versions.length} versions` : ""}</Link>
-                <a className="a-btn ghost" href={`/admin/clients/${client.id}/intake/answers.json`}>Download answers JSON</a>
+                <a className="a-btn ghost" href={`/admin/clients/${client.id}/intake/answers.json`}>Download JSON</a>
+                <Link className="a-btn ghost" href={`/admin/clients/${client.id}/intake/upload`}>Upload new JSON</Link>
                 {state.kind === "locked" && (
                   <form action={openChangesAction}>
                     <input type="hidden" name="clientId" value={client.id} />
@@ -153,9 +152,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
-          <div className="a-card">
-            <span className="k">Details</span>
-            <form action={updateClientAction} className="stack" style={{ gap: 14 }}>
+          <details className="a-card" style={{ display: "block" }}>
+            <summary className="k" style={{ cursor: "pointer", listStyle: "none" }}>Edit client details</summary>
+            <form action={updateClientAction} className="stack" style={{ gap: 14, marginTop: 14 }}>
               <input type="hidden" name="clientId" value={client.id} />
               <div className="grid2">
                 <label className="stack" style={{ gap: 6 }}><span className="lbl">Business name</span><input className="a-fld" name="businessName" defaultValue={client.businessName} required /></label>
@@ -166,7 +165,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               </div>
               <div><button className="a-btn ghost" type="submit">Save changes</button></div>
             </form>
-          </div>
+          </details>
         </div>
 
         <div className="aside">

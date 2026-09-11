@@ -57,7 +57,6 @@ export default async function IntakeAdminPage({ params, searchParams }: { params
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {!intake.submittedAt && <a className="a-btn" href={waLink(c.contactPhone, questionnaireNudgeMessage({ contactName: c.contactName.split(" ")[0] ?? c.contactName, openSections }))} target="_blank" rel="noopener">Nudge on WhatsApp</a>}
-          <Link className="a-btn ghost" href={`/admin/clients/${id}/intake/fill`}>Type their answers</Link>
           <a className="a-btn ghost" href={`/admin/clients/${id}/intake/answers.json`}>Download JSON</a>
           <Link className="a-btn ghost" href={`/admin/clients/${id}`}>Project</Link>
         </div>
