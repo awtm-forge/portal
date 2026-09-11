@@ -215,3 +215,11 @@ Found by Ayush on 10 Sep 2026: adding the second admin from Settings produced a 
 
 Taking the first. Built 10 Sep 2026. It leaves the team-notification email links still built from the configured base; those go to the team, who know the host, and the clean fix for them is the same one-line config change. Ayush: set `APP_URL=https://dashboard.awtmforge.com` (leave `ADMIN_URL` empty) until `portal.awtmforge.com` is set up, so every link, including those, names a host that resolves.
 
+## Q17. The client portal, redesigned for clarity
+
+Ayush on 11 Sep 2026 listed nine things about the client portal: too much empty space, no instruction for their operation, the header hierarchy (bolder wordmark, the client name out of the header), everything needed from the client in one place, a clearer journey, a real completion page after the questionnaire, a notification system, "request for change" made visible, and a persistent "book a meeting".
+
+This overrides the strict reading of CLAUDE.md 2 item 9 ("never more than one thing to do", already relaxed by Q15's nav row): the home now leads with a "What we need from you" task, which is still one action because the phases are sequential, and folds the record below. Built 11 September, items 1 to 6, 8 and 9. Item 7, notifications, is a separate build.
+
+Decided while building: the header carries the wordmark only, the client's identity is the body heading; a calm "Where things stand" card explains every state where nothing is on the client, so no screen is silent; "Book a meeting" always resolves to something (a booking link, else a message that asks for a time); the change request is a named action on the questionnaire and the agreement, not a folded summary. Rahul: confirm the wording and the departure from the one-thing rule.
+

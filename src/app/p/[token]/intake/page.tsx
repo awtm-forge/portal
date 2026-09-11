@@ -38,6 +38,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         contactFirstName={client.contactName.split(" ")[0] ?? ""}
         state={intakeStateToClientView(stateOf(intake, requests))}
         lastSentAt={versions.at(-1)?.sentAt.toISOString() ?? null}
+        homeHref={base}
       />
     </ClientShell>
   );

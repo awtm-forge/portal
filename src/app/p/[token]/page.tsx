@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
 import { InvoiceList } from "@/components/portal/InvoiceList";
-import { Journey, journeyFor } from "@/components/portal/Journey";
+import { Journey, journeyFor, pendingTask, standingStatus, type PendingTask } from "@/components/portal/Journey";
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { dayMonthYear } from "@/lib/dates";
@@ -12,14 +12,15 @@ import { intakeProgress } from "@/modules/intake/progress";
 import { forProject as day30For, isUnlocked as day30Unlocked } from "@/modules/day30";
 import { invoiceToClientView, updateToClientView } from "@/modules/serializers";
 import { sentForProject } from "@/modules/updates";
-import { company } from "@/modules/settings";
 import { WeeklyUpdate } from "@/components/portal/WeeklyUpdate";
 import { CodeScreen } from "./CodeScreen";
 
 /**
- * PORTAL-SPEC 6.1 and the one-thing-to-do rule: what this page shows depends
- * on the phase, and only the current phase is loud. Everything else is below
- * it or collapsed.
+ * The client home (items 1 to 5). It leads with the one thing we are waiting
+ * on the client for, as a plain task with an instruction and one action, or a
+ * calm "here is where things stand" when the ball is in our court. The journey
+ * row says where they are; the record is folded below; a person is one tap
+ * away in the header. Never a screen without a next step or an explanation.
  */
 export default async function ProjectPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -35,216 +36,78 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
     );
   }
 
-  // The questionnaire is the client's and comes first (ADR 0015). Until a
-  // project exists, this page is about that and nothing else.
   const intake = client.intake;
   const progress = intake ? intakeProgress(intake.document, intake.answers, intake.sectionsDone) : null;
   const project = await activeProjectFor(client.id);
+  const phase = project?.phase ?? null;
 
-  if (!project) {
-    const journey = journeyFor(null, { intakeSubmitted: Boolean(intake?.submittedAt), day30Done: false });
-    return (
-      <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "home" }}>
-        <div style={{ padding: "22px 20px 18px" }} className="stack">
-          <p className="k">Your page</p>
-          <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{client.businessName}</h1>
-          {journey && <Journey state={journey} />}
-        </div>
-        <div style={{ padding: "0 20px", gap: 12 }} className="stack">
-          {!intake && (
-            <Card>
-              <span className="sec-name" style={{ fontSize: 17 }}>Nothing for you to do yet</span>
-              <p className="c-sub">
-                Rahul is writing your questionnaire from what you said on the call, so it asks about your business and not everyone else&rsquo;s. It turns up here when it is ready and we will message you.
-              </p>
-            </Card>
-          )}
-          {intake && progress && !intake.submittedAt && (
-            <Card loud>
-              <p className="k ember">Now</p>
-              <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Before we start, about ten minutes</span>
-              <p className="c-sub">
-                {progress.done > 0
-                  ? `You are ${progress.done} of ${progress.total} sections in. Pick up where you left off.`
-                  : `${progress.total} short sections, mostly about what is going wrong in your own words.`}
-              </p>
-              <p className="c-sub">It saves as you type, so you can stop anywhere and come back.</p>
-              <Link className="btn-full" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>
-                {progress.done > 0 ? "Carry on with the questionnaire" : "Open the questionnaire"}
-              </Link>
-            </Card>
-          )}
-          {intake?.submittedAt && (
-            <Card>
-              <span className="sec-name" style={{ fontSize: 17 }}>Got it, thank you. Sent {dayMonthYear(intake.submittedAt)}.</span>
-              <p className="c-sub">
-                We are turning your answers into one page: what we are building, what it costs, when it lands, and how you will know it is done. It turns up here when it is ready and we will message you.
-              </p>
-              <Collapsed summary="What you told us">
-                <Link className="btn-full ghost" href={`/p/${token}/intake`}>Open your answers</Link>
-              </Collapsed>
-            </Card>
-          )}
-        </div>
-      </ClientShell>
-    );
-  }
+  const [agreement, invoices, updateRows, day30] = project
+    ? await Promise.all([
+        db.agreement.findUnique({ where: { projectId: project.id } }),
+        db.invoice.findMany({ where: { projectId: project.id }, orderBy: { issuedAt: "asc" } }),
+        sentForProject(project.id),
+        day30For(project.id),
+      ])
+    : [null, [], [], null];
 
-  const [agreement, invoices, updateRows, c, day30] = await Promise.all([
-    db.agreement.findUnique({ where: { projectId: project.id } }),
-    db.invoice.findMany({ where: { projectId: project.id }, orderBy: { issuedAt: "asc" } }),
-    sentForProject(project.id),
-    company(),
-    day30For(project.id),
-  ]);
-  // The one thing to do, when the month is up and they have not answered.
   const day30Due = day30 !== null && day30Unlocked(day30) && day30.metricAfterSubmittedAt === null;
   const updates = updateRows.map(updateToClientView);
   const latest = updates[0] ?? null;
-  const phase = project.phase;
-  const journey = journeyFor(phase, { intakeSubmitted: Boolean(intake?.submittedAt), day30Done: day30?.metricAfterSubmittedAt !== null && day30 !== null });
+
+  const facts = { hasIntake: Boolean(intake), intakeSubmitted: Boolean(intake?.submittedAt) };
+  const journey = journeyFor(phase, { intakeSubmitted: facts.intakeSubmitted, day30Done: day30 !== null && day30.metricAfterSubmittedAt !== null });
+  const task = pendingTask(phase, {
+    ...facts,
+    sectionsDone: progress?.done ?? 0,
+    sectionsTotal: progress?.total ?? 0,
+    day30Due,
+  });
+  const standing = standingStatus(phase, facts);
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "home" }}>
-      <div style={{ padding: "22px 20px 18px" }} className="stack">
-        <p className="k">Your project</p>
-        <h1 className="c-title" style={{ fontSize: 26, marginTop: 9 }}>{project.name}</h1>
+      <div style={{ padding: "22px 20px 16px" }} className="stack">
+        <p className="k">{project ? "Your project" : "Your page"}</p>
+        <h1 className="c-title" style={{ fontSize: 26, marginTop: 8 }}>{project ? project.name : client.businessName}</h1>
         {journey && <Journey state={journey} />}
       </div>
 
       <div style={{ padding: "0 20px", gap: 12 }} className="stack">
-        {phase === Phase.CANCELLED && (
-          <Card>
-            <span className="sec-name" style={{ fontSize: 17 }}>This project was closed on {dayMonthYear(project.cancelledAt)}.</span>
-            <p className="c-sub">Everything below is still here to read. If that is a surprise, message Rahul and he will explain.</p>
-          </Card>
-        )}
+        {task ? <ToDo token={token} task={task} /> : <Standing title={standing.title} detail={standing.detail} />}
 
-        {phase === Phase.INTAKE && !intake && (
-          <Card>
-            <span className="sec-name" style={{ fontSize: 17 }}>Nothing for you to do yet</span>
-            <p className="c-sub">
-              Rahul is writing your questionnaire from what you said on the call, so it asks about your business and not everyone else&rsquo;s. It turns up here when it is ready and we will message you.
-            </p>
-            <p className="c-sub">Nothing is needed from you until then.</p>
-          </Card>
-        )}
-
-        {phase === Phase.INTAKE && intake && progress && (
-          <Card loud>
-            <p className="k ember">Now</p>
-            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Before we start, about ten minutes</span>
-            <p className="c-sub">
-              {progress.done > 0
-                ? `You are ${progress.done} of ${progress.total} sections in. Pick up where you left off.`
-                : `${progress.total} short sections, mostly about what is going wrong in your own words.`}
-            </p>
-            <p className="c-sub">It saves as you type, so you can stop anywhere and come back.</p>
-            <Link className="btn-full" href={`/p/${token}/intake`} style={{ marginTop: 4 }}>
-              {progress.done > 0 ? "Carry on with the questionnaire" : "Open the questionnaire"}
-            </Link>
-          </Card>
-        )}
-
-        {phase === Phase.AGREEMENT_DRAFT && (
-          <Card>
-            <span className="sec-name" style={{ fontSize: 17 }}>
-              {intake?.submittedAt ? `Got it, thank you. Sent ${dayMonthYear(intake.submittedAt)}.` : "Got it, thank you."}
-            </span>
-            <p className="c-sub">
-              We are turning your answers into one page: what we are building, what it costs, when it lands, and how you will know it is done. It turns up here when it is ready and we will message you.
-            </p>
-          </Card>
-        )}
-
-        {phase === Phase.AGREEMENT_SENT && (
-          <Card loud>
-            <p className="k ember">Now</p>
-            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Your agreement is ready to read</span>
-            <p className="c-sub">One page, and worth reading properly. If anything in it is wrong, say so on the same page and we will change it. Nothing is invoiced until you agree.</p>
-            <Link className="btn-full" href={`/p/${token}/agreement`} style={{ marginTop: 4 }}>Read the agreement</Link>
-          </Card>
-        )}
-
-        {phase === Phase.AGREED && (
-          <Card>
-            <span className="sec-name" style={{ fontSize: 17 }}>Agreed, thank you. We start shortly.</span>
-            <p className="c-sub">Rahul will confirm the kickoff date with you, and the weekly updates start from there.</p>
-          </Card>
-        )}
-
-        {phase === Phase.BUILDING && (
-          <Card loud={Boolean(latest)}>
-            {latest ? (
-              <>
-                <p className="k ember">
-                  {project.weekCount ? `Week ${latest.weekNumber} of ${project.weekCount}` : `Week ${latest.weekNumber}`}
-                </p>
-                <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Where your project is</span>
-                <p className="help">Sent {latest.sentAt}</p>
-                <WeeklyUpdate update={latest} full />
-              </>
-            ) : (
-              <>
-                <span className="sec-name" style={{ fontSize: 17 }}>We are building it.</span>
-                <p className="c-sub">A written update lands here every week, whether or not anything went wrong. The first one is on its way.</p>
-              </>
-            )}
-            {c.bookingUrl && (
-              <a className="btn-full ghost" href={c.bookingUrl} target="_blank" rel="noopener" style={{ marginTop: 4 }}>
-                Book a sync
-              </a>
-            )}
-          </Card>
-        )}
-
-        {phase === Phase.IN_REVIEW && (
-          <Card loud>
-            <p className="k ember">Now</p>
-            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>Ready for you to check</span>
-            <p className="c-sub">
-              The work is finished. Have a look at it against what you agreed to, and either tell us what is off or sign it off. Nothing is invoiced until you are happy.
-            </p>
-            <Link className="btn-full" href={`/p/${token}/review`} style={{ marginTop: 4 }}>Check the work</Link>
-          </Card>
-        )}
-
-        {day30Due && (
-          <Card>
-            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>One month in. Two things, under a minute.</span>
-            <p className="c-sub">One number and one line, and then we leave you alone.</p>
-            <Link className="btn-full" href={`/p/${token}/day30`}>Open it</Link>
-          </Card>
+        {phase === Phase.BUILDING && latest && (
+          <div className="card">
+            <div className="card-h open" style={{ display: "block" }}>
+              <p className="k ember">{project?.weekCount ? `Week ${latest.weekNumber} of ${project.weekCount}` : `Week ${latest.weekNumber}`}</p>
+              <p className="help" style={{ marginTop: 6 }}>Sent {latest.sentAt}</p>
+            </div>
+            <div className="card-b"><WeeklyUpdate update={latest} full /></div>
+          </div>
         )}
 
         {(phase === Phase.DELIVERED || phase === Phase.CLOSED) && (
-          <Card>
-            <span className="sec-name" style={{ fontSize: 19, lineHeight: 1.2 }}>
-              Delivered on {dayMonthYear(project.deliveredAt)}
-            </span>
-            {project.afterDelivery === "RETAINER" ? (
-              <div className="stack" style={{ gap: 6 }}>
-                <p className="c-sub">{project.retainerNamedPerson ? `${project.retainerNamedPerson} is your person from here.` : "We run it monthly from here."}</p>
-                {project.retainerResponseTime && <p className="c-sub">Replies within: {project.retainerResponseTime.toLowerCase()}.</p>}
+          <div className="card stand">
+            <p className="k">Delivered {dayMonthYear(project?.deliveredAt)}</p>
+            {project?.afterDelivery === "RETAINER" ? (
+              <>
+                <p>{project.retainerNamedPerson ? `${project.retainerNamedPerson} is your person from here.` : "We run it monthly from here."}{project.retainerResponseTime ? ` You will hear back within ${project.retainerResponseTime.toLowerCase()}.` : ""}</p>
                 {project.retainerTier && <p className="help">{project.retainerTier}</p>}
-              </div>
-            ) : project.afterDelivery === "HANDOVER" ? (
-              <div className="stack" style={{ gap: 8 }}>
-                <p className="c-sub">Everything is documented and every access is yours.</p>
-                {project.handoverDocUrl && (
-                  <a className="btn-full ghost" href={project.handoverDocUrl} target="_blank" rel="noopener">Open the handover document</a>
-                )}
-              </div>
+              </>
+            ) : project?.afterDelivery === "HANDOVER" ? (
+              <>
+                <p>Everything is documented and every access is yours.</p>
+                {project.handoverDocUrl && <a className="btn-full ghost" href={project.handoverDocUrl} target="_blank" rel="noopener" style={{ marginTop: 6 }}>Open the handover document</a>}
+              </>
             ) : (
-              <p className="c-sub">{agreement?.afterDeliveryOffer || "Rahul will confirm what happens from here."}</p>
+              <p>{agreement?.afterDeliveryOffer || "Rahul will confirm what happens from here."}</p>
             )}
-            {!project.thanksSeenAt && !day30Due && (
-              <Link className="btn-full ghost" href={`/p/${token}/thanks`}>Say how it went</Link>
+            {project && !project.thanksSeenAt && !day30Due && (
+              <Link className="btn-full ghost" href={`/p/${token}/thanks`} style={{ marginTop: 6 }}>Say how it went, if you would like to</Link>
             )}
-          </Card>
+          </div>
         )}
 
-        {/* Below the fold, collapsed: the record so far. */}
+        {/* The record, folded below. */}
         {updates.length > 1 && (
           <Collapsed summary={`Earlier weeks, ${updates.length - 1}`}>
             <div className="stack">
@@ -275,15 +138,40 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
             <InvoiceList invoices={invoices.map(invoiceToClientView)} />
           </Collapsed>
         )}
+
+        <Collapsed summary="How this works">
+          <ol className="how">
+            <li><b>Agree the shape.</b> You read one page, what we will build and how you will check it, and agree to it once. Nothing is invoiced until you do.</li>
+            <li><b>Something you can open.</b> By about day ten there is a real link, not a screenshot. It will be rough, and that is the point.</li>
+            <li><b>The build.</b> A short written update here every week, and a call every two weeks that either of us can book.</li>
+            <li><b>Delivery.</b> You check the work against what you agreed to. If something is off, you say so and we keep going. When it holds, you sign off and we invoice the balance.</li>
+          </ol>
+        </Collapsed>
       </div>
     </ClientShell>
   );
 }
 
-function Card({ children, loud }: { children: React.ReactNode; loud?: boolean }) {
+function ToDo({ token, task }: { token: string; task: PendingTask }) {
   return (
-    <div className={`card${loud ? " now" : ""}`} style={{ padding: "18px 16px" }}>
-      <div className="stack" style={{ gap: 12 }}>{children}</div>
+    <div className="card now todo">
+      <div className="todo-head">
+        <p className="k ember">What we need from you</p>
+        {task.meta && <span className="help">{task.meta}</span>}
+      </div>
+      <h2>{task.title}</h2>
+      <p className="todo-detail">{task.detail}</p>
+      <Link className="btn-full" href={`/p/${token}${task.path}`}>{task.cta}</Link>
+    </div>
+  );
+}
+
+function Standing({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="card stand">
+      <p className="k">Where things stand</p>
+      <h2>{title}</h2>
+      <p>{detail}</p>
     </div>
   );
 }

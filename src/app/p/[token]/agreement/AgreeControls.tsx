@@ -62,16 +62,17 @@ export function AgreeControls({ token, signoffPersonName }: { token: string; sig
         <button className="btn-full" type="submit" name="intent" value="start" disabled={pending}>{pending ? "One moment" : "I agree"}</button>
       </form>
       {state.message && <p className="help err" style={{ marginTop: 10 }}>{state.message}</p>}
-      <details className="pushback">
-        <summary>Something is off</summary>
-        <form action={action} className="stack" style={{ gap: 10, paddingTop: 12 }}>
+      <div className="stack" style={{ gap: 10, marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--rule-soft)" }}>
+        <p className="sec-name" style={{ fontSize: 15 }}>Something not right?</p>
+        <p className="c-sub">You do not have to agree as it stands. Tell us what is off and we will change it and send it again. No code needed, and nothing is invoiced until you agree.</p>
+        <form action={action} className="stack" style={{ gap: 10 }}>
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="intent" value="push_back" />
-          <p className="help">Say what is wrong and we will change it and send it again. Nothing is invoiced until you agree.</p>
-          <textarea className="fld" name="text" rows={4} required maxLength={8000} placeholder="The launch date does not work, we have stock arriving that week." />
-          <button className="btn-full ghost" type="submit" disabled={pending}>Send</button>
+          <label className="visually-hidden" htmlFor="pushback-text">What is off</label>
+          <textarea id="pushback-text" className="fld" name="text" rows={4} required maxLength={8000} placeholder="The launch date does not work, we have stock arriving that week." />
+          <button className="btn-full ghost" type="submit" disabled={pending}>Request a change</button>
         </form>
-      </details>
+      </div>
       <p className="help" style={{ marginTop: 14 }}>Agreeing asks for a six digit code, so the record shows who agreed and when.</p>
     </div>
   );

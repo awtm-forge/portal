@@ -11,10 +11,12 @@ export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "in
  * keeps a readable measure inside it, so the page works on a laptop as well
  * as a phone (portal.css, the client shell block).
  *
- * Two things are on every page (QUESTIONS.md Q15): a quiet row of links to
- * the pages that exist for this client, and one "Reach us" control with the
- * team's WhatsApp and email. Neither is a thing to do: the one loud action
- * on a page stays in the body, and the row lists only what is already there.
+ * The header carries the wordmark only: the client's own name belongs in the
+ * body as the heading, not up here (item 3, a proper hierarchy). Two things
+ * are on every page: a persistent "Book a meeting" and a "Reach us" with the
+ * team's WhatsApp and email (items 9 and Q15), so a client is never more than
+ * one tap from a person. The quiet row of links below names the pages that
+ * already exist for this client.
  */
 export async function ClientShell({
   businessName,
@@ -42,9 +44,18 @@ export async function ClientShell({
       ]
     : [];
   const whatsapp = c.phone.trim() ? `https://wa.me/${phoneDigits(c.phone)}` : null;
+  // Always resolvable to something (item 9): the booking page if there is one,
+  // otherwise a message that asks for a time.
+  const book = c.bookingUrl?.trim()
+    ? c.bookingUrl.trim()
+    : whatsapp
+      ? `${whatsapp}?text=${encodeURIComponent("Hi, I would like to book a quick meeting.")}`
+      : `mailto:${c.email}?subject=${encodeURIComponent("Booking a meeting")}`;
+  const bookExternal = !book.startsWith("mailto:");
 
   return (
     <div className={`p-shell${wide ? " p-wide" : ""}`}>
+      <span className="visually-hidden">{businessName}</span>
       <header className="p-head">
         <div className="p-head-in">
           {home ? (
@@ -52,15 +63,17 @@ export async function ClientShell({
           ) : (
             <span className="c-brand">awtm <b>forge</b></span>
           )}
-          <span className="k p-biz">{businessName}</span>
-          <details className="reach">
-            <summary>Reach us</summary>
-            <div className="reach-menu">
-              {whatsapp && <a href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}
-              <a href={`mailto:${c.email}`}>Email {c.email}</a>
-              <p>Any time, about anything on this page.</p>
-            </div>
-          </details>
+          <div className="p-head-actions">
+            <a className="p-pill" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>Book a meeting</a>
+            <details className="reach">
+              <summary className="p-pill">Reach us</summary>
+              <div className="reach-menu">
+                {whatsapp && <a href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}
+                <a href={`mailto:${c.email}`}>Email {c.email}</a>
+                <p>Any time, about anything on this page.</p>
+              </div>
+            </details>
+          </div>
         </div>
         {links.length > 1 && (
           <nav className="p-nav" aria-label="Your pages">

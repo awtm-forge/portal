@@ -1,8 +1,8 @@
 /* Portal and admin components. Values lifted from reference/mocks. */
 .c-page { max-width: 480px; margin: 0 auto; min-height: 100dvh; background: var(--ground); font-size: 15px; line-height: 1.55; }
 .c-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--rule); background: var(--surface); }
-.c-brand { font-family: var(--font-display-stack); font-weight: 600; font-size: 14px; letter-spacing: -0.01em; color: var(--ink); text-decoration: none; }
-.c-brand b { color: var(--ember); font-weight: 600; }
+.c-brand { font-family: var(--font-display-stack); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+.c-brand b { color: var(--ember); font-weight: 700; }
 .k { font-family: var(--font-mono-stack); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin: 0; }
 .k.ember { color: var(--ember); }
 .c-title { font-family: var(--font-display-stack); margin: 0; font-size: 25px; line-height: 1.14; font-weight: 600; letter-spacing: -0.02em; }
@@ -254,12 +254,15 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .p-head-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; }
 .p-biz { flex: 1; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Reach us: one control on every page, with the two ways to talk to a person (Q15). */
+/* Book a meeting and Reach us: two controls on every page, so a person is one
+   tap away from anywhere (items 9 and Q15). */
+.p-head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.p-pill { list-style: none; cursor: pointer; font-family: var(--font-mono-stack); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ember); border: 1px solid var(--ember); border-radius: 999px; padding: 0 13px; min-height: 32px; display: inline-flex; align-items: center; white-space: nowrap; text-decoration: none; }
+.p-pill::-webkit-details-marker { display: none; }
+.p-pill:hover { background: var(--ember); color: var(--on-ember); }
+.p-pill:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 .reach { position: relative; flex: none; }
-.reach summary { list-style: none; cursor: pointer; font-family: var(--font-mono-stack); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ember); border: 1px solid var(--ember); border-radius: 999px; padding: 0 12px; min-height: 32px; display: inline-flex; align-items: center; }
-.reach summary::-webkit-details-marker { display: none; }
-.reach summary:hover, .reach[open] summary { background: var(--ember); color: var(--on-ember); }
-.reach summary:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.reach[open] > summary.p-pill { background: var(--ember); color: var(--on-ember); }
 .reach-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 250px; background: var(--surface); border: 1px solid var(--rule); border-radius: 2px; padding: 6px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4); }
 .reach-menu a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 2px; font-family: var(--font-mono-stack); font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink); text-decoration: none; }
 .reach-menu a:hover { background: var(--ground); color: var(--ember); }
@@ -292,6 +295,34 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .p-foot-in a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .p-foot-in a:hover { color: var(--ember); }
 
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* The one thing we are waiting on the client for (item 4): a clear task, an
+   instruction, and one action. Distinct from the calm "here is where things
+   stand" card, which carries no button. */
+.todo { padding: 20px 18px; display: flex; flex-direction: column; gap: 11px; }
+.todo .todo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.todo h2 { font-family: var(--font-display-stack); font-weight: 600; font-size: 20px; line-height: 1.15; letter-spacing: -0.01em; margin: 0; color: var(--ink); }
+.todo .todo-detail { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0; }
+.todo .btn-full { margin-top: 5px; }
+
+/* The calm status card: what is happening when nothing is on the client. */
+.stand { padding: 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+.stand h2 { font-family: var(--font-display-stack); font-weight: 600; font-size: 16.5px; margin: 0; color: var(--ink); }
+.stand p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0; }
+
+/* Change requests and push-backs are named actions, not folded away (item 8). */
+.ask-open { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid var(--rule); border-radius: 2px; background: var(--surface); font-family: var(--font-mono-stack); font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink); cursor: pointer; text-decoration: none; }
+.ask-open:hover { border-color: var(--ember); color: var(--ember); }
+.ask-open::before { content: "\270E"; color: var(--ember); }
+
+/* "How this works": the always-available operation guide (item 2). */
+.how { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.how b { color: var(--ink); font-weight: 600; }
+
+/* The questionnaire completion badge (item 6). */
+.done-mark { width: 52px; height: 52px; border-radius: 50%; background: var(--ember); display: inline-flex; align-items: center; justify-content: center; }
+
 /* A list of options is a set to scan, not a queue to scroll. */
 .opts { display: flex; flex-direction: column; gap: 6px; }
 
@@ -302,6 +333,7 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 
 @media (min-width: 960px) {
   .p-shell { --p-measure: 660px; font-size: 16px; }
+  .p-shell .c-brand { font-size: 18px; }
   .p-shell .c-title { font-size: 31px; }
   .p-shell .c-sub { font-size: 16px; }
   .p-shell .q { font-size: 15.5px; }

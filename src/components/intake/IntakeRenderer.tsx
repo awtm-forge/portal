@@ -28,6 +28,8 @@ export type RendererProps = {
   state: IntakeStateClientView;
   /** When the latest version was sent; the first sending when there is only one. */
   lastSentAt: string | null;
+  /** The client home, for the completion screen. Client mode only. */
+  homeHref?: string;
 };
 
 export type FileInfo = { id: string; name: string; mime: string; hasThumb: boolean };
@@ -48,6 +50,7 @@ export function IntakeRenderer(p: RendererProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [state, setState] = useState<IntakeStateClientView>(p.state);
+  const [justSent, setJustSent] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<string | null>(p.lastSentAt);
   const sections = p.doc.sections;
   const firstOpen = useMemo(() => {
@@ -136,6 +139,7 @@ export function IntakeRenderer(p: RendererProps) {
     setLastSentAt(r.at ?? null);
     setState({ kind: "locked", declinedReply: null });
     setDone(new Set(sections.map((s) => s.key)));
+    setJustSent(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -163,6 +167,27 @@ export function IntakeRenderer(p: RendererProps) {
 
   const doneCount = sections.filter((s) => done.has(s.key)).length;
   const lastSavedText = statusText(status);
+
+  // The completion screen (item 6): a clear "you have submitted it" moment,
+  // shown once after the first send, before the read-only answers.
+  if (justSent && p.mode === "client") {
+    return (
+      <div style={{ padding: "48px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
+        <span className="done-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--on-ember)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+        </span>
+        <div className="stack" style={{ gap: 10, maxWidth: 460 }}>
+          <p className="k ember">Questionnaire submitted</p>
+          <h1 className="c-title" style={{ fontSize: 26 }}>Thank you. That is everything we need for now.</h1>
+          <p className="c-sub">We will read through your answers and turn them into your plan: what we will build, what it costs, when it lands, and how you will check it. It turns up on your page when it is ready, and we will message you. We will reach out if we need anything more.</p>
+        </div>
+        <div className="stack" style={{ gap: 10, width: "100%", maxWidth: 360, marginTop: 6 }}>
+          {p.homeHref && <a className="btn-full" href={p.homeHref}>See your page</a>}
+          <button className="btn-full ghost" type="button" onClick={() => setJustSent(false)}>Review what you sent</button>
+        </div>
+      </div>
+    );
+  }
 
   // After sending (ADR 0016, Q14): read-only and locked, until the team opens
   // it for a change. Then tap an answer to change it, and send. The access
@@ -228,16 +253,15 @@ export function IntakeRenderer(p: RendererProps) {
           </div>
         )}
         {p.mode === "client" && state.kind === "locked" && (
-          <div style={{ padding: "8px 20px 0" }}>
-            <details className="pushback">
-              <summary>Something needs changing</summary>
-              <form className="stack" style={{ gap: 10, paddingTop: 12 }} onSubmit={askToOpen}>
-                <label className="help" htmlFor="ask-note">What needs changing, in a line. We open it and message you.</label>
-                <textarea id="ask-note" className="fld" name="note" rows={3} maxLength={2000} required />
-                {message && <p className="help err">{message}</p>}
-                <button className="btn-full ghost" type="submit" disabled={status.kind === "saving"}>Ask us to open it</button>
-              </form>
-            </details>
+          <div className="stack" style={{ padding: "16px 20px 0", gap: 10 }}>
+            <p className="sec-name" style={{ fontSize: 15 }}>Need to change an answer?</p>
+            <p className="c-sub">The questionnaire is locked so nothing changes by accident. Tell us what needs changing and we open it for you.</p>
+            <form className="stack" style={{ gap: 10 }} onSubmit={askToOpen}>
+              <label className="visually-hidden" htmlFor="ask-note">What needs changing, in a line</label>
+              <textarea id="ask-note" className="fld" name="note" rows={3} maxLength={2000} placeholder="What needs changing, in a line" required />
+              {message && <p className="help err">{message}</p>}
+              <button className="btn-full ghost" type="submit" disabled={status.kind === "saving"}>Request a change</button>
+            </form>
           </div>
         )}
         <RuleBlock />
