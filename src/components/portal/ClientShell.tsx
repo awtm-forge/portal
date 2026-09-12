@@ -6,7 +6,7 @@ import { unreadCount } from "@/modules/notifications/client";
 import { company } from "@/modules/settings";
 import { NavProgress } from "@/components/ui/NavProgress";
 import { Toast } from "@/components/ui/Toast";
-import { NavScroll } from "./NavScroll";
+import { PortalMenu } from "./PortalMenu";
 
 export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates" | "book";
 
@@ -76,36 +76,18 @@ export async function ClientShell({
             <span className="c-brand">awtm <b>forge</b></span>
           )}
           <div className="p-head-actions">
-            {home && (
-              <Link className="p-bell" href={`${home}/updates`} aria-label={unread > 0 ? `Updates, ${unread} new` : "Updates"} aria-current={nav?.current === "updates" ? "page" : undefined}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
-                {unread > 0 && <span className="p-bell-dot">{unread > 9 ? "9+" : unread}</span>}
-              </Link>
-            )}
             <a className="p-pill" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>Book a meeting</a>
-            <details className="reach">
-              <summary className="p-pill reach-pill" aria-label="Reach us">
-                <svg className="reach-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.7-.8L3 21l1.9-5.1A8.4 8.4 0 0 1 3 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 9 8.4Z" /></svg>
-                <span className="reach-txt">Reach us</span>
-              </summary>
-              <div className="reach-menu">
-                {whatsapp && <a href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}
-                <a href={`mailto:${c.email}`}>Email {c.email}</a>
-                <p>Any time, about anything on this page.</p>
-              </div>
-            </details>
+            {home && (
+              <PortalMenu
+                pages={links.map((l) => ({ key: l.key, label: l.label, href: l.href, current: l.key === nav?.current }))}
+                updatesHref={`${home}/updates`}
+                unread={unread}
+                whatsapp={whatsapp}
+                email={c.email}
+              />
+            )}
           </div>
         </div>
-        {links.length > 1 && (
-          <nav className="p-nav" aria-label="Your pages">
-            <div className="p-nav-in">
-              {links.map((l) => (
-                <Link key={l.key} href={l.href} aria-current={l.key === nav?.current ? "page" : undefined}>{l.label}</Link>
-              ))}
-            </div>
-            <NavScroll />
-          </nav>
-        )}
       </header>
       <main className="p-body">{children}</main>
       <Toast />

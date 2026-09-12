@@ -33,19 +33,28 @@ test.afterAll(async () => {
   await closeDb();
 });
 
-test("the row lists the pages that exist, marks the current one, and each link goes there", async ({ page }) => {
+/** The menu is how a client moves between pages (12 Sep). Open it first. */
+async function openMenu(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: /menu/i }).click();
+  await expect(page.getByRole("navigation", { name: "Your pages" })).toBeVisible();
+}
+
+test("the menu lists the pages that exist, marks the current one, and each link goes there", async ({ page }) => {
   await setPhase(projectId, "BUILDING");
   // Other specs raise and remove the seed project's invoices, so the row is
   // checked against what is there rather than against the seed as written.
   const invoiceCount = Number((await query<{ n: number | bigint }>("SELECT COUNT(*) AS n FROM Invoice WHERE projectId = ?", [projectId]))[0]?.n ?? 0);
   await page.goto(`/p/${token}`);
+  await openMenu(page);
   const nav = page.getByRole("navigation", { name: "Your pages" });
-  await expect(nav.getByRole("link")).toHaveText(["Your page", "Questionnaire", "Agreement", ...(invoiceCount > 0 ? ["Invoices"] : [])]);
+  // The page you are on carries a "You are here" note beside its label.
+  await expect(nav.getByRole("link")).toHaveText([/^Your page/, "Questionnaire", "Agreement", ...(invoiceCount > 0 ? ["Invoices"] : [])]);
   await expect(nav.getByRole("link", { name: "Your page" })).toHaveAttribute("aria-current", "page");
   await expect(nav.getByRole("link", { name: "Review" })).toHaveCount(0);
 
   await nav.getByRole("link", { name: "Agreement" }).click();
   await expect(page).toHaveURL(new RegExp(`/p/${token}/agreement$`));
+  await openMenu(page);
   await expect(page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Agreement" })).toHaveAttribute("aria-current", "page");
 
   if (invoiceCount > 0) {
@@ -63,7 +72,7 @@ test("the row lists the pages that exist, marks the current one, and each link g
   await expect(page).toHaveURL(new RegExp(`/p/${token}$`));
 });
 
-test("the review appears in the row only while one is open", async ({ page }) => {
+test("the review appears in the menu only while one is open", async ({ page }) => {
   await setPhase(projectId, "IN_REVIEW");
   await query("DELETE FROM ReviewRound WHERE projectId = ? AND outcome = 'OPEN' AND id LIKE 'nav%'", [projectId]);
   await query(
@@ -71,31 +80,32 @@ test("the review appears in the row only while one is open", async ({ page }) =>
     [`nav${Date.now()}`, projectId, projectId],
   );
   await page.goto(`/p/${token}`);
+  await openMenu(page);
   await expect(page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Review" })).toBeVisible();
   await query("DELETE FROM ReviewRound WHERE projectId = ? AND id LIKE 'nav%'", [projectId]);
 });
 
-test("Reach us is on every page with the ways to reach a person", async ({ page }) => {
+test("the ways to reach a person are in the menu on every page", async ({ page }) => {
   const email = (await query<{ email: string }>("SELECT email FROM Company LIMIT 1"))[0]?.email ?? "hello@awtmforge.com";
   const phone = (await query<{ phone: string }>("SELECT phone FROM Company LIMIT 1"))[0]?.phone ?? "";
   for (const path of [`/p/${token}`, `/p/${token}/intake`, `/p/${token}/agreement`]) {
     await page.goto(path);
-    const reach = page.locator(".reach");
-    await expect(reach.locator("summary")).toHaveText("Reach us");
-    await reach.locator("summary").click();
-    await expect(reach.getByRole("link", { name: `Email ${email}` })).toHaveAttribute("href", `mailto:${email}`);
+    await openMenu(page);
+    const menu = page.locator(".pmenu-panel");
+    await expect(menu.getByRole("link", { name: `Email ${email}` })).toHaveAttribute("href", `mailto:${email}`);
     if (phone.trim()) {
-      await expect(reach.getByRole("link", { name: "WhatsApp Rahul" })).toHaveAttribute("href", /wa\.me\/\d+/);
+      await expect(menu.getByRole("link", { name: "WhatsApp Rahul" })).toHaveAttribute("href", /wa\.me\/\d+/);
     } else {
-      await expect(reach.getByRole("link", { name: "WhatsApp Rahul" })).toHaveCount(0);
+      await expect(menu.getByRole("link", { name: "WhatsApp Rahul" })).toHaveCount(0);
     }
   }
 });
 
-test("the row is not there before signing in, and nothing in it is a loud button", async ({ page, context }) => {
+test("the menu is not there before signing in, and nothing in it is a loud button", async ({ page, context }) => {
   await context.clearCookies();
   await page.goto(`/p/${token}`);
+  // Nothing to navigate to until they are in: no menu, and no pages listed.
+  await expect(page.getByRole("button", { name: /menu/i })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Your pages" })).toHaveCount(0);
-  await expect(page.locator(".reach summary")).toHaveText("Reach us");
   await expect(page.locator("nav .btn-full")).toHaveCount(0);
 });

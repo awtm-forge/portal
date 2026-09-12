@@ -15,7 +15,8 @@ async function signInClient(page: Page, token: string, projectId: string) {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByRole("navigation", { name: "Your pages" })).toBeVisible();
+  // The menu button is on every signed-in page, whatever the client has.
+  await expect(page.getByRole("button", { name: /menu/i })).toBeVisible();
 }
 
 async function signInAdmin(page: Page) {
@@ -205,6 +206,30 @@ test("ending a project is one tap from the top, in one slot whatever the phase",
   await expect(page.getByRole("button", { name: /close this project/i })).toBeInViewport();
 
   await backToBuilding(projectId);
+});
+
+test("a client with only one page still has a way back from the booking page", async ({ page }) => {
+  // The row lists the pages a client has. One with no questionnaire, no
+  // agreement and no invoice has a single page, and the row was hidden
+  // whenever it held fewer than two, which left the booking page with nothing
+  // to go back to but the wordmark (Ayush, 12 Sep).
+  const bare = await query<{ slug: string; id: string }>(
+    "SELECT p.slug, p.id FROM Project p LEFT JOIN Intake i ON i.clientId = p.clientId WHERE i.id IS NULL LIMIT 1",
+  );
+  test.skip(bare.length === 0, "the seed has no client without a questionnaire");
+  await query("UPDATE Company SET bookingUrl = 'https://calendar.example/awtm' WHERE id = 'company'");
+  const link = await freshLink(bare[0].slug);
+  await signInClient(page, link.token, link.projectId);
+
+  await page.goto(`/p/${link.token}/book`);
+  await expect(page.getByRole("heading", { name: /pick a time/i })).toBeVisible();
+  await page.getByRole("button", { name: /menu/i }).click();
+  const back = page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Your page" });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page).toHaveURL(new RegExp(`/p/${link.token}$`));
+
+  await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
 });
 
 test("the dashboard says who each project is waiting on (F-20)", async ({ page }) => {

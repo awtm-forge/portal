@@ -69,6 +69,12 @@ function embedSrc(booking: string, name: string, email: string): string | null {
     // Not embed=true: that mode stays blank until cal.com's own script talks to
     // it from the parent page, and their script is the thing we are not
     // loading. The ordinary booking page frames perfectly well on its own.
+    //
+    // theme is advisory, and on a direct page load cal.com ignores it and
+    // follows the device's own light or dark setting: a client on a light
+    // phone gets a white calendar inside this dark page. Checked on 12 Sep
+    // against theme, ui.theme and ui[theme]; none of them move it. The control
+    // that does work is the appearance setting inside cal.com itself.
     u.searchParams.set("theme", "dark");
     u.searchParams.set("layout", "month_view");
     if (name.trim()) u.searchParams.set("name", name.trim());

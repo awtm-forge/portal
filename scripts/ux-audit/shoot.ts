@@ -62,7 +62,7 @@ async function signInClient(page: Page, token: string, projectId: string) {
   await page.getByLabel(/six digit code/i).waitFor();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await page.getByRole("navigation", { name: "Your pages" }).waitFor();
+  await page.getByRole("button", { name: /menu/i }).waitFor();
 }
 
 async function mintAdmin(): Promise<string> {

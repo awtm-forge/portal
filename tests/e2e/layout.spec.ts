@@ -109,10 +109,19 @@ const PAGES: { name: string; setUp: () => Promise<void>; path: () => string }[] 
  * button, and no tabs. The one loud action stays in the body.
  */
 async function navigationIsQuiet(page: import("@playwright/test").Page) {
-  await expect(page.locator("nav .btn-full")).toHaveCount(0);
+  // Since 12 Sep the way between pages is a menu, not a row of tabs. Shut, it
+  // is one quiet pill and no nav at all; open, it is one nav of plain links.
+  // Either way nothing in it is the filled button a page's one action uses.
+  await expect(page.locator("nav")).toHaveCount(0);
+  const menu = page.getByRole("button", { name: /menu/i });
+  await expect(menu).toHaveCount(1);
+  await expect(menu).not.toHaveClass(/btn-full/);
+  await menu.click();
   await expect(page.locator("nav")).toHaveCount(1);
+  await expect(page.locator("nav .btn-full")).toHaveCount(0);
   await expect(page.getByRole("tablist")).toHaveCount(0);
-  await expect(page.locator(".reach summary")).toHaveText("Reach us");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("nav")).toHaveCount(0);
 }
 
 for (const screen of PAGES) {
