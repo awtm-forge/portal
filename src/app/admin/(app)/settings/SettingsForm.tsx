@@ -14,7 +14,7 @@ export function SettingsForm({ company }: { company: CompanyView }) {
           <div className="grid2">
             <label className="stack" style={{ gap: 6 }}><span className="lbl">Name, as it goes on an invoice</span><input className="a-fld" name="name" defaultValue={company.name} required /></label>
             <label className="stack" style={{ gap: 6 }}><span className="lbl">Email</span><input className="a-fld" name="email" type="email" defaultValue={company.email} required /></label>
-            <label className="stack" style={{ gap: 6 }}><span className="lbl">Phone</span><input className="a-fld" name="phone" defaultValue={company.phone} /></label>
+            <label className="stack" style={{ gap: 6 }}><span className="lbl">Phone, with the country code</span><input className="a-fld" name="phone" defaultValue={company.phone} placeholder="+91 99000 21188" /></label>
           </div>
           <label className="stack" style={{ gap: 6 }}><span className="lbl">Address</span><textarea className="a-fld" name="address" rows={3} defaultValue={company.address} /></label>
         </div>

@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
+import { COUNTRY_CODE_MESSAGE, hasCountryCode } from "@/lib/phone";
 import { db } from "@/lib/db";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
 import { createClient, deliverLink, rotateLink } from "@/modules/clients";
@@ -55,7 +56,9 @@ const clientSchema = z.object({
   businessName: z.string().trim().min(1).max(120),
   location: z.string().trim().max(120).optional().default(""),
   contactName: z.string().trim().min(1).max(120),
-  contactPhone: z.string().trim().min(8).max(24),
+  // Every "Tell them on WhatsApp" on the admin side is built from this, so it
+  // needs the country code for the same reason the company's own does.
+  contactPhone: z.string().trim().min(8).max(24).refine(hasCountryCode, COUNTRY_CODE_MESSAGE),
   contactEmail: z.string().trim().email().max(200),
 });
 

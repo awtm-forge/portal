@@ -2,6 +2,7 @@
 
 import { refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
+import { COUNTRY_CODE_MESSAGE, hasCountryCode } from "@/lib/phone";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/modules/auth/admin";
 import { COMPANY_ID } from "@/modules/settings";
@@ -12,7 +13,10 @@ const schema = z.object({
   name: z.string().trim().min(1).max(120),
   address: z.string().trim().max(500),
   email: z.string().trim().email().max(200),
-  phone: z.string().trim().max(40),
+  // Optional, but if it is there it has to be diallable: every client page
+  // offers WhatsApp, and a number without its country code makes a link that
+  // silently goes nowhere (12 Sep).
+  phone: z.string().trim().max(40).refine((v) => v === "" || hasCountryCode(v), COUNTRY_CODE_MESSAGE),
   bankName: z.string().trim().max(120),
   bankAccountName: z.string().trim().max(120),
   bankAccountNumber: z.string().trim().max(40),
