@@ -180,7 +180,10 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .pushback summary::after { content: "+"; color: var(--ember); margin-left: 8px; }
 .pushback[open] summary::after { content: "\2013"; }
 
-/* The quiet way back a section on the questionnaire. Not a primary action (Q10): the same weight as Skip. */
+/* The quiet way through the questionnaire, either direction. Not primary
+   actions (Q10): the same weight as Skip, and they mark nothing. */
+.secmove { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; }
+.secmove .backlink { width: auto; margin: 0; padding: 10px 6px; }
 .backlink { display: block; width: 100%; margin-top: 2px; padding: 10px 0; min-height: 44px; background: none; border: none; cursor: pointer; font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); text-align: center; transition: color var(--t-fast) var(--ease); }
 .backlink span { color: var(--ember); margin-right: 6px; }
 .backlink:hover { color: var(--ink); }

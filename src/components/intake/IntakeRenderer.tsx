@@ -121,15 +121,19 @@ export function IntakeRenderer(p: RendererProps) {
   }
 
   /**
-   * Back one section. Nothing is saved or unsaved by it: answers save as they
-   * are typed, and a section already marked done stays done. The previous
-   * section's title is tappable too, but nobody found that on 10 September,
-   * so the way back is now written down under the button.
+   * Move a section either way without marking anything. Nothing is saved or
+   * unsaved by it: answers save as they are typed, and a section already
+   * marked done stays done. Section titles are tappable too, but nobody found
+   * that on 10 September, so the way through is written down under the button.
+   *
+   * Next is not the same as "Save and carry on": that one marks the section
+   * finished. A client who cannot answer this section yet needs a way past it
+   * that does not tell the progress bar they are done (Ayush, 12 Sep).
    */
-  function goBack() {
-    if (open === 0) return;
+  function goTo(index: number) {
+    if (index < 0 || index > sections.length - 1 || index === open) return;
     setMessage(null);
-    setOpen(open - 1);
+    setOpen(index);
     requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
@@ -316,7 +320,7 @@ export function IntakeRenderer(p: RendererProps) {
           <div className="progress"><div style={{ width: `${Math.round((doneCount / Math.max(1, sections.length)) * 100)}%` }} /></div>
           <span className="mono-sm" style={{ flex: "none" }}>{doneCount} of {sections.length}</span>
         </div>
-        <p className="help" style={{ marginTop: 10 }}>{lastSavedText}{doneCount > 0 ? ". Tap a finished section to change something in it" : ""}</p>
+        <p className="help" style={{ marginTop: 10 }}>{lastSavedText}. Tap any section to jump to it, in any order</p>
         {signedOutNote}
       </div>
 
@@ -360,8 +364,15 @@ export function IntakeRenderer(p: RendererProps) {
                     <StickyAction key={s.key} targetId="section-action" label={i < sections.length - 1 ? "Save and carry on" : "Finish and send"} hint={`Section ${i + 1} of ${sections.length}`} />
                   )}
                   {i === sections.length - 1 && p.mode === "client" && <p className="help" style={{ textAlign: "center" }}>After sending it locks. If something needs changing later, you can ask us to open it from this page.</p>}
-                  {i > 0 && (
-                    <button className="backlink" type="button" onClick={goBack} disabled={status.kind === "saving"}><span aria-hidden="true">←</span> Back</button>
+                  {sections.length > 1 && (
+                    <div className="secmove">
+                      {i > 0 ? (
+                        <button className="backlink" type="button" onClick={() => goTo(i - 1)} disabled={status.kind === "saving"}><span aria-hidden="true">←</span> Back</button>
+                      ) : <span />}
+                      {i < sections.length - 1 && (
+                        <button className="backlink" type="button" onClick={() => goTo(i + 1)} disabled={status.kind === "saving"}>Next <span aria-hidden="true">→</span></button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
