@@ -109,14 +109,32 @@ test("the booking button appears only when a booking link is set", async ({ page
     [`ub${Date.now()}`, projectId, "Something moved.", "Something next.", "", "None this week."],
   );
   // Item 9 (11 Sep): "Book a meeting" is on every page. Without a booking link
-  // it asks for a time over WhatsApp; with one it opens the calendar.
+  // it asks for a time over WhatsApp; with one it opens the calendar, which
+  // since 12 Sep is a page of ours with the calendar framed in it.
   await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
   await signInClient(page);
   await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveAttribute("href", /wa\.me|^mailto:/);
+  // With no link there is no page to send them to either.
+  expect((await page.goto(`/p/${token}/book`))?.url()).toContain(`/p/${token}`);
+  await expect(page.getByRole("heading", { name: /pick a time/i })).toHaveCount(0);
 
   await query("UPDATE Company SET bookingUrl = 'https://calendar.example/awtm' WHERE id = 'company'");
-  await page.reload();
-  await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveAttribute("href", "https://calendar.example/awtm");
+  await page.goto(`/p/${token}`);
+  await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveAttribute("href", `/p/${token}/book`);
+
+  await page.getByRole("link", { name: /book a meeting/i }).click();
+  await expect(page.getByRole("heading", { name: /pick a time/i })).toBeVisible();
+  // The calendar is framed, themed, and carries the client's own details so
+  // they do not retype them. The frame is a separate origin on purpose.
+  const src = await page.locator(".bookframe iframe").getAttribute("src");
+  expect(src).toContain("https://calendar.example/awtm");
+  expect(src).toContain("theme=dark");
+  expect(src).toContain("email=");
+  expect(src).not.toContain("embed=true");
+  // And a way out, in case the frame is ever blocked.
+  await expect(page.getByRole("link", { name: /open the calendar in a new tab/i })).toHaveAttribute("href", "https://calendar.example/awtm");
+
+  await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
 });
 
 test("marking the kickoff done is the one action that starts the build", async ({ page }) => {

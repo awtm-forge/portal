@@ -8,7 +8,7 @@ import { NavProgress } from "@/components/ui/NavProgress";
 import { Toast } from "@/components/ui/Toast";
 import { NavScroll } from "./NavScroll";
 
-export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates";
+export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates" | "book";
 
 /**
  * Every client page sits in this. The shell spans the window and the content
@@ -49,14 +49,20 @@ export async function ClientShell({
       ]
     : [];
   const whatsapp = c.phone.trim() ? `https://wa.me/${phoneDigits(c.phone)}` : null;
-  // Always resolvable to something (item 9): the booking page if there is one,
-  // otherwise a message that asks for a time.
-  const book = c.bookingUrl?.trim()
-    ? c.bookingUrl.trim()
-    : whatsapp
-      ? `${whatsapp}?text=${encodeURIComponent("Hi, I would like to book a quick meeting.")}`
-      : `mailto:${c.email}?subject=${encodeURIComponent("Booking a meeting")}`;
-  const bookExternal = !book.startsWith("mailto:");
+  // Always resolvable to something (item 9). Signed in, with a booking link
+  // set, the calendar has its own page inside the portal and the client never
+  // leaves; otherwise it is the booking link itself, then a message asking for
+  // a time, then email.
+  const booking = c.bookingUrl?.trim() ?? "";
+  const inPortal = Boolean(home && booking);
+  const book = inPortal
+    ? `${home}/book`
+    : booking
+      ? booking
+      : whatsapp
+        ? `${whatsapp}?text=${encodeURIComponent("Hi, I would like to book a quick meeting.")}`
+        : `mailto:${c.email}?subject=${encodeURIComponent("Booking a meeting")}`;
+  const bookExternal = !inPortal && !book.startsWith("mailto:");
 
   return (
     <div className={`p-shell${wide ? " p-wide" : ""}`}>
