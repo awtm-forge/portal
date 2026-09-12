@@ -72,7 +72,9 @@ describe("raising an extra invoice", () => {
   it("is the only kind an admin can raise, and it gets a real number", async () => {
     const invoice = await anInvoice("2500.50");
     expect(invoice.kind).toBe(InvoiceKind.OTHER);
-    expect(invoice.number).toMatch(/^[A-Z]+\/\d{2}-\d{2}\/\d{3}$/);
+    // Three digits, or more once a year passes 999: padStart never truncates,
+    // because a wrapped number would be a reused one (criterion 4).
+    expect(invoice.number).toMatch(/^[A-Z]+\/\d{2}-\d{2}\/\d{3,}$/);
     expect(invoice.amountPaise).toBe(250050n);
     expect(invoice.totalPaise).toBe(250050n);
     expect(invoice.status).toBe(InvoiceStatus.ISSUED);

@@ -67,7 +67,10 @@ test("the client reads the agreement, agrees with a fresh code, and the advance 
   expect(invoices).toHaveLength(1);
   expect(invoices[0].kind).toBe("ADVANCE");
   expect(BigInt(invoices[0].totalPaise as never)).toBe(26000000n);
-  expect(invoices[0].number).toMatch(/^AWTM\/\d{2}-\d{2}\/\d{3}$/);
+  // Zero-padded to three digits (PORTAL-SPEC 5.7), and longer once a financial
+  // year passes 999: padStart pads, it never truncates, because a number that
+  // wrapped would be reused, which criterion 4 forbids.
+  expect(invoices[0].number).toMatch(/^AWTM\/\d{2}-\d{2}\/\d{3,}$/);
 
   // Criterion 6: a sign-off event exists and says how it happened.
   const events = await query<{ kind: string; method: string; actorName: string }>(

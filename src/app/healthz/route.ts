@@ -4,6 +4,7 @@ import { mailMode, mailVars } from "@/lib/mail";
 import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
 import { activatedAdminCount, listAdmins } from "@/modules/auth/admin";
 import { requestLogger, safeError } from "@/lib/logger";
+import { company } from "@/modules/settings";
 
 /**
  * What Hostinger's monitor pings, and the first thing to curl when something
@@ -40,6 +41,11 @@ export async function GET() {
         mailVars: mailVars(),
         links: { client: hostnameOf(clientBase()), admin: hostnameOf(adminBase()) },
         admins: { rows: adminRows, activated },
+        // Which client-facing settings are filled in, by name, never their
+        // values. An empty booking link silently turns Book a meeting into a
+        // mailto, and an empty phone takes WhatsApp off every client page;
+        // both looked like bugs from the outside on 12 September.
+        settings: await settingsSet(),
       },
       { headers: NO_STORE },
     );
@@ -50,3 +56,24 @@ export async function GET() {
 }
 
 const NO_STORE = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" };
+
+/**
+ * Names, never values, in the shape mailVars uses: which of the settings a
+ * client can feel are filled in. The booking link and the phone are things a
+ * client clicks, so neither is a secret, but a health endpoint answers
+ * without signing in and has no business handing out either.
+ */
+async function settingsSet(): Promise<{ set: string[]; empty: string[] }> {
+  const c = await company();
+  const fields: Record<string, string | null | undefined> = {
+    BOOKING_URL: c.bookingUrl,
+    PHONE: c.phone,
+    BANK_ACCOUNT: c.bankAccountNumber,
+    UPI_ID: c.upiId,
+    GSTIN: c.gstin,
+  };
+  const set: string[] = [];
+  const empty: string[] = [];
+  for (const [name, value] of Object.entries(fields)) (value?.trim() ? set : empty).push(name);
+  return { set, empty };
+}
