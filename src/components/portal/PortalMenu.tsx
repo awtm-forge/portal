@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ThemePick } from "./ThemePick";
 
 export type MenuLink = { key: string; label: string; href: string; current: boolean };
 
@@ -93,8 +92,6 @@ export function PortalMenu({
           {whatsapp && <a className="pmenu-out" href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}
           <a className="pmenu-out" href={`mailto:${email}`}>Email {email}</a>
           <p className="pmenu-note">Any time, about anything on this page.</p>
-
-          <ThemePick />
         </div>
       )}
     </div>

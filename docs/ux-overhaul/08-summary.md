@@ -108,8 +108,10 @@ device. It reads the same five notes the rail opens, so the two cannot drift.
 frame is a flex column the height of the window with the footer last.
 
 **Contrast was low across the board, and there was only one theme.** The two
-greys became one, brighter one. Light and dark now follow the device, with the
-choice in the menu, and the palette is checked by a script rather than by eye.
+greys became one, brighter one. There are two themes now, dark by default in
+both portals and light one button away on the bar beside the menu, in the team
+zone as well as the client one. The palette is checked by a script rather than
+by eye.
 
 ## The numbers
 
@@ -175,8 +177,9 @@ on every existing row.
 2. Tap a stage you have not reached. One sentence opens under it saying what
    happens and roughly how long it takes. Tap the stage you are on: the page
    scrolls to the status card.
-3. Open the menu, choose Light. The page turns to paper without reloading.
-   Reload it: still light. Choose Device, and it follows the phone.
+3. Press the sun beside the menu. The page turns to paper without reloading.
+   Reload it: still light. Press the moon and it goes back. The same switch is
+   at the top of the admin sidebar.
 4. On a laptop, the pages are plain text links on the bar with the current one
    underlined, and one filled button. There are no back and forward chevrons.
    The footer sits at the bottom of the window, not halfway up it.

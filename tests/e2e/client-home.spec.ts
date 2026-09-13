@@ -227,28 +227,56 @@ test("the page has a floor, one primary action, and no sideways scroll", async (
   await backToBuilding(projectId);
 });
 
-test("light and dark follow the choice in the menu, and it survives a reload", async ({ page }) => {
+test("dark by default, and one button on the bar turns it to paper", async ({ page, context }) => {
   const { token, projectId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);
   await signInClient(page, token, projectId);
+  // No choice made yet. Dark is the brand, not whatever the device prefers.
+  await context.clearCookies({ name: "awtm_theme" });
   await page.goto(`/p/${token}`);
 
   const theme = () => page.evaluate(() => document.documentElement.getAttribute("data-theme"));
   const ground = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ground").trim());
+  expect(await theme(), "dark with nothing chosen").toBe("dark");
+  const dark = await ground();
 
-  await page.getByRole("button", { name: /menu/i }).click();
-  await page.getByRole("button", { name: "Light" }).click();
+  // The control is on the bar beside the menu, not inside it, and it says
+  // what it will do rather than what is already true.
+  const toggle = page.getByRole("banner").getByRole("button", { name: /switch to the light theme/i });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
   expect(await theme()).toBe("light");
-  const light = await ground();
+  expect(await ground(), "the two themes are not the same colour").not.toBe(dark);
 
   await page.reload();
   expect(await theme(), "the choice is a cookie, so it survives a reload").toBe("light");
 
-  await page.getByRole("button", { name: /menu/i }).click();
-  await page.getByRole("button", { name: "Dark" }).click();
+  await page.getByRole("banner").getByRole("button", { name: /switch to the dark theme/i }).click();
   expect(await theme()).toBe("dark");
-  expect(await ground(), "the two themes are not the same colour").not.toBe(light);
+  expect(await ground()).toBe(dark);
+});
 
-  await page.getByRole("button", { name: "Device" }).click();
-  expect(await theme(), "following the device resolves to one of the two").toMatch(/^(light|dark)$/);
+test("the team gets the same switch, in the same two states", async ({ page, context }) => {
+  await signInAdmin(page);
+  await context.clearCookies({ name: "awtm_theme" });
+  await page.goto("/admin");
+
+  const theme = () => page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+  expect(await theme(), "dark with nothing chosen").toBe("dark");
+
+  await page.getByRole("button", { name: /switch to the light theme/i }).click();
+  expect(await theme()).toBe("light");
+  // The sidebar reads on paper too: its ink and its ground are not the same.
+  const readable = await page.evaluate(() => {
+    const side = document.querySelector(".a-side");
+    if (!side) return false;
+    const style = getComputedStyle(side);
+    return style.backgroundColor !== style.color;
+  });
+  expect(readable).toBe(true);
+
+  await page.reload();
+  expect(await theme()).toBe("light");
+  await page.getByRole("button", { name: /switch to the dark theme/i }).click();
+  expect(await theme()).toBe("dark");
 });

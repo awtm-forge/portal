@@ -6,6 +6,7 @@ import { navFor } from "@/modules/clients";
 import { noticeCounts } from "@/modules/notifications/client";
 import { company } from "@/modules/settings";
 import { NavProgress } from "@/components/ui/NavProgress";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Toast } from "@/components/ui/Toast";
 import { PortalMenu } from "./PortalMenu";
 
@@ -113,6 +114,9 @@ export async function ClientShell({
             <a className="p-cta" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>
               Book a meeting
             </a>
+            {/* Beside the menu, not inside it: dark is the default and this is
+                how a person asks for paper (Ayush, 13 Sep). */}
+            <ThemeToggle />
             {home && (
               <PortalMenu
                 pages={links.map((l) => ({ key: l.key, label: l.label, href: l.href, current: l.key === nav?.current }))}

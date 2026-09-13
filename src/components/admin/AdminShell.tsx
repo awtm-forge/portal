@@ -3,7 +3,9 @@ import "@/components/portal/portal.css";
 import { logoutAction } from "@/app/admin/(app)/actions";
 import { HistoryNav } from "@/components/ui/HistoryNav";
 import { NavProgress } from "@/components/ui/NavProgress";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Toast } from "@/components/ui/Toast";
+import { THEME_SCRIPT } from "@/lib/theme";
 import { currentAdmin } from "@/modules/auth/admin";
 import { teamUnreadCount } from "@/modules/notifications/team";
 
@@ -30,10 +32,15 @@ export async function AdminShell({
   return (
     <div className="a-page">
       <NavProgress />
+      {/* Before the first paint, so an admin who chose light never sees dark. */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       <aside className="a-side">
         <div className="a-top">
           <HistoryNav />
           <Link className="a-brand" href="/admin">awtm <b>forge</b></Link>
+          {/* At the top of the navigation, where the client's sits beside the
+              menu. Dark is the default in both zones (Ayush, 13 Sep). */}
+          <ThemeToggle className="a-theme" />
         </div>
         <nav className="a-navs" aria-label="Admin">
           <Link className={`a-nav${active === "clients" ? " on" : ""}`} href="/admin/clients" aria-current={active === "clients" ? "page" : undefined}>Clients</Link>
