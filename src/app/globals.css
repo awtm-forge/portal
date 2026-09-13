@@ -1,38 +1,78 @@
 @import "tailwindcss";
 
-/* awtm forge design tokens. One set, used by the marketing site and the portal.
-   Dark is the only theme for now, by decision on 5 Sep 2026. Every colour is
-   defined on bare :root so nothing exists only inside a media query.
+/* awtm forge design tokens, the one file both themes live in.
 
-   The non-colour tokens (spacing, radius, motion, elevation, layers) were added
-   in the UX overhaul of 11 Sep 2026 (docs/ux-overhaul/04-design-decisions.md)
-   so that every component paces and spaces itself the same way. */
+   Dark was the only theme from 5 Sep 2026. The client portal now carries both
+   and follows the system unless the person chooses (Ayush, 13 Sep). The admin
+   and the marketing site stay dark: nothing sets data-theme on them, so they
+   read the :root block and never the light one.
+
+   Colour names are roles, not shades: ground, surface, surface-raised, ink,
+   ink-muted, accent, accent-ink, hairline, success, danger. The older names
+   below them (--muted, --rule, --ember and the rest) are aliases kept so the
+   620-line component sheet did not have to be rewritten in one go; they carry
+   no values of their own, so a theme only ever sets the roles.
+
+   Every text pairing in PAIRS (scripts/contrast.ts) is checked against WCAG AA
+   in both themes by tests/contrast.test.ts. Change a value here and that test
+   tells you what it broke. */
 :root {
+  /* tokens: dark */
   --ground: #141110;
   --surface: #1b1715;
-  --surface-2: #221d1a;
+  --surface-raised: #221d1a;
   --ink: #ede7dc;
-  --muted: #a69c8e;
-  /* 4.8:1 on every surface. The earlier #7a7166 was 3.9:1 and failed contrast
-     on every kicker, help line and label (03-baseline-metrics.md). */
-  --faint: #948a7e;
-  --rule: #2e2925;
-  --rule-soft: #252019;
-  /* A control with nowhere to go. 2.6:1, under the text minimum on purpose,
-     which is what WCAG allows an inactive control, but well above the rule
-     colour, which made a dim arrow look like a rendering fault. */
+  --ink-muted: #b0a496;
+  --accent: #e08536;
+  --accent-fill: #e08536;
+  --accent-ink: #181008;
+  --accent-soft: #2e2115;
+  --hairline: #2e2925;
+  --hairline-soft: #252019;
+  --success: #7fc08a;
+  --danger: #ef8a72;
+  /* A control with nowhere to go. Under the text minimum on purpose, which is
+     what WCAG allows an inactive control, but well above the hairline, which
+     made a dim arrow look like a rendering fault. */
   --off: #605850;
-  --ember: #e08536;
-  --ember-deep: #b5661f;
-  --ember-soft: #2e2115;
-  --on-ember: #181008;
+  --shadow: none;
+  --focus: var(--accent);
 
+  color-scheme: dark;
+
+  /* Aliases. One value each, pointing at a role above. */
+  --surface-2: var(--surface-raised);
+  --muted: var(--ink-muted);
+  --faint: var(--ink-muted);
+  --rule: var(--hairline);
+  --rule-soft: var(--hairline-soft);
+  --ember: var(--accent);
+  --ember-deep: #b5661f;
+  --ember-soft: var(--accent-soft);
+  --on-ember: var(--accent-ink);
+  --shadow-float: var(--shadow);
+
+  /* Two voices, and no more (13 Sep). One sans for every heading, label and
+     sentence, and the mono for short metadata only: a date, a week number, a
+     reference. A full sentence is never set in mono. The serif that used to
+     carry portal body copy is now the marketing site's alone. */
   --font-display-stack: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  --font-ui-stack: var(--font-display), "Helvetica Neue", Arial, sans-serif;
   --font-body-stack: var(--font-body), Georgia, serif;
   --font-mono-stack: var(--font-mono), ui-monospace, Menlo, monospace;
 
-  /* Spacing: a 4 px scale. Card padding is --s-5, stack gaps --s-3 and --s-4,
-     page gutters --s-5. */
+  /* Type: six steps, ratio 1.2, from a 14 px body. --fs-1 is body; --fs-0 is
+     the one step below it, for metadata, and stops at 13 px because nothing a
+     person must read goes under 12. The desktop set is in the 960 px query. */
+  --fs-0: 13px;
+  --fs-1: 14px;
+  --fs-2: 17px;
+  --fs-3: 20px;
+  --fs-4: 24px;
+  --fs-5: 29px;
+
+  /* Spacing: an 8 px grid. The 4 px steps are kept for the inside of small
+     controls, where 8 is too coarse. Between major blocks use --s-10 to --s-14. */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -41,9 +81,11 @@
   --s-6: 24px;
   --s-8: 32px;
   --s-10: 40px;
+  --s-12: 48px;
+  --s-14: 56px;
 
-  /* Radius: cards, fields and buttons stay square-cornered; only floating
-     things (dialog, toast) round off. */
+  /* Radius: small for anything that sits in the page, medium for anything that
+     floats above it. Square corners are the house style; these stay small. */
   --r-1: 2px;
   --r-2: 6px;
   --r-pill: 999px;
@@ -53,19 +95,54 @@
   --t-base: 200ms;
   --t-slow: 320ms;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-
-  --shadow-float: 0 10px 28px rgba(0, 0, 0, 0.4);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
 
   --z-sticky: 30;
   --z-menu: 40;
   --z-toast: 50;
   --z-dialog: 60;
+}
 
-  color-scheme: dark;
+html[data-theme="light"] {
+  /* tokens: light */
+  --ground: #f4f4f6;
+  --surface: #fbfbfc;
+  --surface-raised: #ebebef;
+  --ink: #1a1a1f;
+  --ink-muted: #5a5a66;
+  /* The accent as text and as a 2 px edge. Burnt orange at its dark-mode
+     value is 2.2:1 on paper, so the light theme carries a deeper mix of the
+     same hue rather than a second accent colour. */
+  --accent: #99500d;
+  /* 3.4:1 against the paper, so a filled button has a visible edge without an
+     outline, which WCAG 1.4.11 asks of any control that carries meaning. */
+  --accent-fill: #c96d1b;
+  --accent-ink: #1a0e02;
+  --accent-soft: #f7ece1;
+  --hairline: #d9d9e0;
+  --hairline-soft: #e6e6eb;
+  --success: #1b6e36;
+  --danger: #b3341c;
+  --off: #a3a3ad;
+  --shadow: 0 6px 20px rgba(20, 20, 30, 0.10);
+  --ember-deep: #7d400a;
+
+  color-scheme: light;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --t-fast: 0ms; --t-base: 0ms; --t-slow: 0ms; }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --fs-0: 13.5px;
+    --fs-1: 16px;
+    --fs-2: 19px;
+    --fs-3: 23px;
+    --fs-4: 28px;
+    --fs-5: 33px;
+  }
 }
 
 @theme inline {
