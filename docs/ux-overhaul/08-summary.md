@@ -49,3 +49,138 @@ No light theme, no questionnaire editing in the portal, no scheduler (the day-30
 ## Merging
 
 The branch merges onto `main` cleanly (it is six commits ahead, nothing behind). Auto-deploy fires on push to `main`, about two and a half minutes to live, and `/healthz` reports the commit. Nothing in the branch needs a migration or a new environment variable. The one thing to look at on the live site first is the client home on a phone in each phase, because that is the page every client sees most.
+
+---
+
+# The client home page, rebuilt 13 September 2026
+
+A second pass, on the same branch, after an audit of the live home page at
+1440 px. The earlier overhaul re-paced the page; this one changed what it
+leads with. AI-assisted. Dates are 2026.
+
+## What was wrong, and what it is now
+
+**The hierarchy was inverted.** The largest words on the page were the project
+name, which the client already knows. Whether anything was needed from them sat
+under it in a low-contrast box in smaller type. The status is the hero now and
+carries the largest type on the page; the project name is one size step under
+it, with a meta line giving the day it started and the day it last moved, both
+absolute and both with the weekday.
+
+**Four type voices argued.** Uppercase monospace labels, a sans for headings, a
+serif for body copy and monospace again for the footer, with long footer
+sentences set in mono at low contrast. Two voices now: the sans carries every
+heading, label and sentence, and the mono is for short metadata only, a date or
+a week number. No full sentence is set in monospace anywhere in the portal.
+
+**The header carried three things that did nothing.** Browser-style chevrons
+inside a portal with four pages, a bell with no count and nothing behind it,
+and two outlined orange buttons of equal weight competing. It is now the
+wordmark, the pages this client actually has as plain text links, and one
+filled button. The bell appears only when there is a list to open, and then it
+carries a count. Under 900 px the links fold into the menu and the button
+stays.
+
+**The stage rail could not be read as progress.** Five hollow circles joined by
+dashes, all the same grey but one, in uppercase monospace, ending in a stage
+called "A month on". Three states now, told apart by shape before colour: done
+is a filled disc with a tick, current is a ring with a filled centre and a
+heavier label, upcoming is a hollow ring. The line fills to where they are.
+Every stage is a button that opens one sentence about what happens in it and
+how long it takes; tapping the one they are on scrolls to the status instead.
+On a phone the rail is vertical and the sentence opens under the stage tapped.
+The last stage is called Check-in. Its identifier is still `month`, because
+nothing was gained by renaming a key that the database already speaks.
+
+**The status card said nothing about time.** It now carries a chip that is one
+of exactly three, the headline, one or two sentences, and then either an
+expected date and the channel we will message on, or one button that names the
+action. The accent edge appears only when something is needed. Every date is a
+fact set by hand in admin: where there is none, the line is dropped rather than
+invented, and a date that has passed is dropped too.
+
+**"How this works" was folded by default,** so a first-time client saw nothing
+about the journey. It is open until the questionnaire is behind them, folded
+after that, and their own choice from then on, remembered per client on their
+device. It reads the same five notes the rail opens, so the two cannot drift.
+
+**The page had no floor.** It ended around 640 px and left a dark void. The
+frame is a flex column the height of the window with the footer last.
+
+**Contrast was low across the board, and there was only one theme.** The two
+greys became one, brighter one. Light and dark now follow the device, with the
+choice in the menu, and the palette is checked by a script rather than by eye.
+
+## The numbers
+
+Lighthouse, the same profile and screens as `03-baseline-metrics.md`, against a
+production build. Every screen: accessibility 100, best practices 100, no
+failing audits, in both themes. Performance and largest paint match the page
+this replaces to within noise.
+
+| Screen | Perf before | Perf after | LCP before | LCP after |
+|---|---|---|---|---|
+| client home, mobile | 96 | 96 | 2769 ms | 2768 ms |
+| client home, light, mobile | not measured | 96 | | 2769 ms |
+| client home, desktop | not measured | 100 | | 585 ms |
+| client agreement | 96 | 96 | 2768 ms | 2766 ms |
+| client questionnaire | 96 | 96 | 2769 ms | 2765 ms |
+| client invoices | 96 | 96 | 2768 ms | 2768 ms |
+
+Getting there cost one decision. The brief asked for a 200 ms fade and rise on
+entry, and also for no performance regression. Measured both ways, the fade
+costs 400 ms of largest contentful paint and 90 ms of blocking time, because
+the browser will not count text it cannot see yet. The page rises without
+fading: the entrance is there and the measurement is not.
+
+Tests: 197 unit tests in 30 files and 191 end-to-end tests on desktop Chrome
+and Pixel 7, 3 skipped by design, all green. `tsc --noEmit` and `eslint` clean.
+The palette check is `tests/contrast.test.ts`, 38 pairings in both themes. The
+five-stage walk is `tests/e2e/client-home.spec.ts`, which drives the admin side
+and asserts the chip, the headline and the button at each step.
+
+## The screenshots
+
+`docs/ux-overhaul/audit/client-home/` holds 102 pictures: seventeen states at
+390, 768 and 1440 px, in dark and light. Open `index.html` from that folder for
+the contact sheet, which lays them out in one scroll. They are made by
+`scripts/ux-audit/client-home.ts`, which drives the real database into each
+state and puts it back afterwards.
+
+Four of the twenty state combinations asked for are the same instant in this
+system and are written once: a submitted questionnaire and an agreement being
+prepared are one moment, and so are a delivery being prepared and a delivery
+sent back. A test walks every fact combination and fails if any state in the
+copy file is unreachable. The build's "paused with a reason" is written as
+closed early, because this system has no pause and calling it one would promise
+a restart nothing can deliver. All three are in `06-decision-log.md`.
+
+## Deploying it
+
+One migration, `20260913193000_project_expected_by`, adding two nullable
+columns to `Project`. It is additive and reversible, and both columns are null
+on every existing row.
+
+1. Merge to `main`. Hostinger builds on push; about two and a half minutes.
+2. `prisma migrate deploy` runs in the build, through
+   `scripts/migrate-if-configured.mjs`. Nothing to run by hand.
+3. No new environment variable. The theme is a cookie the browser sets.
+4. `/healthz` reports the commit when it is live.
+
+## Five minutes on the live site
+
+1. Open a client link on a phone. The status card is the biggest thing on the
+   page and says whether anything is needed from you. The rail above it is
+   vertical, with one stage marked as where you are.
+2. Tap a stage you have not reached. One sentence opens under it saying what
+   happens and roughly how long it takes. Tap the stage you are on: the page
+   scrolls to the status card.
+3. Open the menu, choose Light. The page turns to paper without reloading.
+   Reload it: still light. Choose Device, and it follows the phone.
+4. On a laptop, the pages are plain text links on the bar with the current one
+   underlined, and one filled button. There are no back and forward chevrons.
+   The footer sits at the bottom of the window, not halfway up it.
+5. In admin, open a project and set "What their page says to expect" to a date
+   a few days out. Reload the client page: it now reads "We expect to have it
+   with you by" that date, with the weekday. Move the project on a stage and
+   the date clears itself, because it belonged to the stage that ended.

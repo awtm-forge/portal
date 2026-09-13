@@ -83,10 +83,11 @@ src/modules/             domain, one folder per bounded area, no HTTP, no React
   notifications/         templates (email, WhatsApp text), subscribers
   events/                activity_event writer and the in-process dispatcher
   serializers/           toClientView, toAdminView, toPrintView per entity
-src/lib/                 prisma client wrapper, mailer, money, dates, files, rate limit, logger
+src/content/             the words, not the behaviour: client-home.ts holds every sentence the client home page says about where a project stands, plus the resolver that picks one. No database, no React, no HTTP. It exists so a person can change the copy without opening a component, and a test walks every state in it (13 Sep)
+src/lib/                 prisma client wrapper, mailer, money, dates, files, rate limit, logger, theme (the client portal's light and dark choice)
 src/generated/           Prisma client output, gitignored
 prisma/                  schema, migrations, seed
-scripts/                 seed, admin creation, migrate-if-configured; ux-audit (the screenshot camera, Lighthouse runner and before-after page, docs/ux-overhaul)
+scripts/                 seed, admin creation, migrate-if-configured; contrast.ts (the palette check, run by tests/contrast.test.ts); ux-audit (the screenshot cameras, Lighthouse runner and before-after page, docs/ux-overhaul)
 tests/                   unit (vitest) and e2e (playwright)
 docs/                    this folder
 ```

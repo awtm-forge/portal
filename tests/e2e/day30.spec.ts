@@ -38,7 +38,7 @@ async function signInClient(page: import("@playwright/test").Page) {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 }
 
 test.beforeEach(async () => {
@@ -96,7 +96,7 @@ test("the number and the quote are kept, and the switches are off unless ticked"
   await page.locator('input[name="useName"]').check();
   await page.getByRole("button", { name: /approve and send/i }).click();
 
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
   const [row] = await query<{ metricAfterValue: string; metricAfterSubmittedAt: string }>(
     "SELECT metricAfterValue, metricAfterSubmittedAt FROM Day30 WHERE projectId = ?", [projectId],
   );
@@ -120,7 +120,7 @@ test("once answered it says so, and the project page stops asking", async ({ pag
   await page.getByRole("button", { name: /approve and send/i }).click();
   // Prove the answer landed before asserting on what changed: without this,
   // a form that silently did nothing would still satisfy the checks below.
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("link", { name: /open it/i })).toHaveCount(0);
   await page.goto(`/p/${token}/day30`);

@@ -45,7 +45,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 }
 
 /**
@@ -60,7 +60,9 @@ async function signIn(page: import("@playwright/test").Page) {
 async function primaryActionsAboveFold(page: import("@playwright/test").Page): Promise<string[]> {
   const viewport = page.viewportSize();
   if (!viewport) throw new Error("no viewport");
-  const controls = page.locator(".btn-full:not(.ghost)");
+  // The one filled button a screen gets. Since 13 Sep the home page uses
+  // .btn-primary for it; every other client screen still uses .btn-full.
+  const controls = page.locator(".btn-full:not(.ghost), .btn-primary");
   const found: string[] = [];
   for (let i = 0; i < (await controls.count()); i++) {
     const control = controls.nth(i);
@@ -109,19 +111,32 @@ const PAGES: { name: string; setUp: () => Promise<void>; path: () => string }[] 
  * button, and no tabs. The one loud action stays in the body.
  */
 async function navigationIsQuiet(page: import("@playwright/test").Page) {
-  // Since 12 Sep the way between pages is a menu, not a row of tabs. Shut, it
-  // is one quiet pill and no nav at all; open, it is one nav of plain links.
-  // Either way nothing in it is the filled button a page's one action uses.
-  await expect(page.locator("nav")).toHaveCount(0);
+  // The rule, which has outlived three shapes of navigation: whatever gets a
+  // client between pages is quiet, and none of it is the filled button that a
+  // page's one action uses. Since 13 Sep that is plain text links on the bar
+  // above 900 px, the same labels behind a menu button below it, and never a
+  // row of tabs.
+  await expect(page.getByRole("tablist")).toHaveCount(0);
+
   const menu = page.getByRole("button", { name: /menu/i });
   await expect(menu).toHaveCount(1);
-  await expect(menu).not.toHaveClass(/btn-full/);
+  await expect(menu).not.toHaveClass(/btn-full|btn-primary|p-cta/);
+
+  // The page links are a landmark on the bar above 900 px, and behind the menu
+  // below it. Either way there is one list, never two saying the same thing.
+  const onBar = await page.locator(".p-links").isVisible();
+  await expect(page.getByRole("navigation", { name: "Your pages" })).toHaveCount(onBar ? 1 : 0);
+  if (onBar) {
+    for (const link of await page.locator(".p-links a").all()) {
+      await expect(link).not.toHaveClass(/btn-full|btn-primary|p-cta/);
+    }
+  }
+
   await menu.click();
-  await expect(page.locator("nav")).toHaveCount(1);
-  await expect(page.locator("nav .btn-full")).toHaveCount(0);
-  await expect(page.getByRole("tablist")).toHaveCount(0);
+  await expect(page.locator("#portal-menu")).toBeVisible();
+  await expect(page.locator("#portal-menu .btn-full, #portal-menu .btn-primary")).toHaveCount(0);
   await page.keyboard.press("Escape");
-  await expect(page.locator("nav")).toHaveCount(0);
+  await expect(page.locator("#portal-menu")).toHaveCount(0);
 }
 
 for (const screen of PAGES) {
@@ -161,26 +176,24 @@ test("no client page scrolls sideways", async ({ page }) => {
 });
 
 test("the header uses both corners of the window, at any width", async ({ page }) => {
-  // The bar used to be pinned to the reading measure, so on a laptop its five
-  // controls huddled in the middle of an empty band (Ayush, 13 Sep). The way
-  // back belongs in the corner, where a browser and a phone both put it.
+  // The bar used to be pinned to the reading measure, so on a laptop its
+  // controls huddled in the middle of an empty band (Ayush, 13 Sep).
   await setPhase(projectId, "BUILDING");
   await signIn(page);
 
   const width = page.viewportSize()?.width ?? 0;
-  const left = await page.locator(".p-head-nav").boundingBox();
+  const left = await page.getByRole("banner").getByRole("link", { name: /awtm forge/i }).boundingBox();
   const right = await page.locator(".p-head-actions").boundingBox();
   if (!left || !right) throw new Error("the header lost one of its two ends");
 
   const gutterLeft = Math.round(left.x);
   const gutterRight = Math.round(width - (right.x + right.width));
-  expect(gutterLeft, "the left corner").toBeLessThanOrEqual(24);
-  expect(gutterRight, "the right corner").toBeLessThanOrEqual(24);
+  expect(gutterLeft, "the wordmark is in the left corner").toBeLessThanOrEqual(24);
+  expect(gutterRight, "the actions are in the right corner").toBeLessThanOrEqual(24);
   expect(Math.abs(gutterLeft - gutterRight), "the two gutters match").toBeLessThanOrEqual(1);
 
-  // Back is the first thing in that corner, before the wordmark.
-  const back = await page.getByRole("button", { name: "Go back" }).boundingBox();
-  expect(Math.round(back?.x ?? -1)).toBe(gutterLeft);
+  // One filled action up here, and only one.
+  await expect(page.locator("header .p-cta")).toHaveCount(1);
 });
 
 test("the pages that ask for something put exactly one button in reach", async ({ page }) => {
@@ -212,7 +225,7 @@ test("an answer survives closing the tab and opening the link on another device"
   await expect(firstPage.getByLabel(/six digit code/i)).toBeVisible();
   await firstPage.getByLabel(/six digit code/i).fill(await takeoverLatestCode(own.projectId, "LOGIN"));
   await firstPage.getByRole("button", { name: /open my page/i }).click();
-  await expect(firstPage.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(firstPage.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 
   await firstPage.goto(`/p/${own.token}/intake`);
   // Open a named section on both devices. The renderer opens the first
@@ -246,7 +259,7 @@ test("an answer survives closing the tab and opening the link on another device"
   await expect(secondPage.getByLabel(/six digit code/i)).toBeVisible();
   await secondPage.getByLabel(/six digit code/i).fill(await takeoverLatestCode(own.projectId, "LOGIN"));
   await secondPage.getByRole("button", { name: /open my page/i }).click();
-  await expect(secondPage.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(secondPage.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 
   await secondPage.goto(`/p/${own.token}/intake`);
   // One section is open at a time, so a finished one has to be reopened before
@@ -264,7 +277,7 @@ test("an answer survives closing the tab and opening the link on another device"
   await expect(restorePage.getByLabel(/six digit code/i)).toBeVisible();
   await restorePage.getByLabel(/six digit code/i).fill(await takeoverLatestCode(own.projectId, "LOGIN"));
   await restorePage.getByRole("button", { name: /open my page/i }).click();
-  await expect(restorePage.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(restorePage.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
   await restorePage.goto(`/p/${own.token}/intake`);
   await restorePage.getByRole("button", { name: /your business/i }).click();
   const restore = restorePage.locator('input[type="text"]').first();

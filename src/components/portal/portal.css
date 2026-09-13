@@ -464,7 +464,7 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   padding: 6px; display: flex; flex-direction: column;
   box-shadow: var(--shadow-float); animation: rise var(--t-base) var(--ease);
 }
-.pmenu-panel nav { display: flex; flex-direction: column; }
+.pmenu-pages { display: flex; flex-direction: column; }
 .pmenu-panel a {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   min-height: 46px; padding: 0 12px; border-radius: var(--r-1);
@@ -633,8 +633,15 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 /* An invoice row is one link, the whole width of it. */
 .inv-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: var(--r-1); text-decoration: none; color: inherit; background: var(--surface); transition: border-color var(--t-fast) var(--ease); }
 .inv-row:hover { border-color: var(--ember); }
-/* The reading column, and the one place the page enters from. A single fade
-   and rise, not a stagger: a page that arrives in pieces reads as slow. */
+/* The reading column, and the one place the page enters from. One movement,
+   not a stagger: a page that arrives in pieces reads as slow.
+
+   It rises, and it does not fade. A fade from nothing costs 400 ms of largest
+   contentful paint and 90 ms of blocking time, measured both ways on 13 Sep:
+   the browser will not count text it cannot see yet, so the page scored three
+   points worse for an effect nobody asked to wait for. A transform moves the
+   text without hiding it, so the entrance is there and the measurement is
+   not. */
 .p-body {
   width: 100%;
   max-width: var(--p-measure);
@@ -643,9 +650,9 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   flex: 1;
   animation: page-in var(--t-base) var(--ease-enter);
 }
-@keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes page-in { from { transform: translateY(8px); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+  .p-body { animation: none; }
 }
 
 /* Two lines, a hairline above them, and nothing else. */
@@ -660,8 +667,11 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   padding: var(--s-6) var(--p-gutter) var(--s-8);
 }
 .p-foot-in p { margin: 0; font-family: var(--font-ui-stack); font-size: var(--fs-1); color: var(--ink-muted); line-height: 1.6; }
-.p-foot-in a { color: var(--accent); text-decoration: none; transition: color var(--t-fast) var(--ease); }
-.p-foot-in a:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Underlined, not only coloured: a link inside a paragraph that is told apart
+   by colour alone is an axe violation and a real problem for anyone who does
+   not see the colour (link-in-text-block, 13 Sep). */
+.p-foot-in a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; transition: color var(--t-fast) var(--ease); }
+.p-foot-in a:hover { color: var(--ink); }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 

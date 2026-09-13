@@ -470,3 +470,41 @@ All four decisions postdate the front half. None is built.
 | ~~The client can push back on the agreement.~~ | Done in step 5 |
 | The thank-you page after delivery sign-off, with the first testimonial ask and the referral field. `testimonial` table with `moment`. | Step 8, day-30 prefill in step 10 |
 | Referral in its smallest form, admin-only, deletable. | Step 8 |
+
+## 13 September 2026: the client home page, rebuilt
+
+Not a numbered step. An audit of the live home page at 1440 px found the
+hierarchy inverted, four typefaces on one page, a stage rail that could not be
+read as progress, a header carrying three controls that did nothing, and a page
+that ended in a void halfway down the window.
+
+Built: colour tokens as roles with a light theme beside the dark one and
+`scripts/contrast.ts` measuring 38 pairings in both (run by
+`tests/contrast.test.ts`); a client shell with a 64 px sticky bar, the pages as
+plain text links, one filled action, a bell that only appears when there is a
+list behind it, and a footer at the bottom of the window; a progress rail whose
+three states differ by shape before colour; a status card that leads with
+whether anything is needed, with a chip, a date and one named action; "How this
+works" open until the questionnaire is behind them; and `src/content/client-home.ts`,
+which holds every sentence the page says.
+
+Schema: `Project.expectedBy` and `Project.lastMovedAt`, both nullable, in
+migration `20260913193000_project_expected_by`. `transition()` writes
+`lastMovedAt` and clears `expectedBy` on every move. Admin sets the date in a
+card on the project page and is refused a date in the past.
+
+Verified: 197 unit tests, 191 end-to-end tests on desktop Chrome and Pixel 7
+(3 skipped by design), lint and types clean. Lighthouse on a production build
+gives accessibility 100 and best practices 100 on every screen in both themes,
+with no failing audits, and performance matching the page it replaces (96
+mobile, 100 desktop). 102 screenshots of seventeen states at three widths in
+both themes are in `docs/ux-overhaul/audit/client-home/` with a contact sheet.
+
+Deferred: nothing from the brief. Three things in it do not exist in this
+system and are recorded with what each would cost in
+`docs/ux-overhaul/06-decision-log.md`: a real pause for a build, and two pairs
+of states that are the same instant here.
+
+Needs Rahul: none. The back and forward chevrons added on 13 September were
+removed the same day by this audit; the reason they were added is still true,
+so the wordmark goes home from every page and the menu lists the rest.

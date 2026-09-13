@@ -38,7 +38,7 @@ async function signInClient(page: import("@playwright/test").Page) {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 }
 
 test.beforeEach(async () => {

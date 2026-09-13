@@ -28,7 +28,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 });
 
 test.afterEach(async () => {
@@ -84,7 +84,7 @@ test.describe("after sending, the questionnaire is locked", () => {
     await expect(page.getByLabel(/six digit code/i)).toBeVisible();
     await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(seedProject, "LOGIN"));
     await page.getByRole("button", { name: /open my page/i }).click();
-    await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+    await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
   }
 
   async function signInAsAdmin(page: import("@playwright/test").Page) {

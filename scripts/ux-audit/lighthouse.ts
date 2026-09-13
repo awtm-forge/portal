@@ -72,6 +72,10 @@ async function main() {
     { name: "client-login", path: "/p/login" },
     { name: "client-code", path: `/p/${p.seed.token}` },
     { name: "client-home", path: `/p/${p.seed.token}`, cookie: p.clientCookie },
+    // The same page in the other theme: a palette can only fail contrast in
+    // one of them, so both are measured (13 Sep).
+    { name: "client-home-light", path: `/p/${p.seed.token}`, cookie: `${p.clientCookie}; awtm_theme=light` },
+    { name: "client-home-desktop", path: `/p/${p.seed.token}`, cookie: p.clientCookie, desktop: true },
     { name: "client-agreement", path: `/p/${p.seed.token}/agreement`, cookie: p.clientCookie },
     { name: "client-questionnaire", path: `/p/${p.seed.token}/intake`, cookie: p.clientCookie },
     { name: "client-invoices", path: `/p/${p.seed.token}/invoices`, cookie: p.clientCookie },

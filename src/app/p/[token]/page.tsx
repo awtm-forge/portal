@@ -128,6 +128,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   const unpaid = invoices.filter((i) => i.status === "ISSUED").length;
   const started = project?.kickoffAt ?? project?.createdAt ?? null;
   const moved = project?.lastMovedAt ?? null;
+  const hasRecord =
+    updates.length > 1 ||
+    Boolean(intake?.submittedAt && phase !== Phase.INTAKE) ||
+    Boolean(agreement?.sentAt && phase !== Phase.AGREEMENT_SENT) ||
+    invoices.length > 0;
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "home" }}>
@@ -191,7 +196,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           </div>
         )}
 
-        {/* The record, folded below. */}
+        {/* The record, folded below. Absent rather than empty: a container with
+            nothing in it still leaves a gap the page has to explain. */}
+        {hasRecord && (
         <div className="stack" style={{ marginTop: 8 }}>
           {updates.length > 1 && (
             <Fold title="Earlier weeks" fact={String(updates.length - 1)}>
@@ -223,6 +230,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
           )}
 
         </div>
+        )}
 
         {/* Open until the questionnaire is behind them, then folded. Their
             choice after that, remembered on their device. */}

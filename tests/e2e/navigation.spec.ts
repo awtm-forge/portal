@@ -22,7 +22,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 });
 
 test.afterEach(async () => {
@@ -33,10 +33,19 @@ test.afterAll(async () => {
   await closeDb();
 });
 
-/** The menu is how a client moves between pages (12 Sep). Open it first. */
-async function openMenu(page: import("@playwright/test").Page) {
+/**
+ * The pages a client can reach, wherever they are at this width. Above 900 px
+ * they are plain text links on the bar; below it the bar hides them and the
+ * same labels sit behind the menu button (13 Sep). The tests run at both, so
+ * they ask for whichever is real rather than assuming one.
+ */
+async function pageLinks(page: import("@playwright/test").Page) {
+  const bar = page.locator(".p-links");
+  if (await bar.isVisible()) return bar;
   await page.getByRole("button", { name: /menu/i }).click();
-  await expect(page.getByRole("navigation", { name: "Your pages" })).toBeVisible();
+  const inMenu = page.locator("#portal-menu .pmenu-pages");
+  await expect(inMenu).toBeVisible();
+  return inMenu;
 }
 
 test("the menu lists the pages that exist, marks the current one, and each link goes there", async ({ page }) => {
@@ -45,20 +54,20 @@ test("the menu lists the pages that exist, marks the current one, and each link 
   // checked against what is there rather than against the seed as written.
   const invoiceCount = Number((await query<{ n: number | bigint }>("SELECT COUNT(*) AS n FROM Invoice WHERE projectId = ?", [projectId]))[0]?.n ?? 0);
   await page.goto(`/p/${token}`);
-  await openMenu(page);
-  const nav = page.getByRole("navigation", { name: "Your pages" });
-  // The page you are on carries a "You are here" note beside its label.
-  await expect(nav.getByRole("link")).toHaveText([/^Your page/, "Questionnaire", "Agreement", ...(invoiceCount > 0 ? ["Invoices"] : [])]);
-  await expect(nav.getByRole("link", { name: "Your page" })).toHaveAttribute("aria-current", "page");
-  await expect(nav.getByRole("link", { name: "Review" })).toHaveCount(0);
+  let nav = await pageLinks(page);
+  // In the menu the page you are on carries a "You are here" note beside it.
+  await expect(nav.getByRole("link")).toHaveText([/^Your project/, "Questionnaire", "Agreement", ...(invoiceCount > 0 ? ["Invoices"] : [])]);
+  await expect(nav.getByRole("link", { name: "Your project" })).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("link", { name: "Delivery" })).toHaveCount(0);
 
   await nav.getByRole("link", { name: "Agreement" }).click();
   await expect(page).toHaveURL(new RegExp(`/p/${token}/agreement$`));
-  await openMenu(page);
-  await expect(page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Agreement" })).toHaveAttribute("aria-current", "page");
+  nav = await pageLinks(page);
+  await expect(nav.getByRole("link", { name: "Agreement" })).toHaveAttribute("aria-current", "page");
 
   if (invoiceCount > 0) {
-    await page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Invoices" }).click();
+    nav = await pageLinks(page);
+    await nav.getByRole("link", { name: "Invoices" }).click();
     await expect(page).toHaveURL(new RegExp(`/p/${token}/invoices$`));
     await expect(page.getByRole("heading", { name: /your invoice/i })).toBeVisible();
     await expect(page.locator(".inv-row").first()).toBeVisible();
@@ -72,7 +81,7 @@ test("the menu lists the pages that exist, marks the current one, and each link 
   await expect(page).toHaveURL(new RegExp(`/p/${token}$`));
 });
 
-test("the review appears in the menu only while one is open", async ({ page }) => {
+test("the delivery page appears in the navigation only while a review is open", async ({ page }) => {
   await setPhase(projectId, "IN_REVIEW");
   await query("DELETE FROM ReviewRound WHERE projectId = ? AND outcome = 'OPEN' AND id LIKE 'nav%'", [projectId]);
   await query(
@@ -80,8 +89,8 @@ test("the review appears in the menu only while one is open", async ({ page }) =
     [`nav${Date.now()}`, projectId, projectId],
   );
   await page.goto(`/p/${token}`);
-  await openMenu(page);
-  await expect(page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Review" })).toBeVisible();
+  const nav = await pageLinks(page);
+  await expect(nav.getByRole("link", { name: "Delivery" })).toBeVisible();
   await query("DELETE FROM ReviewRound WHERE projectId = ? AND id LIKE 'nav%'", [projectId]);
 });
 
@@ -90,8 +99,9 @@ test("the ways to reach a person are in the menu on every page", async ({ page }
   const phone = (await query<{ phone: string }>("SELECT phone FROM Company LIMIT 1"))[0]?.phone ?? "";
   for (const path of [`/p/${token}`, `/p/${token}/intake`, `/p/${token}/agreement`]) {
     await page.goto(path);
-    await openMenu(page);
+    await page.getByRole("button", { name: /menu/i }).click();
     const menu = page.locator(".pmenu-panel");
+    await expect(menu).toBeVisible();
     await expect(menu.getByRole("link", { name: `Email ${email}` })).toHaveAttribute("href", `mailto:${email}`);
     if (phone.trim()) {
       await expect(menu.getByRole("link", { name: "WhatsApp Rahul" })).toHaveAttribute("href", /wa\.me\/\d+/);
@@ -107,5 +117,5 @@ test("the menu is not there before signing in, and nothing in it is a loud butto
   // Nothing to navigate to until they are in: no menu, and no pages listed.
   await expect(page.getByRole("button", { name: /menu/i })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Your pages" })).toHaveCount(0);
-  await expect(page.locator("nav .btn-full")).toHaveCount(0);
+  await expect(page.locator(".p-links, .pmenu-pages")).toHaveCount(0);
 });

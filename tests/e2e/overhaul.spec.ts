@@ -52,7 +52,7 @@ test("a cancelled project says it was closed, with the date, and asks for nothin
   await expect(page.getByText(/this project was closed on/i)).toBeVisible();
   await expect(page.getByText(/pending task/i)).toHaveCount(0);
   await expect(page.getByText(/month-on check-in/i)).toHaveCount(0);
-  await expect(page.locator(".steps")).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Project progress" })).toHaveCount(0);
   // The reason is ours and never reaches the page.
   await expect(page.getByText("e2e", { exact: true })).toHaveCount(0);
 
@@ -223,8 +223,8 @@ test("a client with only one page still has a way back from the booking page", a
 
   await page.goto(`/p/${link.token}/book`);
   await expect(page.getByRole("heading", { name: /pick a time/i })).toBeVisible();
-  await page.getByRole("button", { name: /menu/i }).click();
-  const back = page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Your page" });
+  // A client with one page has no page links, so the wordmark is the way back.
+  const back = page.getByRole("banner").getByRole("link", { name: /awtm forge/i });
   await expect(back).toBeVisible();
   await back.click();
   await expect(page).toHaveURL(new RegExp(`/p/${link.token}$`));
@@ -272,29 +272,25 @@ test("the client's bell is outside the menu, so news is one tap away", async ({ 
   await expect(page.locator(".pmenu-panel").getByRole("link", { name: /updates/i })).toHaveCount(0);
 });
 
-test("back and forward are in the page, because a WhatsApp browser has none", async ({ page }) => {
-  // Ayush, 13 Sep. They drive the real history, so they and the browser's own
-  // buttons cannot disagree, and they are dim when there is nowhere to go.
+test("the way home is the wordmark, on every client page", async ({ page }) => {
+  // The back and forward chevrons added on 13 Sep were taken out the same day
+  // by the home page audit: inside a portal this small they read as browser
+  // furniture. The concern they answered is real, so what replaced them is
+  // tested instead. A client in WhatsApp's browser, which has no chrome of its
+  // own, still has a way back from every page.
   const { token, projectId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);
   await signInClient(page, token, projectId);
 
-  const back = page.getByRole("button", { name: "Go back" });
-  const forward = page.getByRole("button", { name: "Go forward" });
-  await expect(back).toBeDisabled();
-  await expect(forward).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Go back" }), "the chevrons are gone").toHaveCount(0);
 
-  await page.getByRole("button", { name: /menu/i }).click();
-  await page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Questionnaire" }).click();
-  await expect(page).toHaveURL(new RegExp(`/p/${token}/intake$`));
-  await expect(back).toBeEnabled();
-
-  await back.click();
-  await expect(page).toHaveURL(new RegExp(`/p/${token}$`));
-  await expect(forward).toBeEnabled();
-
-  await forward.click();
-  await expect(page).toHaveURL(new RegExp(`/p/${token}/intake$`));
+  for (const path of ["/intake", "/agreement", "/invoices"]) {
+    await page.goto(`/p/${token}${path}`);
+    const home = page.getByRole("banner").getByRole("link", { name: /awtm forge/i });
+    await expect(home).toHaveAttribute("href", `/p/${token}`);
+    await home.click();
+    await expect(page).toHaveURL(new RegExp(`/p/${token}$`));
+  }
 });
 
 test("the dashboard says who each project is waiting on (F-20)", async ({ page }) => {

@@ -46,7 +46,7 @@ async function signInClient(page: import("@playwright/test").Page) {
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(projectId, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 }
 
 test.beforeEach(async () => {
@@ -88,7 +88,7 @@ test("the client sees what they agreed to, with how to check each one", async ({
 
   // The one task on the home page, then the review itself.
   await expect(page.getByText(/check the finished work/i).first()).toBeVisible();
-  await page.getByRole("link", { name: /check the work/i }).click();
+  await page.getByRole("link", { name: /review delivery/i }).click();
   await expect(page.getByText(/ready for you to check/i).first()).toBeVisible();
 
   await expect(page.getByText(/a storefront on the new template/i)).toBeVisible();
@@ -222,7 +222,7 @@ test("a quote and a referral are kept, and skipping is recorded too", async ({ p
 
   await page.getByPlaceholder(/a number or an email/i).fill("priya@example.invalid");
   await page.getByRole("button", { name: /^send$/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 
   const testimonials = await query<{ status: string; text: string; useName: number }>(
     "SELECT status, text, useName FROM Testimonial WHERE projectId = ?",
@@ -248,7 +248,7 @@ test("skipping records that they saw it and gave nothing", async ({ page }) => {
 
   await page.goto(`/p/${token}/thanks`);
   await page.getByRole("button", { name: /^skip$/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 
   const seen = await query<{ thanksSeenAt: string | null }>("SELECT thanksSeenAt FROM Project WHERE id = ?", [projectId]);
   expect(seen[0].thanksSeenAt).not.toBeNull();

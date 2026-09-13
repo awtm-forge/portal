@@ -42,7 +42,7 @@ async function signInClient(page: import("@playwright/test").Page, forToken: str
   await expect(page.getByLabel(/six digit code/i)).toBeVisible();
   await page.getByLabel(/six digit code/i).fill(await takeoverLatestCode(forProject, "LOGIN"));
   await page.getByRole("button", { name: /open my page/i }).click();
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 }
 
 /** The invoices sit in a fold that opens by itself only while one is unpaid; a test opens it either way. */

@@ -27,10 +27,9 @@ test("logging in with the email lands on the page at /p/me", async ({ page }) =>
   await page.getByRole("button", { name: /^Log in$/ }).click();
 
   await page.waitForURL(/\/p\/me$/);
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
-  // The menu on the tokenless page points at /p/me, not a token.
-  await page.getByRole("button", { name: /menu/i }).click();
-  await expect(page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Your page" })).toHaveAttribute("href", "/p/me");
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
+  // The way home on the tokenless page points at /p/me, not a token.
+  await expect(page.getByRole("banner").getByRole("link", { name: /awtm forge/i })).toHaveAttribute("href", "/p/me");
 });
 
 test("the tokenless page sends a signed-out visitor to the login", async ({ page }) => {

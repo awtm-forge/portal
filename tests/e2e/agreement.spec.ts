@@ -28,7 +28,7 @@ async function signIn(page: import("@playwright/test").Page, token: string, proj
   await page.getByLabel(/six digit code/i).fill(code);
   await page.getByRole("button", { name: /open my page/i }).click();
   // "Your project" only renders once the session cookie is accepted.
-  await expect(page.getByText("Your project", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByText("Your project", { exact: true })).toBeVisible();
 }
 
 test.afterAll(async () => {
@@ -45,7 +45,7 @@ test("the client reads the agreement, agrees with a fresh code, and the advance 
   await signIn(page, token, projectId);
 
   // One thing to do: read the agreement.
-  await page.getByRole("link", { name: /read the agreement/i }).click();
+  await page.getByRole("link", { name: /review agreement/i }).click();
   await expect(page.getByRole("heading", { name: /what you get, and how you check it/i })).toBeVisible();
   await expect(page.getByText("Rs 5,20,000")).toBeVisible();
 
@@ -161,16 +161,18 @@ test("on a phone the questionnaire page shows one button above the fold", async 
   await backToSent(projectId);
   await signIn(page, token, projectId);
 
-  // Criterion 13, as reworded by Q15: the row of links under the header is
-  // quiet and is not a thing to do, so the count is of the page body.
-  await expect(page.locator("nav .btn-full")).toHaveCount(0);
+  // Criterion 13, as reworded by Q15 and measured the way tests/e2e/layout.spec
+  // measures it: the count is of filled buttons, not of clickable elements.
+  // Counting every link and button used to pass only because the page had few
+  // of them; it fails a page with a progress rail on it, and it was always
+  // measuring the wrong rule. The client should have one obvious next move,
+  // not one thing they are allowed to touch.
+  await expect(page.locator("nav .btn-full, nav .btn-primary")).toHaveCount(0);
   const viewport = page.viewportSize();
-  const body = page.locator("main");
-  const buttons = body.getByRole("button").or(body.getByRole("link"));
-  const count = await buttons.count();
+  const loud = page.locator("main .btn-full:not(.ghost), main .btn-primary");
   let aboveFold = 0;
-  for (let i = 0; i < count; i++) {
-    const box = await buttons.nth(i).boundingBox();
+  for (let i = 0; i < (await loud.count()); i++) {
+    const box = await loud.nth(i).boundingBox();
     if (box && viewport && box.y < viewport.height) aboveFold += 1;
   }
   expect(aboveFold).toBeLessThanOrEqual(1);

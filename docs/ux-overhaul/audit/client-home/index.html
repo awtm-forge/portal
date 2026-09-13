@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Client home, every state</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 28px; background: #141110; color: #ede7dc; font: 15px/1.6 ui-sans-serif, system-ui, sans-serif; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .lede { color: #b0a496; max-width: 70ch; margin: 0 0 30px; }
+  section { border-top: 1px solid #2e2925; padding: 22px 0 6px; }
+  h2 { font-size: 17px; margin: 0 0 4px; font-family: ui-monospace, Menlo, monospace; color: #e08536; }
+  section p { margin: 0 0 14px; color: #b0a496; }
+  .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #b0a496; padding-bottom: 5px; }
+  img { width: 100%; display: block; border: 1px solid #2e2925; border-radius: 2px; background: #1b1715; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style></head>
+<body>
+  <h1>The client home page, every state</h1>
+  <p class="lede">Each state at 390, 768 and 1440, in dark and light. Made by scripts/ux-audit/client-home.ts, which drives the real database and puts it back afterwards. Click a picture for it at full size.</p>
+  <section>
+    <h2>questionnaire-writing</h2>
+    <p>We are writing your questionnaire. Nothing needed from you yet.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="questionnaire-writing--390--dark.png"><img loading="lazy" src="questionnaire-writing--390--dark.png" alt="questionnaire-writing at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="questionnaire-writing--390--light.png"><img loading="lazy" src="questionnaire-writing--390--light.png" alt="questionnaire-writing at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="questionnaire-writing--768--dark.png"><img loading="lazy" src="questionnaire-writing--768--dark.png" alt="questionnaire-writing at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="questionnaire-writing--768--light.png"><img loading="lazy" src="questionnaire-writing--768--light.png" alt="questionnaire-writing at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="questionnaire-writing--1440--dark.png"><img loading="lazy" src="questionnaire-writing--1440--dark.png" alt="questionnaire-writing at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="questionnaire-writing--1440--light.png"><img loading="lazy" src="questionnaire-writing--1440--light.png" alt="questionnaire-writing at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>questionnaire-ready</h2>
+    <p>The questionnaire is up and untouched. Action needed.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="questionnaire-ready--390--dark.png"><img loading="lazy" src="questionnaire-ready--390--dark.png" alt="questionnaire-ready at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="questionnaire-ready--390--light.png"><img loading="lazy" src="questionnaire-ready--390--light.png" alt="questionnaire-ready at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="questionnaire-ready--768--dark.png"><img loading="lazy" src="questionnaire-ready--768--dark.png" alt="questionnaire-ready at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="questionnaire-ready--768--light.png"><img loading="lazy" src="questionnaire-ready--768--light.png" alt="questionnaire-ready at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="questionnaire-ready--1440--dark.png"><img loading="lazy" src="questionnaire-ready--1440--dark.png" alt="questionnaire-ready at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="questionnaire-ready--1440--light.png"><img loading="lazy" src="questionnaire-ready--1440--light.png" alt="questionnaire-ready at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>questionnaire-resumed</h2>
+    <p>Two sections in, saved. Action needed, and it says how far along.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="questionnaire-resumed--390--dark.png"><img loading="lazy" src="questionnaire-resumed--390--dark.png" alt="questionnaire-resumed at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="questionnaire-resumed--390--light.png"><img loading="lazy" src="questionnaire-resumed--390--light.png" alt="questionnaire-resumed at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="questionnaire-resumed--768--dark.png"><img loading="lazy" src="questionnaire-resumed--768--dark.png" alt="questionnaire-resumed at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="questionnaire-resumed--768--light.png"><img loading="lazy" src="questionnaire-resumed--768--light.png" alt="questionnaire-resumed at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="questionnaire-resumed--1440--dark.png"><img loading="lazy" src="questionnaire-resumed--1440--dark.png" alt="questionnaire-resumed at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="questionnaire-resumed--1440--light.png"><img loading="lazy" src="questionnaire-resumed--1440--light.png" alt="questionnaire-resumed at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>questionnaire-submitted</h2>
+    <p>Sent, and no project made yet. Nothing needed from you.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="questionnaire-submitted--390--dark.png"><img loading="lazy" src="questionnaire-submitted--390--dark.png" alt="questionnaire-submitted at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="questionnaire-submitted--390--light.png"><img loading="lazy" src="questionnaire-submitted--390--light.png" alt="questionnaire-submitted at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="questionnaire-submitted--768--dark.png"><img loading="lazy" src="questionnaire-submitted--768--dark.png" alt="questionnaire-submitted at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="questionnaire-submitted--768--light.png"><img loading="lazy" src="questionnaire-submitted--768--light.png" alt="questionnaire-submitted at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="questionnaire-submitted--1440--dark.png"><img loading="lazy" src="questionnaire-submitted--1440--dark.png" alt="questionnaire-submitted at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="questionnaire-submitted--1440--light.png"><img loading="lazy" src="questionnaire-submitted--1440--light.png" alt="questionnaire-submitted at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>agreement-preparing</h2>
+    <p>We are writing the agreement. Nothing needed, with a date.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="agreement-preparing--390--dark.png"><img loading="lazy" src="agreement-preparing--390--dark.png" alt="agreement-preparing at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="agreement-preparing--390--light.png"><img loading="lazy" src="agreement-preparing--390--light.png" alt="agreement-preparing at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="agreement-preparing--768--dark.png"><img loading="lazy" src="agreement-preparing--768--dark.png" alt="agreement-preparing at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="agreement-preparing--768--light.png"><img loading="lazy" src="agreement-preparing--768--light.png" alt="agreement-preparing at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="agreement-preparing--1440--dark.png"><img loading="lazy" src="agreement-preparing--1440--dark.png" alt="agreement-preparing at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="agreement-preparing--1440--light.png"><img loading="lazy" src="agreement-preparing--1440--light.png" alt="agreement-preparing at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>agreement-changes</h2>
+    <p>They said something was off. We are changing it.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="agreement-changes--390--dark.png"><img loading="lazy" src="agreement-changes--390--dark.png" alt="agreement-changes at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="agreement-changes--390--light.png"><img loading="lazy" src="agreement-changes--390--light.png" alt="agreement-changes at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="agreement-changes--768--dark.png"><img loading="lazy" src="agreement-changes--768--dark.png" alt="agreement-changes at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="agreement-changes--768--light.png"><img loading="lazy" src="agreement-changes--768--light.png" alt="agreement-changes at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="agreement-changes--1440--dark.png"><img loading="lazy" src="agreement-changes--1440--dark.png" alt="agreement-changes at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="agreement-changes--1440--light.png"><img loading="lazy" src="agreement-changes--1440--light.png" alt="agreement-changes at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>agreement-ready</h2>
+    <p>The agreement is with them. Action needed.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="agreement-ready--390--dark.png"><img loading="lazy" src="agreement-ready--390--dark.png" alt="agreement-ready at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="agreement-ready--390--light.png"><img loading="lazy" src="agreement-ready--390--light.png" alt="agreement-ready at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="agreement-ready--768--dark.png"><img loading="lazy" src="agreement-ready--768--dark.png" alt="agreement-ready at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="agreement-ready--768--light.png"><img loading="lazy" src="agreement-ready--768--light.png" alt="agreement-ready at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="agreement-ready--1440--dark.png"><img loading="lazy" src="agreement-ready--1440--dark.png" alt="agreement-ready at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="agreement-ready--1440--light.png"><img loading="lazy" src="agreement-ready--1440--light.png" alt="agreement-ready at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>agreement-agreed</h2>
+    <p>Agreed, kickoff to come. Nothing needed.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="agreement-agreed--390--dark.png"><img loading="lazy" src="agreement-agreed--390--dark.png" alt="agreement-agreed at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="agreement-agreed--390--light.png"><img loading="lazy" src="agreement-agreed--390--light.png" alt="agreement-agreed at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="agreement-agreed--768--dark.png"><img loading="lazy" src="agreement-agreed--768--dark.png" alt="agreement-agreed at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="agreement-agreed--768--light.png"><img loading="lazy" src="agreement-agreed--768--light.png" alt="agreement-agreed at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="agreement-agreed--1440--dark.png"><img loading="lazy" src="agreement-agreed--1440--dark.png" alt="agreement-agreed at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="agreement-agreed--1440--light.png"><img loading="lazy" src="agreement-agreed--1440--light.png" alt="agreement-agreed at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>build-dated</h2>
+    <p>Building, with a date for the next thing they can open.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="build-dated--390--dark.png"><img loading="lazy" src="build-dated--390--dark.png" alt="build-dated at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="build-dated--390--light.png"><img loading="lazy" src="build-dated--390--light.png" alt="build-dated at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="build-dated--768--dark.png"><img loading="lazy" src="build-dated--768--dark.png" alt="build-dated at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="build-dated--768--light.png"><img loading="lazy" src="build-dated--768--light.png" alt="build-dated at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="build-dated--1440--dark.png"><img loading="lazy" src="build-dated--1440--dark.png" alt="build-dated at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="build-dated--1440--light.png"><img loading="lazy" src="build-dated--1440--light.png" alt="build-dated at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>build-undated</h2>
+    <p>Building, with no date promised. The line is dropped, not faked.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="build-undated--390--dark.png"><img loading="lazy" src="build-undated--390--dark.png" alt="build-undated at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="build-undated--390--light.png"><img loading="lazy" src="build-undated--390--light.png" alt="build-undated at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="build-undated--768--dark.png"><img loading="lazy" src="build-undated--768--dark.png" alt="build-undated at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="build-undated--768--light.png"><img loading="lazy" src="build-undated--768--light.png" alt="build-undated at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="build-undated--1440--dark.png"><img loading="lazy" src="build-undated--1440--dark.png" alt="build-undated at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="build-undated--1440--light.png"><img loading="lazy" src="build-undated--1440--light.png" alt="build-undated at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>build-stopped</h2>
+    <p>Closed early, with the date. It asks for nothing.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="build-stopped--390--dark.png"><img loading="lazy" src="build-stopped--390--dark.png" alt="build-stopped at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="build-stopped--390--light.png"><img loading="lazy" src="build-stopped--390--light.png" alt="build-stopped at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="build-stopped--768--dark.png"><img loading="lazy" src="build-stopped--768--dark.png" alt="build-stopped at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="build-stopped--768--light.png"><img loading="lazy" src="build-stopped--768--light.png" alt="build-stopped at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="build-stopped--1440--dark.png"><img loading="lazy" src="build-stopped--1440--dark.png" alt="build-stopped at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="build-stopped--1440--light.png"><img loading="lazy" src="build-stopped--1440--light.png" alt="build-stopped at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>delivery-ready</h2>
+    <p>The finished work is with them. Action needed.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="delivery-ready--390--dark.png"><img loading="lazy" src="delivery-ready--390--dark.png" alt="delivery-ready at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="delivery-ready--390--light.png"><img loading="lazy" src="delivery-ready--390--light.png" alt="delivery-ready at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="delivery-ready--768--dark.png"><img loading="lazy" src="delivery-ready--768--dark.png" alt="delivery-ready at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="delivery-ready--768--light.png"><img loading="lazy" src="delivery-ready--768--light.png" alt="delivery-ready at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="delivery-ready--1440--dark.png"><img loading="lazy" src="delivery-ready--1440--dark.png" alt="delivery-ready at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="delivery-ready--1440--light.png"><img loading="lazy" src="delivery-ready--1440--light.png" alt="delivery-ready at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>delivery-changes</h2>
+    <p>They sent it back. We are making the changes.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="delivery-changes--390--dark.png"><img loading="lazy" src="delivery-changes--390--dark.png" alt="delivery-changes at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="delivery-changes--390--light.png"><img loading="lazy" src="delivery-changes--390--light.png" alt="delivery-changes at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="delivery-changes--768--dark.png"><img loading="lazy" src="delivery-changes--768--dark.png" alt="delivery-changes at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="delivery-changes--768--light.png"><img loading="lazy" src="delivery-changes--768--light.png" alt="delivery-changes at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="delivery-changes--1440--dark.png"><img loading="lazy" src="delivery-changes--1440--dark.png" alt="delivery-changes at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="delivery-changes--1440--light.png"><img loading="lazy" src="delivery-changes--1440--light.png" alt="delivery-changes at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>delivery-done</h2>
+    <p>Signed off, with no check-in on the books. Done.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="delivery-done--390--dark.png"><img loading="lazy" src="delivery-done--390--dark.png" alt="delivery-done at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="delivery-done--390--light.png"><img loading="lazy" src="delivery-done--390--light.png" alt="delivery-done at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="delivery-done--768--dark.png"><img loading="lazy" src="delivery-done--768--dark.png" alt="delivery-done at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="delivery-done--768--light.png"><img loading="lazy" src="delivery-done--768--light.png" alt="delivery-done at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="delivery-done--1440--dark.png"><img loading="lazy" src="delivery-done--1440--dark.png" alt="delivery-done at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="delivery-done--1440--light.png"><img loading="lazy" src="delivery-done--1440--light.png" alt="delivery-done at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>checkin-waiting</h2>
+    <p>Delivered, and the check-in has a date. Nothing needed.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="checkin-waiting--390--dark.png"><img loading="lazy" src="checkin-waiting--390--dark.png" alt="checkin-waiting at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="checkin-waiting--390--light.png"><img loading="lazy" src="checkin-waiting--390--light.png" alt="checkin-waiting at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="checkin-waiting--768--dark.png"><img loading="lazy" src="checkin-waiting--768--dark.png" alt="checkin-waiting at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="checkin-waiting--768--light.png"><img loading="lazy" src="checkin-waiting--768--light.png" alt="checkin-waiting at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="checkin-waiting--1440--dark.png"><img loading="lazy" src="checkin-waiting--1440--dark.png" alt="checkin-waiting at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="checkin-waiting--1440--light.png"><img loading="lazy" src="checkin-waiting--1440--light.png" alt="checkin-waiting at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>checkin-ready</h2>
+    <p>A month on. One number and one line. Action needed.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="checkin-ready--390--dark.png"><img loading="lazy" src="checkin-ready--390--dark.png" alt="checkin-ready at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="checkin-ready--390--light.png"><img loading="lazy" src="checkin-ready--390--light.png" alt="checkin-ready at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="checkin-ready--768--dark.png"><img loading="lazy" src="checkin-ready--768--dark.png" alt="checkin-ready at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="checkin-ready--768--light.png"><img loading="lazy" src="checkin-ready--768--light.png" alt="checkin-ready at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="checkin-ready--1440--dark.png"><img loading="lazy" src="checkin-ready--1440--dark.png" alt="checkin-ready at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="checkin-ready--1440--light.png"><img loading="lazy" src="checkin-ready--1440--light.png" alt="checkin-ready at 1440 in light"></a></figure>
+    </div>
+  </section>
+  <section>
+    <h2>checkin-done</h2>
+    <p>The check-in is in. That is everything.</p>
+    <div class="grid">
+      <figure><figcaption>390 dark</figcaption><a href="checkin-done--390--dark.png"><img loading="lazy" src="checkin-done--390--dark.png" alt="checkin-done at 390 in dark"></a></figure>
+      <figure><figcaption>390 light</figcaption><a href="checkin-done--390--light.png"><img loading="lazy" src="checkin-done--390--light.png" alt="checkin-done at 390 in light"></a></figure>
+      <figure><figcaption>768 dark</figcaption><a href="checkin-done--768--dark.png"><img loading="lazy" src="checkin-done--768--dark.png" alt="checkin-done at 768 in dark"></a></figure>
+      <figure><figcaption>768 light</figcaption><a href="checkin-done--768--light.png"><img loading="lazy" src="checkin-done--768--light.png" alt="checkin-done at 768 in light"></a></figure>
+      <figure><figcaption>1440 dark</figcaption><a href="checkin-done--1440--dark.png"><img loading="lazy" src="checkin-done--1440--dark.png" alt="checkin-done at 1440 in dark"></a></figure>
+      <figure><figcaption>1440 light</figcaption><a href="checkin-done--1440--light.png"><img loading="lazy" src="checkin-done--1440--light.png" alt="checkin-done at 1440 in light"></a></figure>
+    </div>
+  </section>
+</body></html>

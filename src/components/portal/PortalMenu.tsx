@@ -67,8 +67,12 @@ export function PortalMenu({
           {/* The same labels the header links carry, so what a page is called
               does not change with where you happen to be reading it. Hidden by
               the stylesheet from 900 px up, where the links are already on the
-              bar and this would be the same list twice. */}
-          <nav aria-label="Your pages" className="pmenu-pages">
+              bar and this would be the same list twice.
+
+              Not a <nav>: the bar already has the one navigation landmark
+              named "Your pages", and two landmarks with the same name is a
+              screen reader saying it twice. */}
+          <div className="pmenu-pages">
             {pages.map((p) => (
               <Link
                 key={p.key}
@@ -83,7 +87,7 @@ export function PortalMenu({
                 {p.current && <span className="pmenu-here" aria-hidden="true">You are here</span>}
               </Link>
             ))}
-          </nav>
+          </div>
 
           <p className="pmenu-head">Reach us</p>
           {whatsapp && <a className="pmenu-out" href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}

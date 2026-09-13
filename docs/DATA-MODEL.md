@@ -1,6 +1,6 @@
 # Data model
 
-Drafted 7 Sep 2026, last checked against the code on 10 Sep 2026, after ADR 0016. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
+Drafted 7 Sep 2026, last checked against the code on 13 Sep 2026, after the client home rebuild. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
 
 ## Entity relationship diagram
 
@@ -77,6 +77,8 @@ erDiagram
     enum after_delivery "retainer, handover, undecided"
     datetime delivered_at
     string cancel_reason "nullable"
+    datetime expected_by "nullable, the date the client's page shows"
+    datetime last_moved_at "nullable, when the phase last changed"
   }
   agreement {
     id id PK
@@ -329,3 +331,25 @@ from its project's client, and only then drops the project's columns. A client
 that never had a project gets a hash nobody holds the other half of; their
 link exists the moment an admin rotates it.
 
+
+## Changed on 13 September 2026: two dates on a project
+
+The client home page now says when to expect the next thing from us and when
+the project last moved, so `project` carries two nullable columns.
+
+`expected_by` is a promise made by hand. Only admin writes it, it is refused if
+it is in the past, and `transition()` clears it on every phase move, because a
+date set for the stage that just ended is not true of the one that started.
+Where it is null the page says how we will reach them instead of inventing a
+date. It is deliberately not `agreement.launch_target_date`, which is the
+contractual date and is frozen the moment the client agrees.
+
+`last_moved_at` is written by `transition()` in the same statement as the phase
+change. It is a column rather than a read of the activity log because `emit()`
+swallows its own write failure on purpose, so a lost log never rolls back a
+sign-off; it runs after the transaction commits; and several client-visible
+events carry no `project_id`. A stamp the client reads as fact has to be
+written where the change is written.
+
+Both are null on every row that existed before the migration, which is correct:
+nobody was promised a date, and no phase has moved since.
