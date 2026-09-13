@@ -25,8 +25,12 @@
   --ink-muted: #b0a496;
   --accent: #e08536;
   --accent-fill: #e08536;
+  --accent-fill-hover: #ec934b;
   --accent-ink: #181008;
   --accent-soft: #2e2115;
+  /* The ground of something floating above the page. Dark lifts it with a
+     lighter surface instead of a shadow; light lifts it with the shadow. */
+  --surface-float: #221d1a;
   --hairline: #2e2925;
   --hairline-soft: #252019;
   --success: #7fc08a;
@@ -117,8 +121,10 @@ html[data-theme="light"] {
   /* 3.4:1 against the paper, so a filled button has a visible edge without an
      outline, which WCAG 1.4.11 asks of any control that carries meaning. */
   --accent-fill: #c96d1b;
+  --accent-fill-hover: #ad5c12;
   --accent-ink: #1a0e02;
   --accent-soft: #f7ece1;
+  --surface-float: #ffffff;
   --hairline: #d9d9e0;
   --hairline-soft: #e6e6eb;
   --success: #1b6e36;

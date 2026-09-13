@@ -13,7 +13,7 @@ export default async function InvoicesPage({ params }: { params: Promise<{ token
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "invoices" }}>
-      <div style={{ padding: "24px 20px 18px" }} className="stack">
+      <div style={{ padding: "24px 0 18px" }} className="stack">
         <p className="k">{project.name}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>{invoices.length === 1 ? "Your invoice" : "Your invoices"}</h1>
         <p className="c-sub" style={{ marginTop: 10 }}>
@@ -25,7 +25,7 @@ export default async function InvoicesPage({ params }: { params: Promise<{ token
         </p>
       </div>
       {invoices.length > 0 && (
-        <div style={{ padding: "0 20px" }}>
+        <div style={{ padding: "0" }}>
           <InvoiceList invoices={invoices} />
         </div>
       )}

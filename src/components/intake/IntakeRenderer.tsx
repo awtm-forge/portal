@@ -191,7 +191,7 @@ export function IntakeRenderer(p: RendererProps) {
   // shown once after the first send, before the read-only answers.
   if (justSent && p.mode === "client") {
     return (
-      <div style={{ padding: "48px 20px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
+      <div style={{ padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
         <span className="done-mark" aria-hidden="true">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--on-ember)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
         </span>
@@ -218,7 +218,7 @@ export function IntakeRenderer(p: RendererProps) {
     // The ask lives at the top, beside the status that explains the lock
     // (F-08); a line at the foot points back up for whoever read to the end.
     const askForm = p.mode === "client" && state.kind === "locked" ? (
-      <div className="card" style={{ margin: "14px 20px 0", padding: "16px" }} id="ask-change">
+      <div className="card" style={{ margin: "14px 0 0", padding: "16px" }} id="ask-change">
         <div className="stack" style={{ gap: 10 }}>
           <p className="sec-name" style={{ fontSize: 15 }}>Need to change an answer?</p>
           <p className="c-sub">Tell us what needs changing, in a line, and we open it for you.</p>
@@ -233,7 +233,7 @@ export function IntakeRenderer(p: RendererProps) {
     ) : null;
     return (
       <div>
-        <div style={{ padding: "24px 20px 0" }} className="stack">
+        <div style={{ padding: "24px 0 0" }} className="stack">
           <p className="k">{p.doc.title}</p>
           <h1 className="c-title" style={{ marginTop: 10 }}>{p.mode === "client" ? "Your answers" : "Their answers"}</h1>
           {p.mode === "client" && state.kind === "changing" && (
@@ -262,7 +262,7 @@ export function IntakeRenderer(p: RendererProps) {
             const shown = editable ? s.questions : s.questions.filter((q) => !isEmptyAnswer(q, answers));
             const unanswered = s.questions.length - shown.length;
             return (
-              <div key={s.key} className="card" style={{ margin: "0 20px" }}>
+              <div key={s.key} className="card" style={{ margin: "0" }}>
                 <div className="card-h open"><span className="sec-name">{s.title}</span><span className={`tag${editable ? " ember" : ""}`}>{editable ? "Open" : "Done"}</span></div>
                 <div className="card-b">
                   {s.access_items && <AccessBlock items={s.access_items} access={access} kickoff={p.kickoffDateText} onToggle={accessToggle} />}
@@ -292,7 +292,7 @@ export function IntakeRenderer(p: RendererProps) {
           })}
         </div>
         {p.mode === "client" && editable && (
-          <div style={{ padding: "16px 20px 0" }} className="stack">
+          <div style={{ padding: "16px 0 0" }} className="stack">
             {message && <p className="msg">{message}</p>}
             <button id="send-changes" className="btn-full" type="button" onClick={sendChanges} disabled={status.kind === "saving"}>Send the changes</button>
             <p className="help" style={{ textAlign: "center" }}>It locks again after this, and we see what changed.</p>
@@ -300,7 +300,7 @@ export function IntakeRenderer(p: RendererProps) {
           </div>
         )}
         {p.mode === "client" && state.kind === "locked" && (
-          <p className="help" style={{ padding: "16px 20px 0", textAlign: "center" }}>
+          <p className="help" style={{ padding: "16px 0 0", textAlign: "center" }}>
             Need to change an answer? <a href="#ask-change" style={{ color: "var(--ember)" }}>Ask at the top of this page</a>.
           </p>
         )}
@@ -311,7 +311,7 @@ export function IntakeRenderer(p: RendererProps) {
 
   return (
     <div>
-      <div style={{ padding: "24px 20px 18px" }} className="stack">
+      <div style={{ padding: "24px 0 18px" }} className="stack">
         <p className="k">{p.mode === "team" ? "Typing for the client" : "Your questionnaire"}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>{p.doc.title}</h1>
         {p.doc.intro && <p className="c-sub" style={{ marginTop: 10 }}>{p.doc.intro}</p>}
@@ -330,7 +330,7 @@ export function IntakeRenderer(p: RendererProps) {
           const isDone = done.has(s.key);
           const state: "done" | "now" | "later" = isOpen ? "now" : isDone ? "done" : "later";
           return (
-            <div key={s.key} ref={isOpen ? sectionRef : undefined} className={`card${isOpen ? " now" : isDone ? "" : " later"}`} style={{ margin: "0 20px", scrollMarginTop: 16 }}>
+            <div key={s.key} ref={isOpen ? sectionRef : undefined} className={`card${isOpen ? " now" : isDone ? "" : " later"}`} style={{ margin: "0", scrollMarginTop: 16 }}>
               <button type="button" className={`card-h${isOpen ? " open" : ""}`} style={{ width: "100%", background: "none", border: "none", cursor: isOpen ? "default" : "pointer", textAlign: "left", color: "inherit" }} onClick={() => { if (!isOpen) { setOpen(i); setMessage(null); } }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   {state === "done" ? <Tick /> : <span className="mono-sm" style={{ color: isOpen ? "var(--ember)" : "var(--faint)" }}>{i + 1}</span>}
@@ -408,7 +408,7 @@ function Tick() {
 
 function RuleBlock() {
   return (
-    <div className="rule-box" style={{ margin: "22px 20px 0" }}>
+    <div className="rule-box" style={{ margin: "22px 0 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
         <span className="k ember">One rule, and we mean it</span>

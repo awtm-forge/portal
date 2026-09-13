@@ -49,11 +49,11 @@ export default async function UpdatesPage({ params }: { params: Promise<{ token:
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "updates" }}>
-      <div style={{ padding: "22px 20px 16px" }} className="stack">
+      <div style={{ padding: "22px 0 16px" }} className="stack">
         <p className="k">Notifications</p>
         <h1 className="c-title" style={{ fontSize: 26, marginTop: 8 }}>Updates</h1>
       </div>
-      <div style={{ padding: "0 20px", gap: 10 }} className="stack">
+      <div style={{ padding: "0", gap: 10 }} className="stack">
         {items.length === 0 ? (
           <Empty title="Nothing yet" line="Whenever something needs you or changes, it turns up here, and we email you too." />
         ) : (

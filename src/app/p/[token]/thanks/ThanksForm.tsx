@@ -8,7 +8,7 @@ export function ThanksForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState<ThanksState, FormData>(sendThanksAction, {});
   const v = state.values;
   return (
-    <form action={action} className="stack" style={{ gap: 18, padding: "0 20px" }}>
+    <form action={action} className="stack" style={{ gap: 18, padding: "0" }}>
       <input type="hidden" name="token" value={token} />
       <label className="stack" style={{ gap: 6 }}>
         <span className="q">One or two lines on how this went, in your words.</span>

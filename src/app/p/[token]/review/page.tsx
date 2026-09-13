@@ -27,7 +27,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "review" }}>
-      <div style={{ padding: "24px 20px 18px" }} className="stack">
+      <div style={{ padding: "24px 0 18px" }} className="stack">
         <p className="k">{open ? "Ready for you to check" : "The review"}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>{project.name}</h1>
         <p className="c-sub" style={{ marginTop: 10 }}>
@@ -37,7 +37,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
         </p>
       </div>
 
-      <section className="doc-sec" style={{ padding: "0 20px" }}>
+      <section className="doc-sec" style={{ padding: "0" }}>
         <h2>What you agreed to</h2>
         <ul className="deliverables">
           {view.deliverables.map((d) => (
@@ -50,7 +50,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
       </section>
 
       {current && (
-        <div style={{ padding: "18px 20px 0" }} className="stack">
+        <div style={{ padding: "18px 0 0" }} className="stack">
           <a className="btn-full ghost" href={current.finishedWorkUrl} target="_blank" rel="noopener">Open the finished work ↗</a>
           <p className="help" style={{ textAlign: "center", marginTop: 8 }}>It opens in a new tab. Come back here to say how it went.</p>
         </div>
@@ -65,7 +65,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ token: 
       {open && <StickyAction targetId="review-choice" label="Say how it went" hint="Checked it? Then" />}
 
       {earlier.length > 0 && (
-        <div style={{ padding: "22px 20px 0" }}>
+        <div style={{ padding: "22px 0 0" }}>
           <details className="pushback">
             <summary>{earlier.length === 1 ? "The round before this" : `Earlier rounds, ${earlier.length}`}</summary>
             <div className="stack" style={{ gap: 14, paddingTop: 12 }}>

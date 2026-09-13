@@ -12,7 +12,7 @@ export function LoginForm() {
 
   if (state.step === "start") {
     return (
-      <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ padding: "38px 0", display: "flex", flexDirection: "column", gap: 22 }}>
         <div className="stack" style={{ gap: 8 }}>
           <p className="k">Log in to your page</p>
           <h1 className="c-title" style={{ fontSize: 24 }}>Lost your link? Get back in</h1>
@@ -29,7 +29,7 @@ export function LoginForm() {
   }
 
   return (
-    <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
+    <div style={{ padding: "38px 0", display: "flex", flexDirection: "column", gap: 22 }}>
       <div className="stack" style={{ gap: 8 }}>
         <p className="k">Almost in</p>
         <h1 className="c-title" style={{ fontSize: 24 }}>Have a look at your email</h1>

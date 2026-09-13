@@ -22,7 +22,7 @@ export function ReviewControls({ token, signoffPersonName }: { token: string; si
 
   if (state.noteSent) {
     return (
-      <div className="card now" style={{ margin: "0 20px", padding: "18px 16px" }}>
+      <div className="card now" style={{ margin: "0", padding: "18px 16px" }}>
         <div className="stack" style={{ gap: 10 }}>
           <span className="sec-name" style={{ fontSize: 17 }}>Thank you, we have it.</span>
           <p className="c-sub">We will put it right and send it back to you. Nothing is invoiced in the meantime.</p>
@@ -33,7 +33,7 @@ export function ReviewControls({ token, signoffPersonName }: { token: string; si
 
   if (state.step === "code") {
     return (
-      <div style={{ padding: "0 20px" }} className="stack">
+      <div style={{ padding: "0" }} className="stack">
         <form action={action} className="stack" style={{ gap: 12 }}>
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="intent" value="confirm" />
@@ -58,7 +58,7 @@ export function ReviewControls({ token, signoffPersonName }: { token: string; si
   }
 
   return (
-    <div style={{ padding: "0 20px" }} className="stack">
+    <div style={{ padding: "0" }} className="stack">
       <form action={action} className="stack" style={{ gap: 10 }}>
         <input type="hidden" name="token" value={token} />
         <input type="hidden" name="intent" value="changes" />

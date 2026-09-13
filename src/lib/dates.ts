@@ -45,15 +45,28 @@ export function dayMonth(at: Date | null | undefined): string {
  * date with a weekday is a day you can picture and a bare number is arithmetic
  * (13 Sep). Absolute, never "in three days".
  */
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * Built from parts rather than handed to a locale: every English locale writes
+ * this differently, with commas and a four-letter "Sept", and a date a client
+ * reads should look the same on every device.
+ */
+function istWeekday(at: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: IST }).format(at);
+}
+
 export function weekdayDate(at: Date | null | undefined): string {
   if (!at) return "";
-  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: IST }).format(at);
+  const { year, month, day } = istParts(at);
+  return `${istWeekday(at)} ${day} ${MONTHS[month - 1]} ${year}`;
 }
 
 /** "Tue 16 Sep", for a date close enough that the year is noise. */
 export function weekdayDayMonth(at: Date | null | undefined): string {
   if (!at) return "";
-  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: IST }).format(at);
+  const { month, day } = istParts(at);
+  return `${istWeekday(at)} ${day} ${MONTHS[month - 1]}`;
 }
 
 /** Whether an instant is on or after today in Asia/Kolkata. */

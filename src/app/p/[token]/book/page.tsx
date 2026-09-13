@@ -29,7 +29,7 @@ export default async function BookPage({ params }: { params: Promise<{ token: st
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "book" }} wide>
-      <div style={{ padding: "22px 20px 14px" }} className="stack">
+      <div style={{ padding: "22px 0 14px" }} className="stack">
         <p className="k">Book a meeting</p>
         <h1 className="c-title" style={{ fontSize: 26, marginTop: 8 }}>Pick a time that suits you</h1>
         <p className="c-sub" style={{ marginTop: 10 }}>
@@ -44,7 +44,7 @@ export default async function BookPage({ params }: { params: Promise<{ token: st
         </div>
       )}
 
-      <div style={{ padding: "16px 20px 0" }} className="stack">
+      <div style={{ padding: "16px 0 0" }} className="stack">
         <a className="btn-full ghost" href={booking} target="_blank" rel="noopener noreferrer">Open the calendar in a new tab</a>
         <p className="help" style={{ textAlign: "center", marginTop: 8 }}>
           {src ? "Use this if the calendar above does not load." : "The calendar opens on its own page."}

@@ -12,7 +12,7 @@ export function CodeScreen({ token, personName, maskedEmail }: { token: string; 
 
   if (state.step === "start") {
     return (
-      <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ padding: "38px 0", display: "flex", flexDirection: "column", gap: 22 }}>
         <div className="stack" style={{ gap: 8 }}>
           <p className="k">First time on this phone</p>
           <h1 className="c-title" style={{ fontSize: 24 }}>One code and you are in</h1>
@@ -31,7 +31,7 @@ export function CodeScreen({ token, personName, maskedEmail }: { token: string; 
   }
 
   return (
-    <div style={{ padding: "38px 20px", display: "flex", flexDirection: "column", gap: 22 }}>
+    <div style={{ padding: "38px 0", display: "flex", flexDirection: "column", gap: 22 }}>
       <div className="stack" style={{ gap: 8 }}>
         <p className="k">Almost in</p>
         <h1 className="c-title" style={{ fontSize: 24 }}>Have a look at your email</h1>

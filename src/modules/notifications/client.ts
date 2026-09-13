@@ -143,6 +143,19 @@ export async function unreadCount(clientId: string): Promise<number> {
   return db.clientNotification.count({ where: { clientId, readAt: null } });
 }
 
+/**
+ * How many there are and how many are new. The header needs both: a bell with
+ * nothing behind it is a control that does nothing, so it is not rendered at
+ * all until there is a list to open (13 Sep).
+ */
+export async function noticeCounts(clientId: string): Promise<{ total: number; unread: number }> {
+  const [total, unread] = await Promise.all([
+    db.clientNotification.count({ where: { clientId } }),
+    db.clientNotification.count({ where: { clientId, readAt: null } }),
+  ]);
+  return { total, unread };
+}
+
 export async function listForClient(clientId: string, take = 30) {
   return db.clientNotification.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, take });
 }

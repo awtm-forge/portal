@@ -21,7 +21,7 @@ export function AgreeControls({ token, signoffPersonName }: { token: string; sig
 
   if (state.noteSent) {
     return (
-      <div className="card now" style={{ margin: "0 20px", padding: "18px 16px" }}>
+      <div className="card now" style={{ margin: "0", padding: "18px 16px" }}>
         <div className="stack" style={{ gap: 10 }}>
           <span className="sec-name" style={{ fontSize: 17 }}>Thank you, we have it.</span>
           <p className="c-sub">Rahul will read it and send the agreement again with the change. Nothing is invoiced in the meantime.</p>
@@ -32,7 +32,7 @@ export function AgreeControls({ token, signoffPersonName }: { token: string; sig
 
   if (state.step === "code") {
     return (
-      <div style={{ padding: "0 20px" }} className="stack">
+      <div style={{ padding: "0" }} className="stack">
         <form action={action} className="stack" style={{ gap: 12 }}>
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="intent" value="confirm" />
@@ -57,7 +57,7 @@ export function AgreeControls({ token, signoffPersonName }: { token: string; sig
   }
 
   return (
-    <div style={{ padding: "0 20px" }} className="stack">
+    <div style={{ padding: "0" }} className="stack">
       <form action={action}>
         <input type="hidden" name="token" value={token} />
         <button id="agree-btn" className="btn-full" type="submit" name="intent" value="start" disabled={pending}>{pending ? "One moment" : "I agree"}</button>

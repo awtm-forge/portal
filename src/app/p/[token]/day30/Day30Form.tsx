@@ -17,7 +17,7 @@ export function Day30Form({ token, view, draft }: { token: string; view: Day30Cl
   const v = state.values;
 
   return (
-    <form action={action} className="stack" style={{ gap: 20, padding: "0 20px" }}>
+    <form action={action} className="stack" style={{ gap: 20, padding: "0" }}>
       <input type="hidden" name="token" value={token} />
 
       <label className="stack" style={{ gap: 6 }}>

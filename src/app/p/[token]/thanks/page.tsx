@@ -20,7 +20,7 @@ export default async function ThanksPage({ params }: { params: Promise<{ token: 
 
   return (
     <ClientShell businessName={client.businessName} nav={{ token, clientId: client.id, current: "thanks" }}>
-      <div style={{ padding: "38px 20px 20px" }} className="stack">
+      <div style={{ padding: "38px 0 20px" }} className="stack">
         <p className="k ember">Delivered {dayMonthYear(project.deliveredAt)}</p>
         <h1 className="c-title" style={{ marginTop: 10 }}>Thank you. It is delivered.</h1>
         <p className="c-sub" style={{ marginTop: 10 }}>
@@ -31,7 +31,7 @@ export default async function ThanksPage({ params }: { params: Promise<{ token: 
       </div>
 
       {answered ? (
-        <div style={{ padding: "0 20px" }}>
+        <div style={{ padding: "0" }}>
           <Link className="btn-full ghost" href={`/p/${token}`}>Back to your project</Link>
         </div>
       ) : (

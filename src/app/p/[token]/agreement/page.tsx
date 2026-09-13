@@ -28,7 +28,7 @@ export default async function ClientAgreementPage({ params }: { params: Promise<
       {open && <StickyAction targetId="agree-btn" label="I agree" hint="Read it through, then" />}
 
       {!open && !view.isAgreed && (
-        <div className="card" style={{ margin: "0 20px", padding: "18px 16px" }}>
+        <div className="card" style={{ margin: "0", padding: "18px 16px" }}>
           <div className="stack" style={{ gap: 10 }}>
             <span className="sec-name" style={{ fontSize: 17 }}>We are changing it</span>
             <p className="c-sub">You told us something was off. The next version appears here when it is ready.</p>
@@ -36,7 +36,7 @@ export default async function ClientAgreementPage({ params }: { params: Promise<
         </div>
       )}
 
-      <div style={{ padding: "22px 20px 0" }} className="no-print">
+      <div style={{ padding: "22px 0 0" }} className="no-print">
         <Link className="btn-full ghost" href={`/agreement/${token}/print`}>Save it as a PDF</Link>
       </div>
     </ClientShell>

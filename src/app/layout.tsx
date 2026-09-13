@@ -35,7 +35,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    // suppressHydrationWarning: the client portal stamps data-theme on this
+    // element before React loads, so a person who chose light never sees a
+    // dark flash. The server cannot know the choice, so the attribute is a
+    // deliberate difference rather than a bug (src/lib/theme.ts).
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );
