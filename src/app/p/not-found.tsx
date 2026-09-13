@@ -1,12 +1,9 @@
 import Link from "next/link";
 import "@/components/portal/portal.css";
-import { THEME_SCRIPT } from "@/lib/theme";
 
 export default function ProjectNotFound() {
   return (
     <div className="c-page">
-      {/* No shell here, so no switch, but a choice already made still holds. */}
-      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       <div className="c-head"><span className="c-brand">awtm <b>forge</b></span></div>
       <div style={{ padding: "38px 20px" }} className="stack">
         <p className="k">This link is not the one</p>

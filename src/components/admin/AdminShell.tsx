@@ -5,7 +5,6 @@ import { HistoryNav } from "@/components/ui/HistoryNav";
 import { NavProgress } from "@/components/ui/NavProgress";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Toast } from "@/components/ui/Toast";
-import { THEME_SCRIPT } from "@/lib/theme";
 import { currentAdmin } from "@/modules/auth/admin";
 import { teamUnreadCount } from "@/modules/notifications/team";
 
@@ -32,8 +31,6 @@ export async function AdminShell({
   return (
     <div className="a-page">
       <NavProgress />
-      {/* Before the first paint, so an admin who chose light never sees dark. */}
-      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       <aside className="a-side">
         <div className="a-top">
           <HistoryNav />

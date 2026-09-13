@@ -1,7 +1,6 @@
 import Link from "next/link";
 import "./portal.css";
 import { phoneDigits } from "@/lib/format";
-import { THEME_SCRIPT } from "@/lib/theme";
 import { navFor } from "@/modules/clients";
 import { noticeCounts } from "@/modules/notifications/client";
 import { company } from "@/modules/settings";
@@ -74,8 +73,6 @@ export async function ClientShell({
 
   return (
     <div className={`p-shell${wide ? " p-wide" : ""}`}>
-      {/* Before the first paint, so a client who chose light never sees dark. */}
-      <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       <NavProgress />
       <span className="visually-hidden">{businessName}</span>
 
