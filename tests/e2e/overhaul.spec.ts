@@ -232,6 +232,71 @@ test("a client with only one page still has a way back from the booking page", a
   await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
 });
 
+test("the team has notifications too, counted on the nav and cleared by reading", async ({ page }) => {
+  // ADR 0020: the feed is the activity log, and each admin keeps one marker.
+  const { projectId } = await freshLink(SEED_SLUG);
+  const mark = `Zzyxth notify ${Date.now()}`;
+  await query(
+    "INSERT INTO ActivityEvent (id, projectId, type, payload, actor, createdAt) VALUES (?, ?, 'intake.submitted', ?, 'client', NOW(3))",
+    [`ev${Date.now()}`, projectId, JSON.stringify({ projectName: mark, businessName: "Sundara Living" })],
+  );
+
+  await signInAdmin(page);
+  await page.goto("/admin");
+  await expect(page.locator(".a-count")).toBeVisible();
+
+  await page.getByRole("link", { name: /notifications/i }).click();
+  await expect(page.getByRole("heading", { name: /^notifications$/i })).toBeVisible();
+  await expect(page.getByText(`${mark}: questionnaire sent`)).toBeVisible();
+
+  // Reading it moves this admin's marker, so the count goes.
+  await page.goto("/admin");
+  await expect(page.locator(".a-count")).toHaveCount(0);
+
+  await query("DELETE FROM ActivityEvent WHERE type = 'intake.submitted' AND payload LIKE ?", [`%${mark}%`]);
+});
+
+test("the client's bell is outside the menu, so news is one tap away", async ({ page }) => {
+  const { token, projectId } = await freshLink(SEED_SLUG);
+  await backToBuilding(projectId);
+  await signInClient(page, token, projectId);
+
+  // In the header, not behind the menu button (Ayush, 13 Sep).
+  const bell = page.locator(".p-head-actions").getByRole("link", { name: /updates/i });
+  await expect(bell).toBeVisible();
+  await bell.click();
+  await expect(page).toHaveURL(new RegExp(`/p/${token}/updates$`));
+
+  // And the menu no longer repeats it.
+  await page.getByRole("button", { name: /menu/i }).click();
+  await expect(page.locator(".pmenu-panel").getByRole("link", { name: /updates/i })).toHaveCount(0);
+});
+
+test("back and forward are in the page, because a WhatsApp browser has none", async ({ page }) => {
+  // Ayush, 13 Sep. They drive the real history, so they and the browser's own
+  // buttons cannot disagree, and they are dim when there is nowhere to go.
+  const { token, projectId } = await freshLink(SEED_SLUG);
+  await backToBuilding(projectId);
+  await signInClient(page, token, projectId);
+
+  const back = page.getByRole("button", { name: "Go back" });
+  const forward = page.getByRole("button", { name: "Go forward" });
+  await expect(back).toBeDisabled();
+  await expect(forward).toBeDisabled();
+
+  await page.getByRole("button", { name: /menu/i }).click();
+  await page.getByRole("navigation", { name: "Your pages" }).getByRole("link", { name: "Questionnaire" }).click();
+  await expect(page).toHaveURL(new RegExp(`/p/${token}/intake$`));
+  await expect(back).toBeEnabled();
+
+  await back.click();
+  await expect(page).toHaveURL(new RegExp(`/p/${token}$`));
+  await expect(forward).toBeEnabled();
+
+  await forward.click();
+  await expect(page).toHaveURL(new RegExp(`/p/${token}/intake$`));
+});
+
 test("the dashboard says who each project is waiting on (F-20)", async ({ page }) => {
   const { projectId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);

@@ -11,74 +11,18 @@ import { requestLogger, safeError } from "@/lib/logger";
 import { sendPlain, teamNotifyAddress } from "@/lib/mail";
 import { subscribe, type Activity } from "@/modules/events";
 import { tellClient } from "@/modules/notifications/client";
+import { noticeFor } from "@/modules/notifications/team";
 
-/** Team links go to the team host, which is a different name from the
- *  client's when the two are split (ADR 0013). */
-function adminLink(projectId: string | null, clientId?: unknown): string {
-  const base = adminBase();
-  if (projectId) return `${base}/admin/projects/${projectId}`;
-  // The questionnaire belongs to the client and usually has no project yet.
-  if (typeof clientId === "string" && clientId) return `${base}/admin/clients/${clientId}`;
-  return `${base}/admin`;
-}
-
-/** One line each, plain text. CLAUDE.md section 5: name the project and the event. */
+/**
+ * The team's email. The sentence itself comes from modules/notifications/team,
+ * which the admin's own notification page reads too, so the two say the same
+ * thing (ADR 0020). Only the host is added here: team links go to the team
+ * host, a different name from the client's when the two are split (ADR 0013).
+ */
 function teamMessage(a: Activity): { subject: string; body: string } | null {
-  const p = a.payload;
-  const name = typeof p.projectName === "string" ? p.projectName : "A project";
-  const business = typeof p.businessName === "string" ? ` (${p.businessName})` : "";
-  const where = `\n\n${adminLink(a.projectId, p.clientId)}`;
-
-  switch (a.type) {
-    case "intake.submitted":
-      return { subject: `${name}: questionnaire sent`, body: `${name}${business} finished the questionnaire.${where}` };
-    case "intake.change_asked": {
-      const who = typeof p.businessName === "string" ? p.businessName : "A client";
-      const note = typeof p.note === "string" ? p.note : "";
-      return { subject: `${who}: asked to change the questionnaire`, body: `${who} asked to change something on the questionnaire:\n\n${note}\n\nOpen it for them, or decline with a line, from their page.${where}` };
-    }
-    case "intake.changes_sent": {
-      const who = typeof p.businessName === "string" ? p.businessName : "A client";
-      const n = typeof p.changed === "number" ? p.changed : 0;
-      return { subject: `${who}: questionnaire changed`, body: `${who} sent their changes: ${n} ${n === 1 ? "answer" : "answers"} changed, now version ${String(p.version ?? "")}. The changed answers are marked on their page.${where}` };
-    }
-    case "agreement.note":
-      return {
-        subject: `${name}: something is off with the agreement`,
-        body: `${name}${business} pushed back on version ${p.version}. The agreement is back in draft.${where}`,
-      };
-    case "agreement.agreed":
-      return {
-        subject: `${name}: agreed`,
-        body: `${name}${business} agreed version ${p.version}, ${p.method === "WHATSAPP" ? "recorded from WhatsApp" : "in the portal"}. Total ${p.total}. The advance invoice is raised.${where}`,
-      };
-    case "invoice.issued":
-      return { subject: `${name}: invoice ${p.number}`, body: `${p.kindLabel ?? p.kind} invoice ${p.number} for ${p.amount}.${where}` };
-    case "review.changes_requested":
-      return { subject: `${name}: changes requested`, body: `${name}${business} says something is off. Back to building.${where}` };
-    case "delivery.signed_off":
-      return { subject: `${name}: delivered`, body: `${name}${business} signed off the delivery. The balance invoice is raised.${where}` };
-    case "thanks.sent":
-      return { subject: `${name}: thank-you page`, body: `${name}${business} sent the thank-you page.${where}` };
-    case "day30.approved":
-      return { subject: `${name}: day 30 done`, body: `${name}${business} gave the number and approved the quote.${where}` };
-    case "enquiry.received":
-      return {
-        subject: `Enquiry from ${p.name ?? "the site"}`,
-        body: [
-          `Name: ${p.name}`,
-          `Business: ${p.business || "not given"}`,
-          `Reach them: ${p.contact}`,
-          `Budget: ${p.budget}`,
-          `Ad spend: ${p.adSpend}`,
-          "",
-          "What is not working:",
-          String(p.problem ?? ""),
-        ].join("\n"),
-      };
-    default:
-      return null;
-  }
+  const notice = noticeFor(a);
+  if (!notice) return null;
+  return { subject: notice.subject, body: `${notice.body}\n\n${adminBase()}${notice.path}` };
 }
 
 subscribe(async (activity) => {

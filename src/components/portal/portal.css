@@ -72,6 +72,11 @@ textarea.fld { min-height: 88px; resize: vertical; }
 .a-nav { display: block; padding: 8px 12px; border-radius: var(--r-1); font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); border-left: 2px solid transparent; text-decoration: none; transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
 .a-nav:hover { color: var(--ink); }
 .a-nav.on { background: var(--surface-2); color: var(--ink); border-left-color: var(--ember); }
+/* How many notifications are new, on the nav item itself: the admin has a
+   sidebar, so a count belongs beside the word rather than on a bell (ADR 0020). */
+.a-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.a-count { flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--ember); color: var(--on-ember); font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.a-top { display: flex; align-items: center; gap: 6px; }
 .a-side .signed { margin-top: auto; padding: 0 4px; display: flex; flex-direction: column; gap: 3px; }
 .a-side .signout { padding: 0; font-size: 12px; color: var(--faint); text-align: left; }
 .a-main { flex: 1; min-width: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 22px; }
@@ -322,8 +327,31 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
    whichever page did not fit (Ayush, 12 Sep). Full labels, the page you are on
    named in words, and the ways to reach a person in the same place, so the
    header carries two controls instead of four. */
+/* Back and forward, inside the page. A client opens their link from WhatsApp,
+   whose in-app browser has little chrome of its own (Ayush, 13 Sep). Quiet,
+   and dim when there is nowhere to go. */
+.histnav { display: flex; align-items: center; gap: 2px; flex: none; }
+.histnav-b { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-pill); border: none; background: none; color: var(--muted); cursor: pointer; transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
+.histnav-b:hover:not(:disabled) { color: var(--ember); background: var(--surface-2); }
+.histnav-b:disabled { color: var(--rule); cursor: default; }
+
 .pmenu { position: relative; flex: none; }
 .pmenu-btn { gap: 8px; }
+/* The bell, the booking pill, the menu and the wordmark all have to sit on a
+   390px line, so the menu keeps its icon and drops its word on a phone. */
+/* Five things share a 390px line now: the arrows, the wordmark, the bell, the
+   booking pill and the menu. Below 560px the last two keep their icons and
+   drop their words, which they still carry as labels for a screen reader. */
+@media (max-width: 559px) {
+  .pmenu-txt, .p-pill .book-txt { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .pmenu-btn, .p-head-actions .book-pill { width: 36px; min-height: 36px; padding: 0; justify-content: center; }
+  .p-head-in { gap: 6px; padding: 12px 12px; }
+  .histnav-b { width: 28px; height: 28px; }
+}
+/* Notifications live outside the menu: news is time sensitive, so the count is
+   visible without opening anything (Ayush, 13 Sep). */
+.p-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; border-radius: var(--r-pill); border: 1px solid var(--rule); color: var(--muted); text-decoration: none; flex: none; transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.p-bell:hover, .p-bell[aria-current="page"] { border-color: var(--ember); color: var(--ember); }
 .pmenu-panel {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-menu);
   width: max-content; min-width: 250px; max-width: min(86vw, 330px);

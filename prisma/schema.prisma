@@ -26,6 +26,11 @@ model AdminUser {
   setupTokenHash  String?        @unique
   setupExpiresAt  DateTime?
   setupLinkUsedAt DateTime?
+  /// How far down the team's notifications this person has read. Null means
+  /// they have never opened the page, so everything counts as new. One
+  /// timestamp rather than a row per notification: the activity log is
+  /// already the record, and this only marks a place in it (ADR 0020).
+  notificationsSeenAt DateTime?
   createdAt       DateTime       @default(now())
   sessions        AdminSession[]
   intakeUploads   Intake[]       @relation("uploadedBy")

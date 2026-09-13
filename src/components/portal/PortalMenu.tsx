@@ -7,9 +7,11 @@ export type MenuLink = { key: string; label: string; href: string; current: bool
 
 /**
  * One way between the client's pages, at every width (Ayush, 12 Sep). It
- * replaces the row of small uppercase tabs, which scrolled sideways on a phone
- * and hid whichever page did not fit, and it takes in the bell and Reach us so
- * the header holds two controls instead of four.
+ * replaced the row of small uppercase tabs, which scrolled sideways on a phone
+ * and hid whichever page did not fit.
+ *
+ * Notifications are not in here: they are time sensitive, so the bell stays
+ * outside the menu where the count is visible and one tap away (Ayush, 13 Sep).
  *
  * A button and a panel rather than a sidebar: the client portal is one column
  * by design (CLAUDE.md section 2, rule 9), and a menu is quiet, so the one
@@ -17,14 +19,10 @@ export type MenuLink = { key: string; label: string; href: string; current: bool
  */
 export function PortalMenu({
   pages,
-  updatesHref,
-  unread,
   whatsapp,
   email,
 }: {
   pages: MenuLink[];
-  updatesHref: string;
-  unread: number;
   whatsapp: string | null;
   email: string;
 }) {
@@ -47,8 +45,6 @@ export function PortalMenu({
     };
   }, [open]);
 
-  const here = pages.find((p) => p.current);
-
   return (
     <div className="pmenu" ref={wrap}>
       <button
@@ -56,13 +52,13 @@ export function PortalMenu({
         className="p-pill pmenu-btn"
         aria-expanded={open}
         aria-controls="portal-menu"
+        aria-label="Menu"
         onClick={() => setOpen((v) => !v)}
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
           {open ? <path d="M18 6 6 18M6 6l12 12" /> : <><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>}
         </svg>
-        <span>Menu</span>
-        {unread > 0 && !open && <span className="p-bell-dot">{unread > 9 ? "9+" : unread}</span>}
+        <span className="pmenu-txt">Menu</span>
       </button>
 
       {open && (
@@ -85,11 +81,6 @@ export function PortalMenu({
               </Link>
             ))}
           </nav>
-
-          <Link className="pmenu-updates" href={updatesHref} aria-current={here ? undefined : "page"} onClick={() => setOpen(false)}>
-            Updates
-            {unread > 0 && <span className="p-bell-dot static">{unread > 9 ? "9+" : unread}</span>}
-          </Link>
 
           <p className="pmenu-head">Reach us</p>
           {whatsapp && <a className="pmenu-out" href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}

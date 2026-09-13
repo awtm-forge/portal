@@ -52,7 +52,7 @@ export async function currentAdmin() {
   if (!raw) return null;
   const session = await db.adminSession.findUnique({
     where: { tokenHash: hashToken(raw) },
-    include: { adminUser: { select: { id: true, email: true, name: true } } },
+    include: { adminUser: { select: { id: true, email: true, name: true, notificationsSeenAt: true } } },
   });
   if (!session || session.expiresAt < new Date()) return null;
   if (Date.now() - session.lastSeenAt.getTime() > 60 * 60 * 1000) {
