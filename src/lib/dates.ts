@@ -40,6 +40,29 @@ export function dayMonth(at: Date | null | undefined): string {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: IST }).format(at);
 }
 
+/**
+ * "Mon 8 Sep 2026". Every date a client reads carries its weekday, because a
+ * date with a weekday is a day you can picture and a bare number is arithmetic
+ * (13 Sep). Absolute, never "in three days".
+ */
+export function weekdayDate(at: Date | null | undefined): string {
+  if (!at) return "";
+  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: IST }).format(at);
+}
+
+/** "Tue 16 Sep", for a date close enough that the year is noise. */
+export function weekdayDayMonth(at: Date | null | undefined): string {
+  if (!at) return "";
+  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: IST }).format(at);
+}
+
+/** Whether an instant is on or after today in Asia/Kolkata. */
+export function isTodayOrLater(at: Date, now: Date = new Date()): boolean {
+  const a = istParts(at);
+  const b = istParts(now);
+  return a.year * 10000 + a.month * 100 + a.day >= b.year * 10000 + b.month * 100 + b.day;
+}
+
 export function dayMonthTime(at: Date | null | undefined): string {
   if (!at) return "";
   return new Intl.DateTimeFormat("en-IN", {

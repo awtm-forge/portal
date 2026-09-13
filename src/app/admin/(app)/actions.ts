@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { refreshTo, refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { COUNTRY_CODE_MESSAGE, hasCountryCode } from "@/lib/phone";
+import { fromIsoDate, isTodayOrLater, weekdayDayMonth } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
 import { createClient, deliverLink, rotateLink } from "@/modules/clients";
@@ -207,6 +208,31 @@ const signoffSchema = z.object({
   signoffPersonName: z.string().trim().min(1).max(120),
   signoffPersonEmail: z.string().trim().email().max(200),
 });
+
+/**
+ * The date the client sees on their own page, set by hand and by us (13 Sep).
+ *
+ * A date in the past is refused rather than saved: the client page would read
+ * it as a promise already broken, and the cure is a new date, not a stale one.
+ * Every phase move clears it (transition), so it always belongs to the stage
+ * the project is in now. Empty clears it, which is how you take a date back.
+ */
+export async function setExpectedByAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const projectId = String(formData.get("projectId") ?? "");
+  const path = `/admin/projects/${projectId}`;
+  const raw = String(formData.get("expectedBy") ?? "").trim();
+
+  if (raw === "") {
+    await db.project.update({ where: { id: projectId }, data: { expectedBy: null } });
+    await refreshWith(path, "The date is off their page. It now says we will message them.");
+  }
+  const when = fromIsoDate(raw);
+  if (!when) await refreshWith(path, "Not saved: that is not a date.");
+  if (!isTodayOrLater(when!)) await refreshWith(path, "Not saved: that date has passed. Give them a date you can still meet.");
+  await db.project.update({ where: { id: projectId }, data: { expectedBy: when } });
+  await refreshWith(path, `Their page now says to expect it by ${weekdayDayMonth(when)}.`);
+}
 
 export async function updateSignoffAction(formData: FormData): Promise<void> {
   await requireAdmin();

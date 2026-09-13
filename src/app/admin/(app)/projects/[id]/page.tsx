@@ -11,7 +11,7 @@ import { parseDocumentLoose } from "@/modules/intake/document";
 import { PHASE_LABEL } from "@/modules/projects/phase";
 import { WAITING_LABEL, waitingOn } from "@/modules/projects/waiting";
 import { agreementToAdminView, invoiceToClientView } from "@/modules/serializers";
-import { isoDate } from "@/lib/dates";
+import { isoDate, weekdayDayMonth } from "@/lib/dates";
 import { Phase } from "@/generated/prisma/enums";
 import { RecordWhatsapp } from "./whatsapp/RecordWhatsapp";
 import { markKickoffAction } from "./updates/actions";
@@ -27,7 +27,7 @@ import { forProject as updatesForProject } from "@/modules/updates";
 import { company } from "@/modules/settings";
 import { forgetReferralAction } from "./review/actions";
 import { approveTestimonialAction, cancelProjectAction, closeProjectAction, saveFrictionNotesAction } from "./day30/actions";
-import { signoffDecisionAction, updateSignoffAction } from "../../actions";
+import { setExpectedByAction, signoffDecisionAction, updateSignoffAction } from "../../actions";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
 
@@ -473,6 +473,30 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
             </p>
             <div><Link className="a-btn ghost" href={`/admin/clients/${project.client.id}/link`}>The link, and how to send it</Link></div>
           </div>
+
+          {/* The one promise the client's own page makes about time. Open on
+              the page rather than folded away, because a date nobody can see
+              is a date nobody keeps (13 Sep). Cleared automatically whenever
+              the phase moves, so it always belongs to the stage they are in. */}
+          {!ended && (
+            <div className="a-card">
+              <span className="k">What their page says to expect</span>
+              <p className="help" style={{ lineHeight: 1.6 }}>
+                {project.expectedBy
+                  ? `Their page reads "We expect to have this with you by ${weekdayDayMonth(project.expectedBy)}".`
+                  : "Their page says we will message them, with no date. Give one when you can keep it."}
+              </p>
+              <form action={setExpectedByAction} className="stack" style={{ gap: 10 }}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <label className="stack" style={{ gap: 6 }}>
+                  <span className="lbl">Expect it by</span>
+                  <input className="a-fld" name="expectedBy" type="date" min={isoDate(new Date())} defaultValue={isoDate(project.expectedBy)} />
+                </label>
+                <div><button className="a-btn ghost" type="submit">Save</button></div>
+              </form>
+              <p className="help">Leave it empty to take the date off their page. Moving the project on clears it.</p>
+            </div>
+          )}
 
           <Fold card title="Who signs off" ember={Boolean(project.client.proposedSignoffEmail && !ended)} open={Boolean(project.client.proposedSignoffEmail && !ended)} fact={project.signoffPersonName}>
             {ended ? (

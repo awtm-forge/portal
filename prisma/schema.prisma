@@ -126,6 +126,22 @@ model Project {
   kickoffAt                DateTime?
   cancelledAt              DateTime?
   cancelReason             String?         @db.VarChar(500)
+  /// The date we have told the client to expect the next thing from us, set by
+  /// hand in admin and shown on their home page. Null means we have not said,
+  /// and the page then says nothing rather than inventing one.
+  ///
+  /// Separate from Agreement.launchTargetDate, which is the contractual date
+  /// and is frozen the moment the client agrees. This one is about the stage
+  /// the project is in now, so transition() clears it on every move: a date
+  /// set for the stage that just ended is no longer true of the one that
+  /// started, and a stale promise is worse than no promise.
+  expectedBy               DateTime?
+  /// When the phase last moved. Project has no updatedAt, and the activity log
+  /// cannot answer this: emit() swallows its own write failure by design, it
+  /// runs after the transaction commits, and several client-visible events
+  /// carry no projectId. Written by transition(), which is the one place the
+  /// phase changes.
+  lastMovedAt              DateTime?
   createdAt                DateTime        @default(now())
   agreement                Agreement?
   agreementNotes           AgreementNote[]

@@ -125,7 +125,10 @@ export async function transition(
   const t = next(project.phase, event);
   const moved = await tx.project.updateMany({
     where: { id: project.id, phase: t.from },
-    data: { phase: t.to },
+    // The stamp the client's page reads as fact, written in the same statement
+    // as the move so the two cannot disagree, and the expected date cleared
+    // because it belonged to the stage that just ended (13 Sep).
+    data: { phase: t.to, lastMovedAt: new Date(), expectedBy: null },
   });
   if (moved.count !== 1) throw new PhaseRaced(t.from, event);
   return t;
