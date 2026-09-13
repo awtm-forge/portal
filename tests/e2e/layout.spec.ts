@@ -160,6 +160,29 @@ test("no client page scrolls sideways", async ({ page }) => {
   }
 });
 
+test("the header uses both corners of the window, at any width", async ({ page }) => {
+  // The bar used to be pinned to the reading measure, so on a laptop its five
+  // controls huddled in the middle of an empty band (Ayush, 13 Sep). The way
+  // back belongs in the corner, where a browser and a phone both put it.
+  await setPhase(projectId, "BUILDING");
+  await signIn(page);
+
+  const width = page.viewportSize()?.width ?? 0;
+  const left = await page.locator(".p-head-nav").boundingBox();
+  const right = await page.locator(".p-head-actions").boundingBox();
+  if (!left || !right) throw new Error("the header lost one of its two ends");
+
+  const gutterLeft = Math.round(left.x);
+  const gutterRight = Math.round(width - (right.x + right.width));
+  expect(gutterLeft, "the left corner").toBeLessThanOrEqual(24);
+  expect(gutterRight, "the right corner").toBeLessThanOrEqual(24);
+  expect(Math.abs(gutterLeft - gutterRight), "the two gutters match").toBeLessThanOrEqual(1);
+
+  // Back is the first thing in that corner, before the wordmark.
+  const back = await page.getByRole("button", { name: "Go back" }).boundingBox();
+  expect(Math.round(back?.x ?? -1)).toBe(gutterLeft);
+});
+
 test("the pages that ask for something put exactly one button in reach", async ({ page }) => {
   // The other half of the rule. Where there is something to do, it is one
   // thing and it is on the first screen, not buried.

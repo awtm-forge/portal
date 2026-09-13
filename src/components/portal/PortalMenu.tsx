@@ -49,16 +49,16 @@ export function PortalMenu({
     <div className="pmenu" ref={wrap}>
       <button
         type="button"
-        className="p-pill pmenu-btn"
+        className="p-ctl pmenu-btn"
         aria-expanded={open}
         aria-controls="portal-menu"
         aria-label="Menu"
         onClick={() => setOpen((v) => !v)}
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
           {open ? <path d="M18 6 6 18M6 6l12 12" /> : <><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>}
         </svg>
-        <span className="pmenu-txt">Menu</span>
+        <span className="ctl-txt">Menu</span>
       </button>
 
       {open && (

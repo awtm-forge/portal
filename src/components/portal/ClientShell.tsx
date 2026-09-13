@@ -16,12 +16,12 @@ export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "in
  * keeps a readable measure inside it, so the page works on a laptop as well
  * as a phone (portal.css, the client shell block).
  *
- * The header carries the wordmark only: the client's own name belongs in the
- * body as the heading, not up here (item 3, a proper hierarchy). Two things
- * are on every page: a persistent "Book a meeting" and a "Reach us" with the
- * team's WhatsApp and email (items 9 and Q15), so a client is never more than
- * one tap from a person. The quiet row of links below names the pages that
- * already exist for this client.
+ * The header carries the wordmark, not the client's own name: that belongs in
+ * the body as the heading (item 3, a proper hierarchy). It spans the window
+ * and uses both corners, the way back and the way home on the left, the
+ * things you can do on the right. Booking is on every page and the menu holds
+ * "Reach us" with the team's WhatsApp and email (items 9 and Q15), so a client
+ * is never more than a tap or two from a person.
  */
 export async function ClientShell({
   businessName,
@@ -71,29 +71,35 @@ export async function ClientShell({
       <span className="visually-hidden">{businessName}</span>
       <header className="p-head">
         <div className="p-head-in">
-          {home && <HistoryNav />}
-          {home ? (
-            <Link className="c-brand" href={home}>awtm <b>forge</b></Link>
-          ) : (
-            <span className="c-brand">awtm <b>forge</b></span>
-          )}
+          {/* The way back and the way home, together in the left corner, which
+              is where a browser, a phone and every app this was checked
+              against put them (Ayush, 13 Sep). */}
+          <div className="p-head-nav">
+            {home && <HistoryNav />}
+            {home && <span className="p-head-div" aria-hidden="true" />}
+            {home ? (
+              <Link className="c-brand" href={home}>awtm <b>forge</b></Link>
+            ) : (
+              <span className="c-brand">awtm <b>forge</b></span>
+            )}
+          </div>
           <div className="p-head-actions">
             {/* Outside the menu on purpose: news is time sensitive, so the
                 count is visible and one tap away (Ayush, 13 Sep). */}
             {home && (
               <Link
-                className="p-bell"
+                className="p-ctl p-ctl-icon p-bell"
                 href={`${home}/updates`}
                 aria-label={unread > 0 ? `Updates, ${unread} new` : "Updates"}
                 aria-current={nav?.current === "updates" ? "page" : undefined}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
                 {unread > 0 && <span className="p-bell-dot">{unread > 9 ? "9+" : unread}</span>}
               </Link>
             )}
-            <a className="p-pill book-pill" href={book} aria-label="Book a meeting" {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></svg>
-              <span className="book-txt">Book a meeting</span>
+            <a className="p-ctl p-ctl-cta" href={book} aria-label="Book a meeting" {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></svg>
+              <span className="ctl-txt">Book a meeting</span>
             </a>
             {home && (
               <PortalMenu

@@ -18,6 +18,10 @@
   --faint: #948a7e;
   --rule: #2e2925;
   --rule-soft: #252019;
+  /* A control with nowhere to go. 2.6:1, under the text minimum on purpose,
+     which is what WCAG allows an inactive control, but well above the rule
+     colour, which made a dim arrow look like a rendering fault. */
+  --off: #605850;
   --ember: #e08536;
   --ember-deep: #b5661f;
   --ember-soft: #2e2115;
@@ -73,6 +77,7 @@
   --color-faint: var(--faint);
   --color-rule: var(--rule);
   --color-rule-soft: var(--rule-soft);
+  --color-off: var(--off);
   --color-ember: var(--ember);
   --color-ember-deep: var(--ember-deep);
   --color-ember-soft: var(--ember-soft);

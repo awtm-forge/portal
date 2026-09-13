@@ -303,55 +303,79 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   flex-direction: column;
 }
 .p-head { border-bottom: 1px solid var(--rule); background: var(--surface); }
-.p-head-in,
 .p-foot-in {
   width: 100%;
   max-width: var(--p-measure);
   margin: 0 auto;
 }
-.p-head-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; }
-.p-biz { flex: 1; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The bar spans the window, not the reading column. Its two ends are what a
+   person reaches for, so they sit in the two corners: the way back and the way
+   home on the left, the things you can do on the right (Ayush, 13 Sep, looking
+   at it on a laptop). Before this the whole bar was pinned to the 700 px
+   measure, which left five controls huddled in the middle of a wide screen.
+   Checked against docs.stripe.com and github.com, which build the same bar the
+   same way: identity flush left, actions flush right, controls near 34 px, and
+   never more than one of them outlined. */
+.p-head-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; }
+.p-head-nav { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.p-head-div { width: 1px; height: 20px; flex: none; background: var(--rule); }
+.p-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }
 
-/* Book a meeting and Reach us: two controls on every page, so a person is one
-   tap away from anywhere (items 9 and Q15). Under 560 px "Reach us" is its
-   glyph alone, so the wordmark keeps its one line (F-02). */
-.p-head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
-.p-pill { list-style: none; cursor: pointer; font-family: var(--font-mono-stack); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ember); border: 1px solid var(--ember); border-radius: var(--r-pill); padding: 0 13px; min-height: 34px; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; text-decoration: none; transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
-.p-pill::-webkit-details-marker { display: none; }
-.p-pill:hover { background: var(--ember); color: var(--on-ember); }
-.p-pill:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+/* One family for every control in the bar. Four outlined badges of four
+   different widths was the clumsy part: these are quiet until you touch them,
+   and the page's own action stays the loudest thing on the screen (rule 9). */
+.p-ctl {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 34px; min-width: 34px; padding: 0 12px;
+  border: 0; border-radius: var(--r-pill); background: none; color: var(--muted);
+  font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.02em; line-height: 1;
+  white-space: nowrap; text-decoration: none; cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.p-ctl svg { flex: none; }
+.p-ctl:hover { background: var(--surface-2); color: var(--ember); }
+.p-ctl:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.p-ctl[aria-current="page"] { color: var(--ember); }
+/* An open menu looks open with the pointer somewhere else, and on a phone,
+   where there is no hover at all. */
+.p-ctl[aria-expanded="true"] { background: var(--surface-2); color: var(--ember); }
+.p-ctl-icon { width: 34px; padding: 0; }
+/* Booking is the one thing up here you do rather than read, so it carries a
+   ground of its own. A filled shape is calmer than an outline and still reads
+   as the button of the three. */
+.p-ctl-cta { background: var(--surface-2); color: var(--ember); }
+.p-ctl-cta:hover { background: var(--ember); color: var(--on-ember); }
 @keyframes rise { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
-/* The menu: one way between the client's pages at every width. It replaced a
-   row of small uppercase tabs that scrolled sideways on a phone and hid
-   whichever page did not fit (Ayush, 12 Sep). Full labels, the page you are on
-   named in words, and the ways to reach a person in the same place, so the
-   header carries two controls instead of four. */
 /* Back and forward, inside the page. A client opens their link from WhatsApp,
    whose in-app browser has little chrome of its own (Ayush, 13 Sep). Quiet,
    and dim when there is nowhere to go. */
 .histnav { display: flex; align-items: center; gap: 2px; flex: none; }
 .histnav-b { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-pill); border: none; background: none; color: var(--muted); cursor: pointer; transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
 .histnav-b:hover:not(:disabled) { color: var(--ember); background: var(--surface-2); }
-.histnav-b:disabled { color: var(--rule); cursor: default; }
+/* Dim, but still legibly an arrow: at the rule colour it read as a rendering
+   fault rather than as a control with nowhere to go. */
+.histnav-b:disabled { color: var(--off); cursor: default; }
 
+/* The menu: one way between the client's pages at every width. It replaced a
+   row of small uppercase tabs that scrolled sideways on a phone and hid
+   whichever page did not fit (Ayush, 12 Sep). Full labels, the page you are on
+   named in words, and the ways to reach a person in the same place. */
 .pmenu { position: relative; flex: none; }
-.pmenu-btn { gap: 8px; }
-/* The bell, the booking pill, the menu and the wordmark all have to sit on a
-   390px line, so the menu keeps its icon and drops its word on a phone. */
-/* Five things share a 390px line now: the arrows, the wordmark, the bell, the
-   booking pill and the menu. Below 560px the last two keep their icons and
+/* Five things share a 390px line: the arrows, the wordmark, the bell, the
+   booking control and the menu. Below 560px the last two keep their icons and
    drop their words, which they still carry as labels for a screen reader. */
 @media (max-width: 559px) {
-  .pmenu-txt, .p-pill .book-txt { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-  .pmenu-btn, .p-head-actions .book-pill { width: 36px; min-height: 36px; padding: 0; justify-content: center; }
-  .p-head-in { gap: 6px; padding: 12px 12px; }
-  .histnav-b { width: 28px; height: 28px; }
+  .ctl-txt { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .p-head-actions .p-ctl { width: 34px; padding: 0; gap: 0; }
+  .p-head-in { gap: 10px; padding: 9px 10px; }
+  .p-head-nav { gap: 7px; }
+  .p-head-actions { gap: 4px; }
+  .histnav-b { width: 30px; height: 30px; }
 }
 /* Notifications live outside the menu: news is time sensitive, so the count is
    visible without opening anything (Ayush, 13 Sep). */
-.p-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 34px; min-height: 34px; border-radius: var(--r-pill); border: 1px solid var(--rule); color: var(--muted); text-decoration: none; flex: none; transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
-.p-bell:hover, .p-bell[aria-current="page"] { border-color: var(--ember); color: var(--ember); }
+.p-bell[aria-current="page"] { background: var(--surface-2); }
 .pmenu-panel {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-menu);
   width: max-content; min-width: 250px; max-width: min(86vw, 330px);
@@ -370,11 +394,9 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .pmenu-panel a:hover { background: var(--ground); }
 .pmenu-panel a[aria-current="page"] { color: var(--ember); }
 .pmenu-here { font-family: var(--font-mono-stack); font-weight: 400; font-size: 11.5px; letter-spacing: 0.04em; color: var(--faint); flex: none; }
-.pmenu-updates { border-top: 1px solid var(--rule-soft); margin-top: 4px; padding-top: 4px; }
 .pmenu-head { margin: 8px 12px 2px; padding-top: 12px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono-stack); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
 .pmenu-out { font-family: var(--font-mono-stack) !important; font-weight: 400 !important; font-size: 12.5px !important; letter-spacing: 0.02em; }
 .pmenu-note { margin: 2px 12px 6px; font-family: var(--font-mono-stack); font-size: 11.5px; color: var(--faint); line-height: 1.5; }
-.p-bell-dot.static { position: static; margin-left: auto; }
 
 /* Where they are in the whole thing (F-03). Five dots at any width, with the
    labels beside them when there is room and a "Step 3 of 5, Build" line when
@@ -436,7 +458,7 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .done-mark { width: 52px; height: 52px; border-radius: 50%; background: var(--ember); display: inline-flex; align-items: center; justify-content: center; }
 
 /* The notifications bell (Q19) and the updates list, grouped by day (F-14). */
-.p-bell-dot { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--r-pill); background: var(--ember); color: var(--on-ember); font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.p-bell-dot { position: absolute; top: -1px; right: -1px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--r-pill); background: var(--ember); color: var(--on-ember); font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
 .notice-day { margin: 0; font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding: 6px 0 2px; }
 .notice { display: block; padding: 14px 16px; border: 1px solid var(--rule); border-radius: var(--r-1); background: var(--surface); text-decoration: none; color: inherit; transition: border-color var(--t-fast) var(--ease); }
 .notice:hover { border-color: var(--ember); }
@@ -592,7 +614,9 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .p-shell .card-b { gap: 22px; padding: 20px 20px 22px; }
   .p-shell .card-h { padding: 16px 20px; }
   .p-shell .btn-full { padding: 16px; font-size: 12.5px; }
-  .p-head-in { padding: 16px 20px; }
+  /* A wider gutter on a laptop, so the two corners have air around them. */
+  .p-head-in { padding: 13px 24px; }
+  .p-head-nav { gap: 12px; }
 }
 
 @media (min-width: 1280px) {
