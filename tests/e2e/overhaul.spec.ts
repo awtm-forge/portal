@@ -232,8 +232,11 @@ test("a client with only one page still has a way back from the booking page", a
   await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
 });
 
-test("the team has notifications too, counted on the nav and cleared by reading", async ({ page }) => {
+test("the team's notifications are a bell, counted and cleared by reading", async ({ page }) => {
   // ADR 0020: the feed is the activity log, and each admin keeps one marker.
+  // Amended 14 Sep: the count was beside the word "Notifications" in the nav,
+  // between Projects and Image library, where it read as one more place to go.
+  // News is not a place, so it is a bell with the other controls.
   const { projectId } = await freshLink(SEED_SLUG);
   const mark = `Zzyxth notify ${Date.now()}`;
   await query(
@@ -243,33 +246,57 @@ test("the team has notifications too, counted on the nav and cleared by reading"
 
   await signInAdmin(page);
   await page.goto("/admin");
-  await expect(page.locator(".a-count")).toBeVisible();
+  // Not a nav item: the four places in the app are the only things listed.
+  await expect(page.getByRole("navigation", { name: "Admin" }).getByRole("link")).toHaveText([
+    "Clients", "Projects", "Image library", "Settings",
+  ]);
 
-  await page.getByRole("link", { name: /notifications/i }).click();
+  // A bell with a count, which opens what happened rather than a page.
+  const bell = page.getByRole("button", { name: /notifications, \d+ new/i });
+  await expect(bell).toBeVisible();
+  await expect(page.locator(".notify-dot")).toBeVisible();
+
+  await bell.click();
+  const tray = page.locator("#notify-panel");
+  await expect(tray).toBeVisible();
+  await expect(tray.getByText(`${mark}: questionnaire sent`)).toBeVisible();
+  // Opening it clears the count without going anywhere.
+  await expect(page.locator(".notify-dot")).toHaveCount(0);
+
+  // The whole list is one link away, and the marker has moved.
+  await tray.getByRole("link", { name: /see all of them/i }).click();
   await expect(page.getByRole("heading", { name: /^notifications$/i })).toBeVisible();
-  await expect(page.getByText(`${mark}: questionnaire sent`)).toBeVisible();
-
-  // Reading it moves this admin's marker, so the count goes.
   await page.goto("/admin");
-  await expect(page.locator(".a-count")).toHaveCount(0);
+  await expect(page.locator(".notify-dot")).toHaveCount(0);
 
   await query("DELETE FROM ActivityEvent WHERE type = 'intake.submitted' AND payload LIKE ?", [`%${mark}%`]);
 });
 
-test("the client's bell is outside the menu, so news is one tap away", async ({ page }) => {
-  const { token, projectId } = await freshLink(SEED_SLUG);
+test("the client's bell opens the news in place, and is not behind the menu", async ({ page }) => {
+  const { token, projectId, clientId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);
+  await query("UPDATE ClientNotification SET readAt = NULL WHERE clientId = ?", [clientId]);
   await signInClient(page, token, projectId);
+  await page.goto(`/p/${token}`);
 
-  // In the header, not behind the menu button (Ayush, 13 Sep).
-  const bell = page.locator(".p-head-actions").getByRole("link", { name: /updates/i });
+  // On the bar, not behind the menu button (Ayush, 13 Sep), and it opens what
+  // happened rather than sending them to a page (Ayush, 14 Sep).
+  const bell = page.locator(".p-head-actions").getByRole("button", { name: /notifications/i });
   await expect(bell).toBeVisible();
   await bell.click();
+  const tray = page.locator("#notify-panel");
+  await expect(tray).toBeVisible();
+  await expect(tray.locator(".notify-row").first()).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/p/${token}$`));
+
+  // Opening it clears the count, and the whole list is one link away.
+  await expect(page.locator(".notify-dot")).toHaveCount(0);
+  await tray.getByRole("link", { name: /see all of them/i }).click();
   await expect(page).toHaveURL(new RegExp(`/p/${token}/updates$`));
 
-  // And the menu no longer repeats it.
+  // And the menu does not repeat any of it.
   await page.getByRole("button", { name: /menu/i }).click();
-  await expect(page.locator(".pmenu-panel").getByRole("link", { name: /updates/i })).toHaveCount(0);
+  await expect(page.locator(".pmenu-panel").getByRole("link", { name: /updates|notification/i })).toHaveCount(0);
 });
 
 test("the way home is the wordmark, on every client page", async ({ page }) => {

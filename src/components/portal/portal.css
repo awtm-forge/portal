@@ -65,18 +65,27 @@ textarea.fld { min-height: 88px; resize: vertical; }
 
 /* Admin */
 .a-page { min-height: 100dvh; display: flex; font-size: 14px; line-height: 1.5; }
-.a-side { width: 212px; flex: none; border-right: 1px solid var(--rule); background: var(--surface); display: flex; flex-direction: column; gap: 22px; padding: 18px 14px; position: sticky; top: 0; height: 100dvh; }
+/* z-index matters here even on a laptop, where nothing overlaps: position
+   sticky makes a stacking context, so the notification tray's own z-index is
+   trapped inside it, and the project table's positioned rows painted straight
+   through the panel (14 Sep). */
+.a-side { width: 256px; flex: none; border-right: 1px solid var(--rule); background: var(--surface); display: flex; flex-direction: column; gap: 22px; padding: 18px 14px; position: sticky; top: 0; z-index: var(--z-sticky); height: 100dvh; }
 .a-brand { font-family: var(--font-display-stack); font-weight: 600; font-size: 15px; padding: 0 4px; color: var(--ink); text-decoration: none; white-space: nowrap; }
 .a-brand b { color: var(--ember); font-weight: 600; }
 .a-navs { display: flex; flex-direction: column; gap: 3px; }
 .a-nav { display: block; padding: 8px 12px; border-radius: var(--r-1); font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); border-left: 2px solid transparent; text-decoration: none; transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
 .a-nav:hover { color: var(--ink); }
 .a-nav.on { background: var(--surface-2); color: var(--ink); border-left-color: var(--ember); }
-/* How many notifications are new, on the nav item itself: the admin has a
-   sidebar, so a count belongs beside the word rather than on a bell (ADR 0020). */
 .a-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.a-count { flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--accent-fill); color: var(--accent-ink); font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
-.a-top { display: flex; align-items: center; gap: 6px; }
+/* How many are new, on the bell. It sat beside the word "Notifications" in
+   the nav until 14 Sep, where it read as one more place to go rather than as
+   news that had arrived (ADR 0020 amended). */
+/* Four things share this row: the arrows, the wordmark, the bell and the
+   theme. They need 220 px, which is why the sidebar is 256 and not the 212 it
+   was. Wrapping is the fallback, not the plan, so a longer wordmark drops the
+   two controls to their own line rather than squeezing anything. */
+.a-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.a-top-act { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: none; }
 .a-side .signed { margin-top: auto; padding: 0 4px; display: flex; flex-direction: column; gap: 3px; }
 .a-side .signout { padding: 0; font-size: 12px; color: var(--faint); text-align: left; }
 .a-main { flex: 1; min-width: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 22px; }
@@ -357,27 +366,6 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 }
 .p-head-actions { display: flex; align-items: center; gap: var(--s-2); flex: none; margin-left: auto; }
 
-/* The pages this client has, as plain text. Under 900 px they fold into the
-   menu, which lists the same labels. */
-.p-links { display: none; align-items: center; gap: var(--s-5); margin-left: var(--s-8); min-width: 0; }
-.p-links a {
-  color: var(--ink-muted);
-  text-decoration: none;
-  font-size: var(--fs-1);
-  white-space: nowrap;
-  padding: 4px 0;
-  border-bottom: 2px solid transparent;
-  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
-}
-.p-links a:hover { color: var(--ink); }
-.p-links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
-@media (min-width: 900px) {
-  .p-links { display: flex; }
-  /* The menu keeps Reach us and the theme; repeating the pages it already
-     shows on the bar would be the same list twice. */
-  .pmenu-pages { display: none; }
-}
-
 /* The one primary action in the frame: filled, named, and the only thing up
    here with a ground of its own. */
 .p-cta {
@@ -454,9 +442,44 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .p-head-actions { gap: 4px; }
   .histnav-b { width: 30px; height: 30px; }
 }
-/* Notifications live outside the menu: news is time sensitive, so the count is
-   visible without opening anything (Ayush, 13 Sep). */
-.p-bell[aria-current="page"] { background: var(--surface-2); }
+/* The notification tray, the same control in both zones (Ayush, 14 Sep). The
+   bell opens what happened in place rather than sending anyone to a page, and
+   the count clears on opening. */
+.notify { position: relative; flex: none; }
+.notify-dot { position: absolute; top: -1px; right: -1px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--r-pill); background: var(--accent-fill); color: var(--accent-ink); font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.notify-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-menu);
+  width: max-content; min-width: 280px; max-width: min(92vw, 380px);
+  background: var(--surface-float); border: 1px solid var(--hairline); border-radius: var(--r-2);
+  box-shadow: var(--shadow); animation: rise var(--t-base) var(--ease);
+  display: flex; flex-direction: column;
+}
+.notify-head { margin: 0; padding: 10px 14px 6px; font-family: var(--font-mono-stack); font-size: var(--fs-0); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); }
+.notify-list { display: flex; flex-direction: column; max-height: min(60vh, 420px); overflow-y: auto; }
+.notify-row {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--hairline-soft);
+  text-decoration: none; color: var(--ink);
+  transition: background var(--t-fast) var(--ease);
+}
+.notify-row:hover { background: var(--surface-raised); }
+.notify-row.is-new { border-left: 2px solid var(--accent); }
+.notify-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.notify-title { font-family: var(--font-ui-stack); font-size: var(--fs-1); font-weight: 600; min-width: 0; }
+.notify-when { flex: none; font-family: var(--font-mono-stack); font-size: var(--fs-0); color: var(--ink-muted); }
+.notify-body { font-family: var(--font-ui-stack); font-size: var(--fs-0); color: var(--ink-muted); line-height: 1.5; }
+.notify-all {
+  padding: 11px 14px; border-top: 1px solid var(--hairline);
+  font-family: var(--font-ui-stack); font-size: var(--fs-0); color: var(--accent);
+  text-decoration: none; text-align: center;
+  transition: background var(--t-fast) var(--ease);
+}
+.notify-all:hover { background: var(--surface-raised); }
+/* The admin's sidebar is narrow, so its tray hangs from the left of the bell
+   rather than the right, where it would run off the screen. */
+.notify:has(.a-icon) .notify-panel { right: auto; left: 0; }
+
 .pmenu-panel {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-menu);
   width: max-content; min-width: 250px; max-width: min(86vw, 330px);
@@ -746,15 +769,15 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .how-long { text-align: right; }
 }
 
-/* The theme switch on the admin's own bar, matching its nav items rather than
-   the client's control family: same zone, same vocabulary. The arrows beside
-   it lose two pixels each so the three of them and the wordmark share a
+/* The bell and the theme switch: one family, in the admin's own vocabulary.
+   The arrows beside them lose two pixels each so as much as possible shares a
    212 px sidebar without a squeeze. */
-.a-theme {
+.a-icon {
+  position: relative;
   flex: none;
-  margin-left: auto;
   width: 28px;
   height: 28px;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -765,15 +788,15 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   cursor: pointer;
   transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
 }
-.a-theme:hover { color: var(--accent); background: var(--surface-raised); }
-.a-theme:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.a-icon:hover { color: var(--accent); background: var(--surface-raised); }
+.a-icon:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.a-icon[aria-current="page"] { color: var(--accent); background: var(--surface-raised); }
 .a-top .histnav-b { width: 28px; height: 28px; }
 
 /* The questionnaire completion badge (item 6). */
 .done-mark { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-fill); display: inline-flex; align-items: center; justify-content: center; }
 
 /* The notifications bell (Q19) and the updates list, grouped by day (F-14). */
-.p-bell-dot { position: absolute; top: -1px; right: -1px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--r-pill); background: var(--accent-fill); color: var(--accent-ink); font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
 .notice-day { margin: 0; font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding: 6px 0 2px; }
 .notice { display: block; padding: 14px 16px; border: 1px solid var(--rule); border-radius: var(--r-1); background: var(--surface); text-decoration: none; color: inherit; transition: border-color var(--t-fast) var(--ease); }
 .notice:hover { border-color: var(--ember); }

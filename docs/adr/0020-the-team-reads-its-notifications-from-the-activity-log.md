@@ -36,3 +36,22 @@ everything above it. The feed can only ever show what the log holds, so a new
 kind of notification means a new event type rather than a row someone inserts.
 And the list is read from the log on each page load, which is one indexed query
 by type and date, fine at this size and not at a hundred thousand events.
+
+## Amended 14 September 2026: a bell, not a nav item
+
+This decision originally put the count beside the word "Notifications" in the
+sidebar nav, on the reasoning that the admin has a sidebar and so does not need
+a bell. That was wrong about what the sidebar is for. Clients, Projects, Image
+library and Settings are places in the app you go to and come back from. News
+is not a place: it arrives, you read it, it stops being new. Listing it among
+them made it read as a fifth section rather than as something that happened.
+
+It is a bell now, at the top of the sidebar beside the theme switch, with the
+count on it, and it is not rendered at all when there is nothing behind it.
+That is the rule the client's bell already followed, so both zones say the same
+thing the same way.
+
+Nothing about the feed changed: it is still read from the activity log, still
+one watermark per admin, still cleared by opening the page. The sidebar went
+from 212 to 256 pixels wide to hold the row, and the nav lost an item, which is
+why all four now fit on a phone without scrolling.

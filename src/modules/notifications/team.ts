@@ -138,6 +138,19 @@ export async function teamUnreadCount(seenAt: Date | null): Promise<number> {
   });
 }
 
+/**
+ * How many there are and how many are new. The bell needs both: with nothing
+ * behind it, it is a control that does nothing, so it is not rendered at all
+ * until there is a list to open (14 Sep, matching the client's).
+ */
+export async function teamCounts(seenAt: Date | null): Promise<{ total: number; unread: number }> {
+  const [total, unread] = await Promise.all([
+    db.activityEvent.count({ where: { type: { in: TEAM_TYPES } } }),
+    teamUnreadCount(seenAt),
+  ]);
+  return { total, unread };
+}
+
 export async function markTeamSeen(adminUserId: string): Promise<void> {
   await db.adminUser.update({ where: { id: adminUserId }, data: { notificationsSeenAt: new Date() } });
 }

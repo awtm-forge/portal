@@ -1,12 +1,15 @@
 import Link from "next/link";
 import "./portal.css";
+import { dayMonthTime } from "@/lib/dates";
 import { phoneDigits } from "@/lib/format";
 import { navFor } from "@/modules/clients";
-import { noticeCounts } from "@/modules/notifications/client";
+import { listForClient, noticeCounts } from "@/modules/notifications/client";
 import { company } from "@/modules/settings";
 import { NavProgress } from "@/components/ui/NavProgress";
+import { NotifyBell } from "@/components/ui/NotifyBell";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Toast } from "@/components/ui/Toast";
+import { markClientNoticesSeen } from "./notify-actions";
 import { PortalMenu } from "./PortalMenu";
 
 export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates" | "book";
@@ -19,10 +22,13 @@ export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "in
  * always has a floor instead of ending in a dark void halfway down a laptop
  * screen. The content keeps a reading measure inside it.
  *
- * The header is the wordmark on the left and, on the right, the pages this
- * client actually has as plain text links, then one filled button. One primary
- * action, not two outlined buttons of equal weight arguing with each other.
- * Under 900 px the links fold into the menu and the button stays.
+ * The header is the wordmark on the left and, on the right, the notifications,
+ * one filled button, the theme and the menu. One primary action, not two
+ * outlined buttons of equal weight arguing with each other.
+ *
+ * The client's pages are a vertical list inside the menu at every width, not a
+ * row strung across the bar (Ayush, 14 Sep). A row read as five things to do
+ * beside the one thing that is; a list reads as places, which is what they are.
  *
  * The back and forward chevrons are gone. They were added on 12 Sep because a
  * client opens their link in WhatsApp's browser, which has little chrome; the
@@ -46,6 +52,8 @@ export async function ClientShell({
   const c = await company();
   const has = nav ? await navFor(nav.clientId) : null;
   const notices = nav ? await noticeCounts(nav.clientId) : { total: 0, unread: 0 };
+  // Six in the tray; the rest are one link away on the page.
+  const recent = nav && notices.total > 0 ? await listForClient(nav.clientId, 6) : [];
   const home = nav ? `/p/${nav.token}` : null;
   const links: { key: ClientPage; label: string; href: string }[] = home && has
     ? [
@@ -84,29 +92,23 @@ export async function ClientShell({
             <span className="c-brand">awtm <b>forge</b></span>
           )}
 
-          {links.length > 1 && (
-            <nav className="p-links" aria-label="Your pages">
-              {links.map((l) => (
-                <Link key={l.key} href={l.href} aria-current={l.key === nav?.current ? "page" : undefined}>
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-          )}
-
           <div className="p-head-actions">
             {/* Only when there is a list to open, and never empty: a bell with
                 nothing behind it is a control that does nothing. */}
             {home && notices.total > 0 && (
-              <Link
-                className="p-ctl p-ctl-icon p-bell"
-                href={`${home}/updates`}
-                aria-label={notices.unread > 0 ? `Updates, ${notices.unread} new` : "Updates"}
-                aria-current={nav?.current === "updates" ? "page" : undefined}
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
-                {notices.unread > 0 && <span className="p-bell-dot">{notices.unread > 9 ? "9+" : notices.unread}</span>}
-              </Link>
+              <NotifyBell
+                unread={notices.unread}
+                allHref={`${home}/updates`}
+                onOpen={markClientNoticesSeen}
+                items={recent.map((n) => ({
+                  id: n.id,
+                  title: n.title,
+                  body: n.body,
+                  href: `${home}${n.path}`,
+                  when: dayMonthTime(n.createdAt),
+                  unread: n.readAt === null,
+                }))}
+              />
             )}
             <a className="p-cta" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>
               Book a meeting

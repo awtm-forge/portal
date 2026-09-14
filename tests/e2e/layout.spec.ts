@@ -122,18 +122,13 @@ async function navigationIsQuiet(page: import("@playwright/test").Page) {
   await expect(menu).toHaveCount(1);
   await expect(menu).not.toHaveClass(/btn-full|btn-primary|p-cta/);
 
-  // The page links are a landmark on the bar above 900 px, and behind the menu
-  // below it. Either way there is one list, never two saying the same thing.
-  const onBar = await page.locator(".p-links").isVisible();
-  await expect(page.getByRole("navigation", { name: "Your pages" })).toHaveCount(onBar ? 1 : 0);
-  if (onBar) {
-    for (const link of await page.locator(".p-links a").all()) {
-      await expect(link).not.toHaveClass(/btn-full|btn-primary|p-cta/);
-    }
-  }
+  // The pages are a vertical list behind the menu at every width, and there is
+  // never a second copy of them strung across the bar.
+  await expect(page.getByRole("navigation", { name: "Your pages" })).toHaveCount(0);
 
   await menu.click();
   await expect(page.locator("#portal-menu")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Your pages" })).toHaveCount(1);
   await expect(page.locator("#portal-menu .btn-full, #portal-menu .btn-primary")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.locator("#portal-menu")).toHaveCount(0);

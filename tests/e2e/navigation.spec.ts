@@ -34,14 +34,11 @@ test.afterAll(async () => {
 });
 
 /**
- * The pages a client can reach, wherever they are at this width. Above 900 px
- * they are plain text links on the bar; below it the bar hides them and the
- * same labels sit behind the menu button (13 Sep). The tests run at both, so
- * they ask for whichever is real rather than assuming one.
+ * The pages a client can reach: a vertical list behind the menu button, at
+ * every width (Ayush, 14 Sep). They were a row across the bar above 900 px for
+ * a day, which read as five things to do beside the one thing that is.
  */
 async function pageLinks(page: import("@playwright/test").Page) {
-  const bar = page.locator(".p-links");
-  if (await bar.isVisible()) return bar;
   await page.getByRole("button", { name: /menu/i }).click();
   const inMenu = page.locator("#portal-menu .pmenu-pages");
   await expect(inMenu).toBeVisible();
