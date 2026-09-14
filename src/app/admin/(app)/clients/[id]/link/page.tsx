@@ -8,12 +8,19 @@ import { requireAdmin } from "@/modules/auth/admin";
 import { byId } from "@/modules/clients";
 import { clientUrl } from "@/lib/request-origin";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
+import { revealClientToken } from "@/modules/auth/client";
 import { resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
 import { CopyLink } from "../CopyLink";
 
 /**
- * The handover. Its own screen because this is the only moment the link can
- * ever be shown: only a hash of it is stored (PORTAL-SPEC 5.9).
+ * The handover, and the one screen that can show a client their link.
+ *
+ * It used to be the one moment as well: only a hash was stored, so a link not
+ * copied at the time was gone and the only way to send it again was to rotate,
+ * which takes away the link the client already has to solve a problem that is
+ * ours (Ayush, 14 Sep). A sealed copy of the same token is kept now, so the
+ * same link can be read back and sent again (ADR 0021). Links minted before
+ * that change were never captured and still cannot be shown.
  */
 export default async function SendLinkPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -21,7 +28,9 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
   const client = await byId(id);
   if (!client) notFound();
 
-  const token = await takeFlashLink(client.id);
+  // Freshly minted and riding the flash cookie, or read back from the sealed
+  // copy. Either way it is the link the client holds right now.
+  const token = (await takeFlashLink(client.id)) ?? (await revealClientToken(client.id));
   const link = token ? await clientUrl(`/p/${token}`) : null;
   const c = client;
   const firstName = c.contactName.trim().split(/\s+/)[0] || c.contactName;
@@ -39,21 +48,21 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
         <div className="main">
           {link ? (
             <div className="a-card ember">
-              <span className="k ember">Their link, shown once</span>
+              <span className="k ember">Their link</span>
               <div className="a-fld mono" style={{ fontSize: 15, color: "var(--ink)", wordBreak: "break-all", padding: "14px 16px", background: "var(--surface-2)" }}>{link}</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <CopyLink link={link} />
                 <a className="a-btn ghost" href={waLink(c.contactPhone, message)} target="_blank" rel="noopener">Send it on WhatsApp</a>
               </div>
               <p className="help" style={{ lineHeight: 1.65 }}>
-                Only a hash of this link is stored, so this is the one screen that can show it. Copy it now if you want it anywhere else. If you lose it, rotate below and a new one appears here.
+                This is the link {firstName} holds right now, and this page can show it again whenever you need it. Sending it again changes nothing for them. Rotating, below, is the other thing: it makes a new link and stops this one working.
               </p>
             </div>
           ) : (
             <div className="a-card">
-              <span className="k">The link is not in hand</span>
+              <span className="k">This link cannot be shown</span>
               <p className="c-sub" style={{ fontSize: 14 }}>
-                It was shown when the client was added and only its hash was kept, so it cannot be shown again. Rotate it to make a new one, which stops the old link working at once.
+                It was minted before we kept a copy we could read back, so only its hash exists. The client&apos;s link still works; it just cannot be printed here. Rotate to make one that can be, which stops their current link working at once.
               </p>
               <div>
                 <Confirm

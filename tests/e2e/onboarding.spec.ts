@@ -43,7 +43,7 @@ test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
 });
 
-test("a client is added, gets their link at once, and it cannot be recovered later", async ({ page }) => {
+test("a client is added, gets their link at once, and the team can show it again", async ({ page }) => {
   await page.goto("/admin/clients");
   await page.getByRole("link", { name: /add a client/i }).click();
 
@@ -76,13 +76,28 @@ test("a client is added, gets their link at once, and it cannot be recovered lat
   await page.reload();
   await expect(page.getByText(link.trim(), { exact: true })).toBeVisible();
 
-  // Once that cookie is gone, nothing can bring the link back, because only
-  // its hash was ever stored (PORTAL-SPEC 5.9). This is the property that
-  // matters, and it is why the handover has its own screen.
+  // With that cookie gone the same link is still here, read back from the
+  // sealed copy (ADR 0021). It used to be unrecoverable, and the only way to
+  // send it again was to rotate, which took away the link the client already
+  // had to solve a problem that was ours.
   await page.context().clearCookies({ name: "awtm_flash_link" });
   await page.reload();
-  await expect(page.getByText(/the link is not in hand/i)).toBeVisible();
-  await expect(page.getByText(link.trim(), { exact: true })).toHaveCount(0);
+  await expect(page.getByText(link.trim(), { exact: true })).toBeVisible();
+  await expect(page.getByText(/this link cannot be shown/i)).toHaveCount(0);
+
+  // What still holds: it is behind an admin session, and the hash is what
+  // authenticates, so the sealed copy proves nothing on its own.
+  const [row] = await query<{ sealed: string | null; hash: string }>(
+    "SELECT accessTokenSealed AS sealed, accessTokenHash AS hash FROM Client WHERE businessName = ?",
+    [BUSINESS],
+  );
+  expect(row.sealed, "a copy is kept").not.toBeNull();
+  expect(row.sealed, "and it is not the link in the clear").not.toContain(link.trim().split("/p/")[1]);
+  expect(row.hash, "the hash is untouched").toMatch(/^[0-9a-f]{64}$/);
+
+  await page.context().clearCookies();
+  await page.goto(page.url());
+  await expect(page).toHaveURL(/\/admin\/login/);
 });
 
 test("the sign-off person can differ from the day to day contact", async ({ page }) => {

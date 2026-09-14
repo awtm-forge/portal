@@ -1,0 +1,13 @@
+-- The team could not send a client their link again. Only a hash of it was
+-- kept (ADR 0015), so the only way to re-send was to rotate, which takes away
+-- the link the client already has to solve a problem that is ours.
+--
+-- This keeps a second copy of the same token, encrypted rather than hashed,
+-- under a key derived from SESSION_SECRET. That secret lives in the
+-- environment and never in the database, so a dump on its own reveals
+-- nothing. Anyone holding both holds the links, and that is the trade
+-- (ADR 0021).
+--
+-- Nullable, and null on every existing row: those links were never captured
+-- and cannot be recovered, so that page keeps saying the link is not in hand.
+ALTER TABLE `Client` ADD COLUMN `accessTokenSealed` VARCHAR(400) NULL;

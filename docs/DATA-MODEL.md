@@ -1,6 +1,6 @@
 # Data model
 
-Drafted 7 Sep 2026, last checked against the code on 13 Sep 2026, after the client home rebuild. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
+Drafted 7 Sep 2026, last checked against the code on 14 Sep 2026, after ADR 0021. The entity list is PORTAL-SPEC §4 and INTAKE-SPEC §12 plus the tables added by CLAUDE.md §5 and §11. Field detail stays in the specs; this file shows shape, relationships and the rules the schema must enforce. The Prisma schema is derived from this, and this file is updated in the same commit as any migration.
 
 ## Entity relationship diagram
 
@@ -353,3 +353,20 @@ written where the change is written.
 
 Both are null on every row that existed before the migration, which is correct:
 nobody was promised a date, and no phase has moved since.
+
+## Changed on 14 September 2026: a client link that can be read back
+
+`client` gains `access_token_sealed`, nullable: the same token as
+`access_token_hash`, encrypted rather than hashed, under a key derived from
+`SESSION_SECRET`.
+
+The hash stays and stays authoritative. Every sign-in compares hashes and
+nothing reads the sealed copy to authenticate. It exists for one screen, the
+client's link page, so the team can send somebody their link again without
+rotating it and taking away the one they already have.
+
+The key is in the environment, never in the database, so a dump on its own
+reveals nothing; anyone holding both holds the links. ADR 0021 states that
+trade and what it is worth. Null on every row minted before the change, and
+unreadable on every row if `SESSION_SECRET` is ever rotated, in which case the
+page falls back to saying the link cannot be shown and nobody is locked out.

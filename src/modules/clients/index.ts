@@ -8,6 +8,7 @@
  */
 import { Phase } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
+import { seal } from "@/lib/seal";
 import { safeError } from "@/lib/logger";
 import { requestLogger } from "@/lib/logger";
 import { mintToken, rotateClientToken } from "@/modules/auth/client";
@@ -29,7 +30,7 @@ export type NewClient = {
 export async function createClient(input: NewClient): Promise<{ id: string; token: string }> {
   const { token, tokenHash } = mintToken();
   const client = await db.client.create({
-    data: { ...input, contactEmail: input.contactEmail.toLowerCase(), accessTokenHash: tokenHash },
+    data: { ...input, contactEmail: input.contactEmail.toLowerCase(), accessTokenHash: tokenHash, accessTokenSealed: seal(token) },
   });
   await emit({ type: "client.created", projectId: null, actor: "team", payload: { clientId: client.id, businessName: client.businessName } });
   return { id: client.id, token };

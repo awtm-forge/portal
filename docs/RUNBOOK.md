@@ -214,3 +214,29 @@ tar xzf ~/backups/uploads-2026-09-09.tar.gz -C /home/zekst
 **This has not been rehearsed on the live host.** Do it once, on a day nothing
 is happening, and write the date here when you have. Until then, treat this
 section as untested.
+
+## Sending a client their link again
+
+Open the client, then "The link, and how to send it". The link is on that page
+whenever you need it: copy it, or use the WhatsApp button, which opens the
+message with the link already in it. Sending it again changes nothing for the
+client.
+
+"Make a new link" is the other thing, and it is not the same: it stops their
+current link working the moment it runs, so use it when a link has gone
+somewhere it should not have, not when somebody has simply lost theirs.
+
+A client added before 14 September 2026 has no copy we can read back, so that
+page says so. Rotating is the only way to give them a link it can show, and
+that costs them their current one.
+
+## Adding the other admin
+
+Settings, "The team". Fill in their email and name and press Add an admin.
+That makes a setup link: send it to them yourself, they open it and choose
+their own password, and nobody else ever sees it. It works once and lasts
+forty eight hours.
+
+Two accounts is the limit. Entering an address that is already listed reissues
+its setup link, which is also how a forgotten password is reset. An invite that
+was never used can be removed to free the seat.

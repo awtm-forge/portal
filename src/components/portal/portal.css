@@ -945,6 +945,22 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .lib-cell .tag, .lib-cell .help { overflow-wrap: anywhere; }
 .lib-cell .between { flex-wrap: wrap; gap: 4px 8px; }
 
+/* A numbered flow in the admin: three steps of something that happens outside
+   this screen, so the reader knows what they are starting. The numbers earn
+   their place here, because the order is the point. */
+.a-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.a-steps li { display: flex; align-items: flex-start; gap: 10px; }
+.a-step-n {
+  flex: none;
+  width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  color: var(--ink-muted);
+  font-family: var(--font-mono-stack); font-size: 11px; font-weight: 600;
+}
+.a-step-w { font-size: 14px; color: var(--ink); }
+
 /* Ended: a banner for a closed or cancelled project, in either zone. */
 .ended { border: 1px solid var(--rule); border-left: 3px solid var(--muted); background: var(--surface); border-radius: var(--r-1); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
 .ended b { font-family: var(--font-display-stack); font-weight: 600; font-size: 15px; color: var(--ink); }

@@ -62,6 +62,13 @@ model Client {
   /// Q12). One link per client, minted when the client is created, and every
   /// project they ever have appears on it. Only the hash is stored.
   accessTokenHash      String    @unique
+  /// The same token, encrypted rather than hashed, so the team can send a
+  /// client their link again without rotating it and taking away the one they
+  /// already have (14 Sep, ADR 0021). The key is derived from SESSION_SECRET,
+  /// which is not in the database, so a dump alone reveals nothing. Null on
+  /// every row minted before this, which reads as "not in hand" exactly as it
+  /// did before.
+  accessTokenSealed    String?   @db.VarChar(400)
   tokenCreatedAt       DateTime  @default(now())
   tokenRotatedAt       DateTime?
   linkEmailedAt        DateTime?

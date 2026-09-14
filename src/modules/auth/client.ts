@@ -5,6 +5,7 @@ import { hashCode, hashToken, randomToken, safeEqualHex, sixDigitCode } from "@/
 import { requestLogger, safeError } from "@/lib/logger";
 import { sendCode } from "@/lib/mail";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { seal, unseal } from "@/lib/seal";
 import { CodePurpose } from "@/generated/prisma/enums";
 
 /**
@@ -220,11 +221,24 @@ export function mintToken(): { token: string; tokenHash: string } {
 export async function rotateClientToken(clientId: string): Promise<string> {
   const { token, tokenHash } = mintToken();
   await db.$transaction([
-    db.client.update({ where: { id: clientId }, data: { accessTokenHash: tokenHash, tokenRotatedAt: new Date() } }),
+    db.client.update({
+      where: { id: clientId },
+      data: { accessTokenHash: tokenHash, accessTokenSealed: seal(token), tokenRotatedAt: new Date() },
+    }),
     db.clientSession.deleteMany({ where: { clientId } }),
     db.oneTimeCode.updateMany({ where: { clientId, consumedAt: null }, data: { consumedAt: new Date() } }),
   ]);
   return token;
+}
+
+/**
+ * The client's link, read back for the team to send again (ADR 0021). Null for
+ * a client whose link was minted before the sealed copy existed, and for one
+ * whose SESSION_SECRET has changed since.
+ */
+export async function revealClientToken(clientId: string): Promise<string | null> {
+  const row = await db.client.findUnique({ where: { id: clientId }, select: { accessTokenSealed: true } });
+  return unseal(row?.accessTokenSealed);
 }
 
 export function clientLink(token: string): string {
