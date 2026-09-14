@@ -99,7 +99,9 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
             </div>
             {state.message && <p className="help err">{state.message}</p>}
             <div>
-              <button className="a-btn" type="submit" disabled={pending}>
+              {/* Outlined, not filled: Save settings is this page's one loud
+                  action. The old mistake was a grey text link, not an outline. */}
+              <button className="a-btn ghost" type="submit" disabled={pending}>
                 {pending ? "Making the link" : full ? "Reissue a setup link" : "Add an admin"}
               </button>
             </div>

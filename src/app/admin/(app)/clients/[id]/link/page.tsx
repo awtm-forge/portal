@@ -30,7 +30,8 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
 
   // Freshly minted and riding the flash cookie, or read back from the sealed
   // copy. Either way it is the link the client holds right now.
-  const token = (await takeFlashLink(client.id)) ?? (await revealClientToken(client.id));
+  const justMade = await takeFlashLink(client.id);
+  const token = justMade ?? (await revealClientToken(client.id));
   const link = token ? await clientUrl(`/p/${token}`) : null;
   const c = client;
   const firstName = c.contactName.trim().split(/\s+/)[0] || c.contactName;
@@ -39,7 +40,7 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
   return (
     <AdminShell active="clients" adminName={admin.name}>
       <div className="stack" style={{ gap: 6 }}>
-        <span className="k ember">Client added</span>
+        <span className={`k${justMade ? " ember" : ""}`}>{justMade ? "Client added" : "Their way in"}</span>
         <h1 className="a-title">Send {firstName} their link</h1>
         <p className="a-sub">{client.businessName}</p>
       </div>
@@ -82,7 +83,9 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
           {link && (
             <div className="a-card">
               <div className="between"><span className="k">The WhatsApp message, ready to send</span><span className="help">Opens WhatsApp with this written</span></div>
-              <div style={{ border: "1px solid var(--rule)", background: "var(--surface-2)", borderRadius: 2, padding: "14px 16px", fontSize: 14, lineHeight: 1.55, whiteSpace: "pre-wrap", color: "var(--ink)" }}>{message}</div>
+              <div /* The link is one long unbroken word, so this has to be allowed to break
+                   inside it or the page scrolls sideways on a phone (14 Sep). */
+                style={{ border: "1px solid var(--rule)", background: "var(--surface-2)", borderRadius: 2, padding: "14px 16px", fontSize: 14, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "anywhere", color: "var(--ink)" }}>{message}</div>
               <p className="help">Edit it in WhatsApp before you send if you want to. Nothing here is sent for you.</p>
             </div>
           )}
