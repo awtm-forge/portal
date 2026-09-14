@@ -534,6 +534,11 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .rail-i.done .rail-b { color: var(--ink-muted); }
 .rail-i.done .rail-dot { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--accent-ink); }
 .rail-i.now .rail-b { color: var(--ink); font-weight: 600; font-size: var(--fs-2); }
+/* A label can never sit on its neighbour. If one ever outgrows its share of
+   the row it breaks rather than overlaps, which is a worse-looking word and a
+   working page instead of the other way round. */
+.rail-i, .rail-b, .rail-lbl { min-width: 0; }
+.rail-lbl { overflow-wrap: break-word; hyphens: auto; }
 .rail-i.now .rail-dot { border-color: var(--accent-fill); background: radial-gradient(circle, var(--accent-fill) 0 4px, transparent 4px); }
 /* The line between stages, filled up to where they are. Drawn as two halves
    inside each stage rather than between them, because the stages touch and a
@@ -560,11 +565,18 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .rail-howlong { margin-top: var(--s-1) !important; font-family: var(--font-mono-stack); font-size: var(--fs-0); }
 
 @media (min-width: 760px) {
-  .rail { display: flex; align-items: flex-start; gap: var(--s-6); }
+  .rail { display: flex; align-items: flex-start; gap: var(--s-3); }
   .rail-step { order: 2; margin: 0; flex: none; padding-top: 12px; }
   .rail-list { order: 1; flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .rail-i { grid-row: 1; }
   .rail-b { flex-direction: column; align-items: flex-start; gap: var(--s-2); min-height: 0; padding-top: 0; }
+  /* Five labels share one row here, so the four a client is not on step down
+     rather than the one they are on stepping up: "Questionnaire" set a size
+     larger than the rest is wider than a fifth of the row, and it sat on
+     "Agreement" (Ayush, 14 Sep). The current stage is still the larger of
+     them, which is what the eye is looking for. */
+  .rail-b { font-size: var(--fs-0); }
+  .rail-i.now .rail-b { font-size: var(--fs-1); }
   /* Rotated: one segment running right from each dot to the next. */
   .rail-i::before { display: none; }
   .rail-i::after { left: 24px; right: 2px; top: 8px; bottom: auto; width: auto; height: 2px; }

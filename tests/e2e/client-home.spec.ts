@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { backToBuilding, closeDb, freshLink, query, resetRateLimits, SEED_SLUG, setPhase, takeoverLatestCode } from "./fixtures";
+import { backToBuilding, closeDb, freshLink, INTAKE_SLUG, query, resetRateLimits, SEED_SLUG, setPhase, takeoverLatestCode } from "./fixtures";
 
 /**
  * The client home page, walked through all five stages by driving the admin
@@ -200,6 +200,34 @@ test("the rail says where they are, in three states told apart by more than colo
   // Opening the one they are on takes them to the answer instead.
   await current.click();
   await expect(page.locator("section.status")).toBeInViewport();
+});
+
+test("no stage label sits on its neighbour, whatever the stage or the width", async ({ page }) => {
+  // "Questionnaire" set a size larger than the rest, as the current stage, was
+  // wider than a fifth of the row and overlapped "Agreement" (Ayush, 14 Sep).
+  // The seed client whose questionnaire is still open, so the longest label is
+  // the current one without this test changing anything under another spec.
+  const { token, projectId } = await freshLink(INTAKE_SLUG);
+  await signInClient(page, token, projectId);
+  await page.goto(`/p/${token}`);
+  await expect(page.getByRole("navigation", { name: "Project progress" }).getByRole("button", { name: /questionnaire.*where you are now/i })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Project progress" })).toBeVisible();
+
+  const worst = await page.evaluate(() => {
+    let over = -Infinity;
+    let who = "";
+    for (const item of document.querySelectorAll(".rail-i")) {
+      const label = item.querySelector(".rail-lbl");
+      if (!label) continue;
+      const spill = label.getBoundingClientRect().width - item.getBoundingClientRect().width;
+      if (spill > over) {
+        over = spill;
+        who = label.textContent ?? "";
+      }
+    }
+    return { over: Math.round(over), who };
+  });
+  expect(worst.over, `${worst.who} spills out of its column`).toBeLessThanOrEqual(0);
 });
 
 test("the page has a floor, one primary action, and no sideways scroll", async ({ page }) => {

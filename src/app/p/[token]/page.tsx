@@ -85,7 +85,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
   const latest = updates[0] ?? null;
 
   const day30Done = day30 !== null && day30.metricAfterSubmittedAt !== null;
-  const journey = journeyFor(phase, { intakeSubmitted: Boolean(intake?.submittedAt), day30Done });
+  const journey = journeyFor(phase, {
+    questionnaireOpen: Boolean(intake) && !intake?.submittedAt,
+    questionnaireSubmitted: Boolean(intake?.submittedAt),
+    day30Done,
+  });
 
   // The one block of copy that is true right now, from the content file. The
   // page never writes a sentence of its own about where things stand.
@@ -95,7 +99,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ token:
     questionnaireSubmitted: Boolean(intake?.submittedAt),
     sectionsDone: progress?.done ?? 0,
     sectionsTotal: progress?.total ?? 0,
-    hasProject: Boolean(project),
     agreementChangeAsked: phase === Phase.AGREEMENT_DRAFT && (agreement?.version ?? 1) > 1,
     deliveryChangeAsked: phase === Phase.BUILDING && changesAsked,
     day30Due,

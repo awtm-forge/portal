@@ -68,6 +68,12 @@ export const STAGE_NOTES: Record<Stage, { what: string; how_long: string }> = {
  * `expected` is a template, not a sentence: the page fills {date} with a real
  * date or drops the line entirely. `channel` is what we say instead of a date,
  * so a waiting client always knows how they will hear from us.
+ *
+ * `stage` is the stage the rail points at while this copy is showing, which is
+ * not always the stage the words are about: after a delivery goes back for
+ * changes the project is in the build again, and the rail should say so even
+ * though the card is talking about the delivery. Its key names the moment; its
+ * stage names the place.
  */
 export type HomeCopy = {
   key: string;
@@ -116,7 +122,8 @@ export const HOME_STATES: Record<string, HomeCopy> = {
   // moment is agreement.preparing, which is the truer thing to say then.
   "questionnaire.submitted": {
     key: "questionnaire.submitted",
-    stage: "questionnaire",
+    // Sent means the questionnaire is behind them and the agreement is next.
+    stage: "agreement",
     chip: "waiting",
     headline: "Thank you, we have your answers",
     body: "We are reading them now and turning them into your agreement. Nothing else is needed from you until that is ready.",
@@ -150,7 +157,8 @@ export const HOME_STATES: Record<string, HomeCopy> = {
   },
   "agreement.agreed": {
     key: "agreement.agreed",
-    stage: "agreement",
+    // Signed. The build is the stage they are in, even before it starts.
+    stage: "build",
     chip: "waiting",
     headline: "Agreed, thank you",
     body: "We start shortly. Rahul will confirm the day we begin, and from then a short written update lands on this page every week.",
@@ -194,7 +202,8 @@ export const HOME_STATES: Record<string, HomeCopy> = {
   // only honest difference is whether you asked for something.
   "delivery.changes": {
     key: "delivery.changes",
-    stage: "delivery",
+    // Back in the build, which is where the rail should point.
+    stage: "build",
     chip: "waiting",
     headline: "We are making the changes you asked for",
     body: "We have your note. When it is ready you get another look, and as many rounds as it takes after that. Nothing is invoiced until you sign it off.",
@@ -241,7 +250,6 @@ export type HomeFacts = {
   questionnaireSubmitted: boolean;
   sectionsDone: number;
   sectionsTotal: number;
-  hasProject: boolean;
   /** The client asked for a change to the agreement and we have not re-sent it. */
   agreementChangeAsked: boolean;
   /** The client asked for changes to the delivery and we are making them. */
@@ -277,7 +285,11 @@ export function homeStateFor(f: HomeFacts): HomeCopy {
   }
 
   if (!f.hasQuestionnaire && (f.phase === null || f.phase === Phase.INTAKE)) return HOME_STATES["questionnaire.writing"];
-  if (f.questionnaireSubmitted && !f.hasProject) return HOME_STATES["questionnaire.submitted"];
+  // Their answers are in and nothing has moved on them yet: either no project
+  // exists, or one does and it has not left the questionnaire phase. Both are
+  // the same sentence to a client, and without this the second fell through to
+  // "We are building it" while the rail still said Questionnaire (14 Sep).
+  if (f.questionnaireSubmitted && (f.phase === null || f.phase === Phase.INTAKE)) return HOME_STATES["questionnaire.submitted"];
   if (f.phase === Phase.AGREEMENT_DRAFT || f.phase === null) {
     return f.agreementChangeAsked ? HOME_STATES["agreement.changes"] : HOME_STATES["agreement.preparing"];
   }
@@ -287,15 +299,6 @@ export function homeStateFor(f: HomeFacts): HomeCopy {
     return HOME_STATES["build.running"];
   }
   return HOME_STATES["build.running"];
-}
-
-/**
- * The stage the rail should call current, from the state we are showing. The
- * card and the rail read the same table, so the rail can never point at a
- * stage the card is not talking about.
- */
-export function stageOf(copy: HomeCopy): Stage {
-  return copy.stage;
 }
 
 /** Fill {date}, {done} and {total}. A placeholder with no value drops the line. */

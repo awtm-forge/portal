@@ -9,7 +9,6 @@ const base: HomeFacts = {
   questionnaireSubmitted: true,
   sectionsDone: 5,
   sectionsTotal: 5,
-  hasProject: true,
   agreementChangeAsked: false,
   deliveryChangeAsked: false,
   day30Due: false,
@@ -41,9 +40,36 @@ describe("the home page's copy", () => {
 
   it("tells a brand new client what is happening before the questionnaire is up", () => {
     for (const phase of [null, Phase.INTAKE]) {
-      const s = homeStateFor({ ...base, phase, hasQuestionnaire: false, questionnaireSubmitted: false, hasProject: phase !== null });
+      const s = homeStateFor({ ...base, phase, hasQuestionnaire: false, questionnaireSubmitted: false  });
       expect(s.key).toBe("questionnaire.writing");
       expect(s.body).toMatch(/questionnaire/i);
+    }
+  });
+
+  it("never talks about a stage the rail is not pointing at", () => {
+    // The card and the rail read the same table, and a fall-through used to
+    // break that: a project still in the questionnaire phase with the answers
+    // already in landed on "We are building it" (14 Sep).
+    const bools = [true, false];
+    for (const phase of [null, ...Object.values(Phase)]) {
+      for (const hasQuestionnaire of bools) {
+        for (const questionnaireSubmitted of bools) {
+          {
+            // You cannot have sent a questionnaire you were never given.
+            if (questionnaireSubmitted && !hasQuestionnaire) continue;
+            const facts: HomeFacts = {
+              ...base, phase, hasQuestionnaire, questionnaireSubmitted,
+              ended: phase === Phase.CANCELLED || phase === Phase.CLOSED,
+            };
+            const copy = homeStateFor(facts);
+            const journey = journeyFor(phase, { questionnaireOpen: hasQuestionnaire && !questionnaireSubmitted, questionnaireSubmitted, day30Done: false });
+            // A cancelled project has no rail at all, and a finished one has no
+            // current stage; everything else must agree with the card.
+            if (!journey || journey.now === null || copy.chip === "done") continue;
+            expect(copy.stage, `${phase} said ${copy.key} while the rail said ${journey.now}`).toBe(journey.now);
+          }
+        }
+      }
     }
   });
 
@@ -75,7 +101,7 @@ describe("the home page's copy", () => {
       for (const hasQuestionnaire of bools) {
         for (const questionnaireSubmitted of bools) {
           for (const sectionsDone of [0, 2]) {
-            for (const hasProject of bools) {
+            {
               for (const flags of bools.flatMap((a) => bools.flatMap((b) => bools.flatMap((c) => bools.flatMap((d) => bools.map((e) => [a, b, c, d, e] as const)))))) {
                 const [agreementChangeAsked, deliveryChangeAsked, day30Due, day30Done, checkinScheduled] = flags;
                 reachable.add(homeStateFor({
@@ -84,7 +110,6 @@ describe("the home page's copy", () => {
                   questionnaireSubmitted,
                   sectionsDone,
                   sectionsTotal: 5,
-                  hasProject,
                   agreementChangeAsked,
                   deliveryChangeAsked,
                   day30Due,
@@ -145,20 +170,22 @@ describe("filling a line", () => {
 
 describe("the journey", () => {
   it("is absent for a cancelled project and complete for a closed one", () => {
-    expect(journeyFor(Phase.CANCELLED, { intakeSubmitted: true, day30Done: false })).toBeNull();
-    expect(journeyFor(Phase.CLOSED, { intakeSubmitted: true, day30Done: false })).toEqual({ now: null, done: ["questionnaire", "agreement", "build", "delivery", "month"] });
+    expect(journeyFor(Phase.CANCELLED, { questionnaireOpen: false, questionnaireSubmitted: true, day30Done: false })).toBeNull();
+    expect(journeyFor(Phase.CLOSED, { questionnaireOpen: false, questionnaireSubmitted: true, day30Done: false })).toEqual({ now: null, done: ["questionnaire", "agreement", "build", "delivery", "month"] });
   });
 
   it("puts the rail's current stage on the same stage as the card's copy", () => {
-    const pairs: [Phase, string][] = [
-      [Phase.INTAKE, "questionnaire"],
-      [Phase.AGREEMENT_SENT, "agreement"],
-      [Phase.BUILDING, "build"],
-      [Phase.IN_REVIEW, "delivery"],
+    // An open questionnaire outranks the phase column, so the first row asks
+    // for one: that is a client who still owes us their answers.
+    const pairs: [Phase, string, boolean][] = [
+      [Phase.INTAKE, "questionnaire", true],
+      [Phase.AGREEMENT_SENT, "agreement", false],
+      [Phase.BUILDING, "build", false],
+      [Phase.IN_REVIEW, "delivery", false],
     ];
-    for (const [phase, stage] of pairs) {
-      const j = journeyFor(phase, { intakeSubmitted: true, day30Done: false });
-      const copy = homeStateFor({ ...base, phase, hasQuestionnaire: phase === Phase.INTAKE ? false : true });
+    for (const [phase, stage, open] of pairs) {
+      const j = journeyFor(phase, { questionnaireOpen: open, questionnaireSubmitted: !open, day30Done: false });
+      const copy = homeStateFor({ ...base, phase, hasQuestionnaire: true, questionnaireSubmitted: !open, sectionsDone: 0 });
       expect(j?.now, `${phase}`).toBe(stage);
       expect(copy.stage, `${phase}`).toBe(stage);
     }

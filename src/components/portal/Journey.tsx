@@ -4,22 +4,42 @@ import { Phase } from "@/generated/prisma/enums";
 /**
  * Which of the five stages the client is in, and which are behind them.
  *
- * This used to carry the rail component and the home page's copy as well. The
- * rail is now ProgressRail and every sentence is in src/content/client-home.ts,
- * so what is left here is the one thing it was always for: turning a phase
- * into a place on the journey.
+ * The rail and the status card must never point at different stages, so this
+ * answers the same question the copy resolver answers, from the same facts,
+ * and tests/journey.test.ts walks every combination of them to prove the two
+ * agree. They disagreed twice before that test existed (14 Sep).
+ *
+ * The phase column is not the whole truth here. What a client has not finished
+ * outranks what we have done since: a questionnaire still open means that is
+ * where they are, even if the agreement has already gone out.
  */
 export type JourneyState = { now: Stage | null; done: Stage[] };
 
 const ORDER: Stage[] = ["questionnaire", "agreement", "build", "delivery", "month"];
 
+export type JourneyFacts = {
+  /** They have a questionnaire and have not sent it. */
+  questionnaireOpen: boolean;
+  questionnaireSubmitted: boolean;
+  day30Done: boolean;
+};
+
 /** Null for a cancelled project, which has no next. */
-export function journeyFor(phase: Phase | null, facts: { intakeSubmitted: boolean; day30Done: boolean }): JourneyState | null {
+export function journeyFor(phase: Phase | null, facts: JourneyFacts): JourneyState | null {
+  if (phase === Phase.CANCELLED) return null;
+  if (facts.questionnaireOpen) return { now: "questionnaire", done: [] };
+
   const upTo = (n: number): Stage[] => ORDER.slice(0, n);
-  if (phase === null) return facts.intakeSubmitted ? { now: "agreement", done: upTo(1) } : { now: "questionnaire", done: [] };
+  const afterQuestionnaire: JourneyState = facts.questionnaireSubmitted
+    ? { now: "agreement", done: upTo(1) }
+    : { now: "questionnaire", done: [] };
+
+  if (phase === null) return afterQuestionnaire;
   switch (phase) {
     case Phase.INTAKE:
-      return { now: "questionnaire", done: [] };
+      // Sent, but nothing moved on it yet. The questionnaire is behind them
+      // whatever the column says.
+      return afterQuestionnaire;
     case Phase.AGREEMENT_DRAFT:
     case Phase.AGREEMENT_SENT:
       return { now: "agreement", done: upTo(1) };
@@ -32,7 +52,5 @@ export function journeyFor(phase: Phase | null, facts: { intakeSubmitted: boolea
       return facts.day30Done ? { now: null, done: upTo(5) } : { now: "month", done: upTo(4) };
     case Phase.CLOSED:
       return { now: null, done: upTo(5) };
-    case Phase.CANCELLED:
-      return null;
   }
 }
