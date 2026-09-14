@@ -304,14 +304,23 @@ test("the dashboard says who each project is waiting on (F-20)", async ({ page }
   await expect(page.locator('td[data-label="Stage"]').first()).toBeVisible();
 });
 
-test("the admin frame fits a phone: one bar, the nav in a row (F-21)", async ({ page, isMobile }) => {
+test("the admin frame fits a phone: a bar, and the nav gets the width of it (F-21)", async ({ page, isMobile }) => {
   test.skip(!isMobile, "phone project only");
   await signInAdmin(page);
   await page.goto("/admin");
+
+  // A bar, not the laptop's sidebar. It takes two lines under 760 px: on one
+  // line the arrows, the wordmark and the theme switch left the nav 85 px of a
+  // 390 px screen, which is one of five items (14 Sep).
   const side = await page.locator(".a-side").boundingBox();
-  expect(side?.height ?? 999).toBeLessThan(70);
+  const view = page.viewportSize();
+  expect(side?.height ?? 999, "a bar, not a sidebar").toBeLessThan(110);
+  expect(side?.width ?? 0, "the full width of the phone").toBeGreaterThan((view?.width ?? 0) - 2);
+
   const nav = await page.locator(".a-navs").boundingBox();
-  expect(nav?.height ?? 999).toBeLessThan(50);
+  expect(nav?.height ?? 999, "the nav is a row, not a column").toBeLessThan(50);
+  expect(nav?.width ?? 0, "and it gets the whole bar to itself").toBeGreaterThan((view?.width ?? 0) - 2);
+
   await expect(page.getByRole("link", { name: /settings/i })).toBeVisible();
 });
 

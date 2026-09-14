@@ -843,6 +843,17 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .a-fold > summary:hover .fold-t { color: var(--ink); }
 .fold-b { padding: 2px var(--fold-pad) 18px; display: flex; flex-direction: column; gap: 14px; }
 .a-fold .fold-b { padding: 0 20px 20px; }
+/* Under 760 px the bar cannot hold everything on one line: the arrows, the
+   wordmark and the theme switch took 216 px of a 390 px screen and left the
+   nav 85 px, which is one of five items with the rest scrolled away and the
+   current one's underline showing as a stray mark through the fade (14 Sep).
+   The nav takes a line of its own, which fits three and scrolls to five. */
+@media (max-width: 759px) {
+  .a-side { flex-wrap: wrap; row-gap: 2px; padding-bottom: 0; }
+  .a-side .a-navs { order: 3; flex-basis: 100%; margin: 0 -14px; padding: 0 14px; }
+  .a-side .signed { margin-left: auto; }
+}
+
 @media (max-width: 900px) { .a-fold > summary { padding: 14px 16px; } .a-fold .fold-b { padding: 0 16px 16px; } }
 
 /* StickyAction: the page's one action, kept at the foot of the viewport while
@@ -899,11 +910,17 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .bookframe iframe { display: block; width: 100%; height: min(76vh, 780px); min-height: 600px; border: 1px solid var(--hairline); border-radius: var(--r-1); background: var(--surface); }
 
 /* The image library: two across on a phone, three on a laptop. */
-.lib-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+/* Sized by how much room the grid has, not by a column count: the page puts
+   this beside a 330 px aside, so at 1024 a fixed three columns left each cell
+   about 100 px and "in 3 questionnaires" ran out of its cell and into the next
+   one (14 Sep). */
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .lib-cell { border: 1px solid var(--rule); border-radius: var(--r-1); background: var(--ground); padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .lib-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; border-radius: var(--r-1); }
 .lib-cell .mono-sm { word-break: break-all; }
-@media (min-width: 700px) { .lib-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* A key or a caption can be any length, so nothing here may spill. */
+.lib-cell .tag, .lib-cell .help { overflow-wrap: anywhere; }
+.lib-cell .between { flex-wrap: wrap; gap: 4px 8px; }
 
 /* Ended: a banner for a closed or cancelled project, in either zone. */
 .ended { border: 1px solid var(--rule); border-left: 3px solid var(--muted); background: var(--surface); border-radius: var(--r-1); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
