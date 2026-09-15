@@ -1,7 +1,7 @@
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Confirm } from "@/components/ui/Confirm";
 import { dayMonth } from "@/lib/dates";
-import { listAdmins, requireAdmin } from "@/modules/auth/admin";
+import { canManageTeam, isOwner, listAdmins, requireAdmin } from "@/modules/auth/admin";
 import { rehearsalCounts, START_CLEAN_PHRASE } from "@/modules/clients/rehearsal";
 import { company, liveSince } from "@/modules/settings";
 import { markLiveAction, startCleanAction } from "./actions";
@@ -25,7 +25,12 @@ export default async function SettingsPage() {
         <p className="a-sub">Your details, not a client&rsquo;s. These appear on every invoice and agreement.</p>
       </div>
       <SettingsForm company={c} />
-      <InviteAdmin admins={admins.map((a) => ({ email: a.email, name: a.name, hasPassword: a.passwordHash !== null }))} />
+      <InviteAdmin
+        admins={admins.map((a) => ({ email: a.email, name: a.name, hasPassword: a.passwordHash !== null, accessRemoved: a.accessRemovedAt !== null, isOwner: isOwner(a) }))}
+        canManage={canManageTeam(admin)}
+        ownerName={admins.find((a) => isOwner(a))?.name ?? null}
+        meEmail={admin.email}
+      />
 
       <div className="a-card">
         <span className="k">{live ? "Live" : "Rehearsal"}</span>

@@ -1,10 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
-import { inviteAdmin, removeUnusedAdmin } from "@/modules/auth/admin";
+import { canManageTeam, inviteAdmin, isOwner, removeAdminAccess, removeUnusedAdmin } from "@/modules/auth/admin";
 
 /**
- * PORTAL-SPEC 6.6: two accounts, no self-registration. The second is made by
- * the first, from settings, on a host that will not run a script.
+ * PORTAL-SPEC 6.6 as amended by ADR 0024: no self-registration, an owner who
+ * adds as many admins as needed from settings, and access that can be taken
+ * away without losing what that admin did.
  */
 const A = "invite-a@example.invalid";
 const B = "invite-b@example.invalid";
@@ -45,13 +46,14 @@ describe("inviting the other admin", () => {
     expect((await db.adminUser.findUniqueOrThrow({ where: { email: A } })).name).toBe("Ayush M");
   });
 
-  it("stops at two seats", async () => {
-    const existing = await othersBesides(A, B, C);
-    // Fill whatever seats the seed left free.
-    if (existing < 2) await inviteAdmin({ email: A, name: "A" });
-    if (existing < 1) await inviteAdmin({ email: B, name: "B" });
+  it("does not stop at two seats: the owner adds as many as needed (ADR 0024)", async () => {
+    // The old rule was two accounts and no more. Ayush, 15 Sep: "there is no
+    // boundation for number of admins".
+    await inviteAdmin({ email: A, name: "A" });
+    await inviteAdmin({ email: B, name: "B" });
     const third = await inviteAdmin({ email: C, name: "C" });
-    expect(third).toEqual({ ok: false, reason: "limit" });
+    expect(third.ok).toBe(true);
+    expect(await db.adminUser.count({ where: { email: { in: [A, B, C] } } })).toBe(3);
   });
 
   it("refuses nonsense", async () => {
@@ -76,20 +78,61 @@ describe("clearing a stale seat", () => {
     expect(await removeUnusedAdmin("nobody@example.invalid")).toEqual({ ok: false, reason: "not_found" });
   });
 
-  it("frees the seat, so an invite that was at the limit goes through again", async () => {
-    // Fill both seats with stale invites, past what the seed left.
-    const free = 2 - Math.min(2, await othersBesides(A, B, C));
-    if (free >= 1) await inviteAdmin({ email: A, name: "A" });
-    if (free >= 2) await inviteAdmin({ email: B, name: "B" });
-    // With both seats taken, a third is refused.
-    if ((await othersBesides(A, B, C)) >= 2) {
-      expect(await inviteAdmin({ email: C, name: "C" })).toEqual({ ok: false, reason: "limit" });
-      // Clear one stale seat and it goes through.
-      const toClear = (await db.adminUser.findFirst({ where: { email: { in: [A, B] }, passwordHash: null } }))?.email;
-      if (toClear) {
-        expect(await removeUnusedAdmin(toClear)).toEqual({ ok: true });
-        expect((await inviteAdmin({ email: C, name: "C" })).ok).toBe(true);
-      }
-    }
+  it("a freed seat's address can simply be invited again", async () => {
+    // There is no limit to be at any more (ADR 0024); freeing a seat is about
+    // tidying a stale row, and the same address can come back with a fresh link.
+    const first = await inviteAdmin({ email: A, name: "A" });
+    expect(first.ok).toBe(true);
+    expect(await removeUnusedAdmin(A)).toEqual({ ok: true });
+    const again = await inviteAdmin({ email: A, name: "A again" });
+    expect(again.ok).toBe(true);
+    if (first.ok && again.ok) expect(again.token).not.toBe(first.token);
+    expect((await db.adminUser.findUniqueOrThrow({ where: { email: A } })).name).toBe("A again");
+  });
+});
+
+describe("the owner, and taking access away", () => {
+  const withOwner = async (email: string | undefined, fn: () => Promise<void>) => {
+    const before = process.env.OWNER_EMAIL;
+    if (email === undefined) delete process.env.OWNER_EMAIL; else process.env.OWNER_EMAIL = email;
+    try { await fn(); } finally { if (before === undefined) delete process.env.OWNER_EMAIL; else process.env.OWNER_EMAIL = before; }
+  };
+
+  it("lets everyone manage the team while no owner is named, and only the owner once one is", async () => {
+    await withOwner(undefined, async () => {
+      expect(canManageTeam({ email: A })).toBe(true);
+      expect(isOwner({ email: A })).toBe(false);
+    });
+    await withOwner(A.toUpperCase(), async () => {
+      expect(canManageTeam({ email: A })).toBe(true);
+      expect(isOwner({ email: A })).toBe(true);
+      expect(canManageTeam({ email: B })).toBe(false);
+    });
+  });
+
+  it("takes an active admin's access away and keeps the row, and refuses self and the owner", async () => {
+    await inviteAdmin({ email: A, name: "A" });
+    await inviteAdmin({ email: B, name: "B" });
+    const a = await db.adminUser.findUniqueOrThrow({ where: { email: A } });
+    const b = await db.adminUser.findUniqueOrThrow({ where: { email: B } });
+    await db.adminUser.update({ where: { id: b.id }, data: { passwordHash: "x".repeat(60) } });
+    await db.adminSession.create({ data: { adminUserId: b.id, tokenHash: `t-${Date.now()}`, expiresAt: new Date(Date.now() + 60_000) } });
+
+    await withOwner(A, async () => {
+      expect(await removeAdminAccess(A, { id: b.id, email: B }), "the owner's access stays").toEqual({ ok: false, reason: "owner" });
+      expect(await removeAdminAccess(B, { id: b.id, email: B }), "not your own").toEqual({ ok: false, reason: "self" });
+      expect(await removeAdminAccess(B, { id: a.id, email: A })).toEqual({ ok: true });
+    });
+    const after = await db.adminUser.findUniqueOrThrow({ where: { email: B } });
+    expect(after.passwordHash).toBeNull();
+    expect(after.setupTokenHash).toBeNull();
+    expect(after.accessRemovedAt).not.toBeNull();
+    expect(await db.adminSession.count({ where: { adminUserId: b.id } }), "signed out everywhere").toBe(0);
+    // A seat with no access to take away says so rather than pretending.
+    expect(await removeAdminAccess(B, { id: a.id, email: A })).toEqual({ ok: false, reason: "not_active" });
+    // And a reissue gives them a way back in, clearing the stamp.
+    const back = await inviteAdmin({ email: B, name: "B" });
+    expect(back.ok).toBe(true);
+    expect((await db.adminUser.findUniqueOrThrow({ where: { email: B } })).accessRemovedAt).toBeNull();
   });
 });

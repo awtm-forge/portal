@@ -3,11 +3,11 @@ import { amountInWords, formatRupees, parseRupeesToPaise, splitAdvance } from "@
 
 describe("money, ADR 0004 and acceptance criterion 12", () => {
   it("groups rupees the Indian way", () => {
-    expect(formatRupees(48000000n)).toBe("Rs 4,80,000");
-    expect(formatRupees(100000n)).toBe("Rs 1,000");
-    expect(formatRupees(1234567890n)).toBe("Rs 1,23,45,678.90");
-    expect(formatRupees(0n)).toBe("Rs 0");
-    expect(formatRupees(50n)).toBe("Rs 0.50");
+    expect(formatRupees(48000000n)).toBe("\u20B94,80,000");
+    expect(formatRupees(100000n)).toBe("\u20B91,000");
+    expect(formatRupees(1234567890n)).toBe("\u20B91,23,45,678.90");
+    expect(formatRupees(0n)).toBe("\u20B90");
+    expect(formatRupees(50n)).toBe("\u20B90.50");
   });
 
   it("writes the amount in words to match the figure", () => {
@@ -46,6 +46,7 @@ describe("money, ADR 0004 and acceptance criterion 12", () => {
     expect(parseRupeesToPaise("4,80,000")).toBe(48000000n);
     expect(parseRupeesToPaise("4,80,000.50")).toBe(48000050n);
     expect(parseRupeesToPaise("Rs 1,000")).toBe(100000n);
+    expect(parseRupeesToPaise("\u20B91,000")).toBe(100000n);
     expect(parseRupeesToPaise("")).toBeNull();
     expect(parseRupeesToPaise("about four lakh")).toBeNull();
     expect(parseRupeesToPaise("1.234")).toBeNull();

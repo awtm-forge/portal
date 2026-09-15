@@ -86,6 +86,15 @@ past the code screen, so no client can sign in at all. Set the five `SMTP_*`
 variables before the first project link is sent, and run check 6 below with a
 real address before trusting it.
 
+## Naming the owner
+
+`OWNER_EMAIL`, in hPanel's environment variables, is the sign-in address of
+the one admin who adds admins, reissues their setup links, resets their
+passwords and takes access away (ADR 0024). Set it to Ayush's address and
+restart the app. Until it is set every admin can do those things, and
+`/healthz` reports `"admins":{"owner":false}`. There is no limit on how many
+admins the owner adds.
+
 ## First run, over SSH
 
 ### If the server will not run a script

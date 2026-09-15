@@ -178,19 +178,6 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
-          <Fold card title="Client details" fact={`${client.contactName} · ${client.contactPhone}`}>
-            <form action={updateClientAction} className="stack" style={{ gap: 14 }}>
-              <input type="hidden" name="clientId" value={client.id} />
-              <div className="grid2">
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Business name</span><input className="a-fld" name="businessName" defaultValue={client.businessName} required /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Where they are</span><input className="a-fld" name="location" defaultValue={client.location ?? ""} /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Contact name</span><input className="a-fld" name="contactName" defaultValue={client.contactName} required /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">WhatsApp number, with the country code</span><input className="a-fld" name="contactPhone" defaultValue={client.contactPhone} placeholder="+91 99000 21188" required /></label>
-                <label className="stack" style={{ gap: 6 }}><span className="lbl">Contact email, where the login code goes</span><input className="a-fld" name="contactEmail" type="email" defaultValue={client.contactEmail} required /></label>
-              </div>
-              <div><button className="a-btn ghost" type="submit">Save changes</button></div>
-            </form>
-          </Fold>
         </div>
 
         <div className="aside">
@@ -269,6 +256,24 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               </p>
             )}
           </div>
+
+          {/* The details form, last in the side column under the removal card
+              (Ayush, 15 Sep): it is a fold nobody opens often, and it was
+              sitting in the main column below the projects like a page in
+              itself. */}
+          <Fold card title="Client details" fact={`${client.contactName} · ${client.contactPhone}`}>
+            <form action={updateClientAction} className="stack" style={{ gap: 14 }}>
+              <input type="hidden" name="clientId" value={client.id} />
+              <div className="grid2">
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">Business name</span><input className="a-fld" name="businessName" defaultValue={client.businessName} required /></label>
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">Where they are</span><input className="a-fld" name="location" defaultValue={client.location ?? ""} /></label>
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">Contact name</span><input className="a-fld" name="contactName" defaultValue={client.contactName} required /></label>
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">WhatsApp number, with the country code</span><input className="a-fld" name="contactPhone" defaultValue={client.contactPhone} placeholder="+91 99000 21188" required /></label>
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">Contact email, where the login code goes</span><input className="a-fld" name="contactEmail" type="email" defaultValue={client.contactEmail} required /></label>
+              </div>
+              <div><button className="a-btn ghost" type="submit">Save changes</button></div>
+            </form>
+          </Fold>
         </div>
       </div>
     </AdminShell>

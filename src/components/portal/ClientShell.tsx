@@ -1,9 +1,8 @@
 import Link from "next/link";
 import "./portal.css";
-import { dayMonthTime } from "@/lib/dates";
 import { phoneDigits } from "@/lib/format";
 import { navFor } from "@/modules/clients";
-import { listForClient, noticeCounts } from "@/modules/notifications/client";
+import { clientBell } from "./client-bell";
 import { company } from "@/modules/settings";
 import { NavProgress } from "@/components/ui/NavProgress";
 import { NotifyBell } from "@/components/ui/NotifyBell";
@@ -51,10 +50,10 @@ export async function ClientShell({
 }) {
   const c = await company();
   const has = nav ? await navFor(nav.clientId) : null;
-  const notices = nav ? await noticeCounts(nav.clientId) : { total: 0, unread: 0 };
-  // Six in the tray; the rest are one link away on the page.
-  const recent = nav && notices.total > 0 ? await listForClient(nav.clientId, 6) : [];
   const home = nav ? `/p/${nav.token}` : null;
+  // Six in the tray; the rest are one link away on the page. The bell asks
+  // the same helper's route to keep itself current (15 Sep).
+  const bell = nav && home ? await clientBell(nav.clientId, home) : null;
   const links: { key: ClientPage; label: string; href: string }[] = home && has
     ? [
         { key: "home", label: "Your project", href: home },
@@ -100,21 +99,15 @@ export async function ClientShell({
           )}
 
           <div className="p-head-actions">
-            {/* Only when there is a list to open, and never empty: a bell with
-                nothing behind it is a control that does nothing. */}
-            {home && notices.total > 0 && (
+            {/* Never empty: the bell hides itself until something is behind
+                it, and appears on its own when the first notice lands. */}
+            {home && bell && (
               <NotifyBell
-                unread={notices.unread}
+                unread={bell.unread}
+                items={bell.items}
                 allHref={`${home}/updates`}
                 onOpen={markClientNoticesSeen}
-                items={recent.map((n) => ({
-                  id: n.id,
-                  title: n.title,
-                  body: n.body,
-                  href: `${home}${n.path}`,
-                  when: dayMonthTime(n.createdAt),
-                  unread: n.readAt === null,
-                }))}
+                pollHref={`${home}/api/notices`}
               />
             )}
             {book && (

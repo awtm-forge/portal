@@ -272,6 +272,31 @@ test("the team's notifications are a bell, counted and cleared by reading", asyn
   await query("DELETE FROM ActivityEvent WHERE type = 'intake.submitted' AND payload LIKE ?", [`%${mark}%`]);
 });
 
+test("the team's bell keeps itself current without a reload", async ({ page }) => {
+  // Ayush, 15 Sep: "We have to refresh the page for the notifications to be
+  // shown." The bell asks its route on focus and every thirty seconds while
+  // the tab is visible; the test uses the focus path rather than waiting.
+  await signInAdmin(page);
+  // A fresh admin has seen nothing, and the suite's database is full of
+  // earlier events; mark them seen first so the count starts at zero.
+  await query("UPDATE AdminUser SET notificationsSeenAt = NOW(3) WHERE email = ?", [ADMIN_EMAIL]);
+  await page.goto("/admin");
+  await expect(page.locator(".notify-dot")).toHaveCount(0);
+
+  const { projectId } = await freshLink(SEED_SLUG);
+  const mark = `Zzyxth live ${Date.now()}`;
+  await query(
+    "INSERT INTO ActivityEvent (id, projectId, type, payload, actor, createdAt) VALUES (?, ?, 'intake.submitted', ?, 'client', NOW(3))",
+    [`ev${Date.now()}`, projectId, JSON.stringify({ projectName: mark, businessName: "Sundara Living" })],
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(page.locator(".notify-dot")).toBeVisible();
+  await page.getByRole("button", { name: /notifications, \d+ new/i }).click();
+  await expect(page.locator("#notify-panel").getByText(`${mark}: questionnaire sent`)).toBeVisible();
+
+  await query("DELETE FROM ActivityEvent WHERE type = 'intake.submitted' AND payload LIKE ?", [`%${mark}%`]);
+});
+
 test("the client's bell opens the news in place, and is not behind the menu", async ({ page }) => {
   const { token, projectId, clientId } = await freshLink(SEED_SLUG);
   await backToBuilding(projectId);

@@ -31,6 +31,10 @@ model AdminUser {
   /// timestamp rather than a row per notification: the activity log is
   /// already the record, and this only marks a place in it (ADR 0020).
   notificationsSeenAt DateTime?
+  /// Set when the owner takes this admin's access away (ADR 0024). The row
+  /// stays, because uploads and decisions point at it; the password, the
+  /// setup link and every session go.
+  accessRemovedAt DateTime?
   createdAt       DateTime       @default(now())
   sessions        AdminSession[]
   intakeUploads   Intake[]       @relation("uploadedBy")

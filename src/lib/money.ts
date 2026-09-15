@@ -28,8 +28,9 @@ export function formatAmount(paise: bigint): string {
 }
 
 /** "Rs 4,80,000". The site and the portal both say Rs, never a glyph. */
+/** The rupee sign, as the brand's own invoice writes it (15 Sep). */
 export function formatRupees(paise: bigint): string {
-  return `Rs ${formatAmount(paise)}`;
+  return `\u20B9${formatAmount(paise)}`;
 }
 
 const ONES = [
@@ -120,7 +121,8 @@ export function splitAdvance(totalPaise: bigint, advancePct: number): { advance:
 
 /** Parse what an admin typed into a rupee field. Accepts "480000", "4,80,000", "4,80,000.50". */
 export function parseRupeesToPaise(input: string): bigint | null {
-  const cleaned = input.trim().replace(/[, ]/g, "").replace(/^(Rs\.?|INR)/i, "");
+  // The sign, Rs or INR, all accepted: a person types what they see.
+  const cleaned = input.trim().replace(/[, ]/g, "").replace(/^(\u20B9|Rs\.?|INR)/i, "");
   if (cleaned === "") return null;
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
   const [whole, frac = ""] = cleaned.split(".");

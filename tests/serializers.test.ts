@@ -57,13 +57,13 @@ describe("audience serializers", () => {
   it("shows the admin view the internal block, because that is its job", () => {
     const admin = agreementToAdminView(agreement);
     expect(admin.internalNotes).toBe(SECRET_NOTE);
-    expect(admin.internalCost).toBe("Rs 21,00,000");
+    expect(admin.internalCost).toBe("\u20B921,00,000");
   });
 
   it("formats the split so the client sees advance and balance summing to the total", () => {
     const view = agreementToClientView(agreement);
-    expect(view.total).toBe("Rs 52,00,000");
-    expect(view.advance).toBe("Rs 26,00,000");
-    expect(view.balance).toBe("Rs 26,00,000");
+    expect(view.total).toBe("\u20B952,00,000");
+    expect(view.advance).toBe("\u20B926,00,000");
+    expect(view.balance).toBe("\u20B926,00,000");
   });
 });

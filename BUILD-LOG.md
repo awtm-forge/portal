@@ -747,3 +747,45 @@ assertions reworded to the document's own words rather than patched.
 Deferred: none.
 
 Needs Rahul: none.
+
+## 16 September, five things from Ayush: the first four
+
+Built, from the list Ayush sent with the screenshot of a client's page:
+
+Item 5 first because it was one move: Client details is last in the side
+column under Removing this client, where a fold nobody opens often belongs,
+instead of sitting in the main column like a page of its own.
+
+Item 3: both bells keep themselves current. `NotifyBell` takes a route and
+asks it on mount, whenever the tab comes back into view or the window regains
+focus, and every thirty seconds while the tab is visible; a fresh arrival
+after the tray was opened shows its count again, and a bell that finds its
+first notice appears on its own. Polling rather than a held-open connection,
+because the host stops the process when idle and a stream that dies quietly
+looks like silence. One helper per zone feeds both the shell and its route,
+`/admin/api/notices` and `/p/[token]/api/notices`, so the two cannot drift.
+
+Item 2: an owner manages the team and there is no seat limit (ADR 0024).
+`OWNER_EMAIL` names the owner, Ayush's address, set in hPanel; until it is set
+every admin can manage, and `/healthz` reports `admins.owner`. The owner adds
+as many admins as needed, reissues links, resets passwords and takes access
+away; access removal keeps the row and stamps `accessRemovedAt`, because
+uploads and decisions point at admins, and a reissue gives access back.
+Nobody removes their own access or the owner's. One additive migration.
+
+And the rupee sign: amounts read the way the brand's invoice writes them, one
+formatter, the parser accepting the sign as well as Rs.
+
+Verified: 227 unit tests, the invite test brought to the new rule with the
+owner and access-removal cases added, two serializer expectations moved to
+the sign; end to end on desktop Chrome and Pixel 7, the overhaul spec with a
+live-bell check, the link page, the invoices, the leak walk and the overlap
+sweep, 64 green. The live-bell test's first version assumed a fresh admin
+starts at zero, which a database full of earlier events makes untrue; it now
+marks them seen first. Lint and types clean.
+
+Deferred: item 1, the client's files, and item 4, WhatsApp for client
+notifications, which follow in their own entries.
+
+Needs Rahul: `OWNER_EMAIL` set in hPanel to Ayush's sign-in address, and a
+redeploy, for the owner rule to take effect.

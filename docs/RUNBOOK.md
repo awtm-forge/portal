@@ -183,19 +183,24 @@ Either way the invite carries the call link and the client never needs one from
 us. Leave the field empty and the Book a meeting button is hidden rather than
 broken.
 
-**Add the other admin.** Settings, The team, while a seat is free: enter
-their email and name and press Add an admin. It shows a one-time setup link,
-once, valid 48 hours. Send it on WhatsApp; they choose their own password when
-they open it. Two accounts is the limit. The `admin:create` script does the
-same over SSH on a host that will run one.
+**Add an admin.** Settings, The team: enter their email and name and press
+Add an admin. It shows a one-time setup link, once, valid 48 hours. Send it on
+WhatsApp; they choose their own password when they open it. As many admins as
+you need. Only the owner can do this once `OWNER_EMAIL` names one (ADR 0024);
+everyone else sees the team and a line saying who to ask.
 
 **Reissue a setup link, or reset a password.** Settings, The team, the button
 beside that seat: "Reissue their setup link" on a seat whose link was never
-used, "Reset their password" on one that can sign in. Either makes a fresh
-one-time link for that address, shown once, and stops any older link for it.
-A reset does not touch the password they have until they open the link and
-choose a new one. Nothing is typed, so the two-seat limit cannot get in the
-way of it.
+used, "Reset their password" on one that can sign in, "Give access again" on
+one whose access was removed. Either makes a fresh one-time link for that
+address, shown once, and stops any older link for it. A reset does not touch
+the password they have until they open the link and choose a new one.
+
+**Remove an admin's access.** Settings, The team, Remove access beside an
+active seat. It asks first. They are signed out everywhere and cannot sign in;
+what they uploaded and decided stays on the record, and the seat reads "access
+removed" until you give access again. You cannot remove your own access or the
+owner's.
 
 **The very first admin** on a fresh deployment, when nobody can sign in yet:
 `/admin/first-run`, gated on `SETUP_KEY`. It disappears once anyone has a

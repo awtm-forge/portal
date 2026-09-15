@@ -7,9 +7,8 @@ import { NotifyBell } from "@/components/ui/NotifyBell";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Toast } from "@/components/ui/Toast";
 import { currentAdmin } from "@/modules/auth/admin";
-import { teamCounts, teamFeed } from "@/modules/notifications/team";
+import { teamBell } from "./team-bell";
 import { markTeamNoticesSeen } from "@/components/portal/notify-actions";
-import { dayMonthTime } from "@/lib/dates";
 
 /**
  * The admin frame: a sidebar on a laptop, a sticky top bar with the nav as a
@@ -36,9 +35,9 @@ export async function AdminShell({
   children: React.ReactNode;
 }) {
   const me = await currentAdmin();
-  const notices = me ? await teamCounts(me.notificationsSeenAt ?? null) : { total: 0, unread: 0 };
-  // Six in the tray; the rest are one link away on the page.
-  const recent = me && notices.total > 0 ? await teamFeed(me.notificationsSeenAt ?? null, 6) : [];
+  // Six in the tray; the rest are one link away on the page. The bell asks
+  // the same helper's route to keep itself current (15 Sep).
+  const bell = await teamBell(me);
 
   return (
     <div className="a-page">
@@ -48,20 +47,14 @@ export async function AdminShell({
           <HistoryNav />
           <Link className="a-brand" href="/admin">awtm <b>forge</b></Link>
           <div className="a-top-act">
-            {notices.total > 0 && (
+            {me && (
               <NotifyBell
                 className="a-icon"
-                unread={notices.unread}
+                unread={bell.unread}
+                items={bell.items}
                 allHref="/admin/notifications"
                 onOpen={markTeamNoticesSeen}
-                items={recent.map((n) => ({
-                  id: n.id,
-                  title: n.subject,
-                  body: n.body,
-                  href: n.path,
-                  when: dayMonthTime(n.at),
-                  unread: n.unread,
-                }))}
+                pollHref="/admin/api/notices"
               />
             )}
             {/* Beside the bell, where the client's sits beside the menu. Dark

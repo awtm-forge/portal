@@ -201,12 +201,12 @@ export async function createFirstAdmin(args: {
 
 export type InviteResult =
   | { ok: true; token: string; email: string }
-  | { ok: false; reason: "invalid" | "limit" };
+  | { ok: false; reason: "invalid" };
 
 export async function listAdmins() {
   return db.adminUser.findMany({
     orderBy: { createdAt: "asc" },
-    select: { id: true, email: true, name: true, passwordHash: true, setupExpiresAt: true },
+    select: { id: true, email: true, name: true, passwordHash: true, setupExpiresAt: true, accessRemovedAt: true },
   });
 }
 
@@ -216,12 +216,9 @@ export async function inviteAdmin(args: { email: string; name: string }): Promis
   if (!email.includes("@") || email.length > 200 || !name || name.length > 120) {
     return { ok: false, reason: "invalid" };
   }
-  // The limit is on seats, and a reissue takes none: an address that exists
-  // gets its link again whatever the count. Only a new address meets the
-  // limit (15 Sep: the old check counted the other rows, so a reissue was
-  // refused wherever more than two rows existed).
-  const existing = await db.adminUser.findUnique({ where: { email }, select: { id: true } });
-  if (!existing && (await db.adminUser.count()) >= 2) return { ok: false, reason: "limit" };
+  // No seat limit (Ayush, 15 Sep: "there is no boundation for number of
+  // admins"). Who may invite is decided by the owner rule below, not by a
+  // count. A reissue for an address that exists takes nothing anyway.
 
   const token = randomToken();
   await db.adminUser.upsert({
@@ -237,10 +234,59 @@ export async function inviteAdmin(args: { email: string; name: string }): Promis
       setupTokenHash: hashToken(token),
       setupExpiresAt: new Date(Date.now() + SETUP_HOURS * 60 * 60 * 1000),
       setupLinkUsedAt: null,
+      accessRemovedAt: null,
     },
   });
   logger.info("admin invited", { email });
   return { ok: true, token, email };
+}
+
+/* -------------------------------------------------------------------------
+ * The owner (ADR 0024, Ayush 15 Sep: "one super admin, that is Ayush, who can
+ * add new admin"). Named by OWNER_EMAIL in the environment, which Ayush holds,
+ * rather than by a column: it is a deployment fact, it needs no migration, and
+ * it cannot be changed from inside the app. While it is unset, every admin can
+ * manage the team, which is what the two-founder setup was.
+ * ---------------------------------------------------------------------- */
+export function ownerEmail(): string | null {
+  const v = process.env.OWNER_EMAIL?.trim().toLowerCase();
+  return v && v.includes("@") ? v : null;
+}
+
+export function isOwner(admin: { email: string }): boolean {
+  const owner = ownerEmail();
+  return owner !== null && admin.email.trim().toLowerCase() === owner;
+}
+
+/** True when this admin may add admins and take access away. */
+export function canManageTeam(admin: { email: string }): boolean {
+  return ownerEmail() === null || isOwner(admin);
+}
+
+export type RemoveAccessResult = { ok: true } | { ok: false; reason: "not_found" | "self" | "owner" | "not_active" };
+
+/**
+ * Taking an admin's access away. The row stays, because the questionnaires
+ * they uploaded and the changes they decided point at it; the password, the
+ * setup link and every session go, and a stamp says when. Nobody removes
+ * their own access, and nobody removes the owner's.
+ */
+export async function removeAdminAccess(email: string, by: { id: string; email: string }): Promise<RemoveAccessResult> {
+  const normalized = email.trim().toLowerCase();
+  const row = await db.adminUser.findUnique({ where: { email: normalized } });
+  if (!row) return { ok: false, reason: "not_found" };
+  if (row.id === by.id) return { ok: false, reason: "self" };
+  if (isOwner(row)) return { ok: false, reason: "owner" };
+  if (row.passwordHash === null) return { ok: false, reason: "not_active" };
+  await db.$transaction([
+    db.adminSession.deleteMany({ where: { adminUserId: row.id } }),
+    db.adminUser.update({
+      where: { id: row.id },
+      data: { passwordHash: null, setupTokenHash: null, setupExpiresAt: null, setupLinkUsedAt: null, accessRemovedAt: new Date() },
+    }),
+  ]);
+  logger.info("admin access removed", { email: normalized, by: by.email });
+  return { ok: true };
 }
 
 /**

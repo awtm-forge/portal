@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mailMode, mailVars } from "@/lib/mail";
 import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
-import { activatedAdminCount, listAdmins } from "@/modules/auth/admin";
+import { activatedAdminCount, listAdmins, ownerEmail } from "@/modules/auth/admin";
 import { linkCopyCounts } from "@/modules/clients";
 import { requestLogger, safeError } from "@/lib/logger";
 import { company, liveSince } from "@/modules/settings";
@@ -41,7 +41,8 @@ export async function GET() {
         mail: mailMode(),
         mailVars: mailVars(),
         links: { client: hostnameOf(clientBase()), admin: hostnameOf(adminBase()) },
-        admins: { rows: adminRows, activated },
+        // owner: whether OWNER_EMAIL names one (ADR 0024), never who.
+        admins: { rows: adminRows, activated, owner: ownerEmail() !== null },
         // How many clients still have no readable copy of their link, so the
         // "we do not hold this link" card can be counted from outside and
         // watched fall to zero (15 Sep). Counts only.

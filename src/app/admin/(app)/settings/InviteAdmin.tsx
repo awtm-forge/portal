@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { inviteAdminAction, removeAdminAction, type InviteState } from "./adminActions";
+import { Confirm } from "@/components/ui/Confirm";
+import { inviteAdminAction, removeAccessAction, removeAdminAction, type InviteState } from "./adminActions";
 
-type Existing = { email: string; name: string; hasPassword: boolean };
+type Existing = { email: string; name: string; hasPassword: boolean; accessRemoved: boolean; isOwner: boolean };
 
 /**
  * The team, and how someone joins it.
@@ -15,10 +16,10 @@ type Existing = { email: string; name: string; hasPassword: boolean };
  * confusing is not the form, it is not knowing that we never set anybody's
  * password.
  *
- * And each seat carries its own button (Ayush, 15 Sep). Reissuing a link used
- * to mean retyping an address already listed two lines above, and a near miss
- * on the address met the two-seat limit instead of the reissue. The typed form
- * is only for a seat that is free; a seat that exists is acted on where it is.
+ * Each seat carries its own button (Ayush, 15 Sep). And there is an owner
+ * now, named by OWNER_EMAIL, who is the one person who adds admins, reissues
+ * their links and takes access away; there is no limit on how many (ADR 0024).
+ * Everyone else sees the team and nothing to press.
  */
 const STEPS = [
   { what: "You make a setup link here", note: "Nothing is emailed and no password is set." },
@@ -26,11 +27,22 @@ const STEPS = [
   { what: "They open it and choose a password", note: "Only they ever see it. It works once and lasts 48 hours." },
 ];
 
-export function InviteAdmin({ admins }: { admins: Existing[] }) {
+export function InviteAdmin({
+  admins,
+  canManage,
+  ownerName,
+  meEmail,
+}: {
+  admins: Existing[];
+  /** The owner, or anyone while no owner is named. */
+  canManage: boolean;
+  /** Who to name when someone else asks why they cannot. Null while no owner is named. */
+  ownerName: string | null;
+  meEmail: string;
+}) {
   const [state, action, pending] = useActionState<InviteState, FormData>(inviteAdminAction, {});
   const v = state.values;
-  const full = admins.length >= 2;
-  const waiting = admins.filter((a) => !a.hasPassword);
+  const waiting = admins.filter((a) => !a.hasPassword && !a.accessRemoved);
 
   return (
     <div className="a-card">
@@ -40,28 +52,49 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
         {admins.map((a) => (
           <div className="between" key={a.email} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)", flexWrap: "wrap" }}>
             <span className="stack" style={{ gap: 2 }}>
-              <span style={{ fontSize: 14.5 }}>{a.name}</span>
+              <span style={{ fontSize: 14.5 }}>
+                {a.name}
+                {a.isOwner && <span className="tag" style={{ marginLeft: 8, color: "var(--accent)" }}>owner</span>}
+                {a.email === meEmail && !a.isOwner && <span className="tag" style={{ marginLeft: 8 }}>you</span>}
+              </span>
               <span className="mono-sm">{a.email}</span>
             </span>
             <span style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <span className="tag" style={{ color: a.hasPassword ? "var(--muted)" : "var(--accent)" }}>
-                {a.hasPassword ? "can sign in" : "link not used yet"}
+              <span className="tag" style={{ color: a.hasPassword ? "var(--muted)" : a.accessRemoved ? "var(--faint)" : "var(--accent)" }}>
+                {a.hasPassword ? "can sign in" : a.accessRemoved ? "access removed" : "link not used yet"}
               </span>
-              {/* The same action as the form, with this seat's details already
-                  in it. A reissued link does not touch the password they have;
-                  it lets them choose a new one when they open it. */}
-              <form action={action}>
-                <input type="hidden" name="email" value={a.email} />
-                <input type="hidden" name="name" value={a.name} />
-                <button className="a-btn ghost" type="submit" disabled={pending} style={{ minHeight: 32, padding: "6px 12px" }}>
-                  {a.hasPassword ? "Reset their password" : "Reissue their setup link"}
-                </button>
-              </form>
-              {!a.hasPassword && (
-                <form action={removeAdminAction}>
-                  <input type="hidden" name="email" value={a.email} />
-                  <button className="link-mono" type="submit" style={{ padding: 0, fontSize: "10.5px", color: "var(--faint)" }}>Remove</button>
-                </form>
+              {canManage && (
+                <>
+                  {/* The same action as the form, with this seat's details
+                      already in it. A reissued link does not touch the
+                      password they have; it lets them choose a new one. */}
+                  <form action={action}>
+                    <input type="hidden" name="email" value={a.email} />
+                    <input type="hidden" name="name" value={a.name} />
+                    <button className="a-btn ghost" type="submit" disabled={pending} style={{ minHeight: 32, padding: "6px 12px" }}>
+                      {a.hasPassword ? "Reset their password" : a.accessRemoved ? "Give access again" : "Reissue their setup link"}
+                    </button>
+                  </form>
+                  {a.hasPassword && !a.isOwner && a.email !== meEmail && (
+                    <Confirm
+                      trigger="Remove access"
+                      triggerClass="link-mono"
+                      title={`Remove ${a.name}'s access?`}
+                      line="They are signed out everywhere and can no longer sign in. What they uploaded and decided stays on the record, and you can give them access again later from here."
+                      confirmLabel="Remove their access"
+                      keepLabel="Keep them"
+                      action={removeAccessAction}
+                    >
+                      <input type="hidden" name="email" value={a.email} />
+                    </Confirm>
+                  )}
+                  {!a.hasPassword && !a.accessRemoved && (
+                    <form action={removeAdminAction}>
+                      <input type="hidden" name="email" value={a.email} />
+                      <button className="link-mono" type="submit" style={{ padding: 0, fontSize: "10.5px", color: "var(--faint)" }}>Remove</button>
+                    </form>
+                  )}
+                </>
               )}
             </span>
           </div>
@@ -81,35 +114,37 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
       ) : (
         <div className="stack" style={{ gap: 14, paddingTop: 8, borderTop: "1px solid var(--rule-soft)" }}>
           <div className="stack" style={{ gap: 3 }}>
-            <span className="sec-name">{full ? "Both seats are taken" : "Adding the other admin"}</span>
+            <span className="sec-name">{canManage ? "Adding an admin" : "Who manages the team"}</span>
             <p className="help" style={{ lineHeight: 1.65 }}>
-              {full
-                ? "Two accounts is the limit. To reissue a setup link, or to reset a password, use the button beside that seat above. To swap somebody out, remove an unused seat first."
-                : "Two accounts is the limit, and one seat is free. We never set anyone's password, so this makes a link instead."}
+              {canManage
+                ? "As many as you need. We never set anyone's password, so this makes a link instead. To reissue a link, reset a password or remove access, use the buttons beside that seat above."
+                : `Only ${ownerName ?? "the owner"} adds admins, reissues their links or removes access. Ask them.`}
             </p>
           </div>
 
-          <ol className="a-steps">
-            {STEPS.map((s, i) => (
-              <li key={s.what}>
-                <span className="a-step-n">{i + 1}</span>
-                <span className="stack" style={{ gap: 2, minWidth: 0 }}>
-                  <span className="a-step-w">{s.what}</span>
-                  <span className="help">{s.note}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
+          {canManage && (
+            <ol className="a-steps">
+              {STEPS.map((s, i) => (
+                <li key={s.what}>
+                  <span className="a-step-n">{i + 1}</span>
+                  <span className="stack" style={{ gap: 2, minWidth: 0 }}>
+                    <span className="a-step-w">{s.what}</span>
+                    <span className="help">{s.note}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
 
           {waiting.length > 0 && (
             <p className="help">
-              {waiting.length === 1 ? `${waiting[0].name} has a link and has not used it yet.` : "Two links are out and neither has been used yet."}
+              {waiting.length === 1 ? `${waiting[0].name} has a link and has not used it yet.` : `${waiting.length} links are out and none has been used yet.`}
             </p>
           )}
 
           {state.message && <p className="help err">{state.message}</p>}
 
-          {!full && (
+          {canManage && (
             <form action={action} className="stack" style={{ gap: 10 }}>
               <div className="grid2">
                 <label className="stack" style={{ gap: 6 }}><span className="lbl">Email</span><input className="a-fld" type="email" name="email" maxLength={200} defaultValue={v?.email} required /></label>
