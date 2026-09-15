@@ -6,9 +6,10 @@ import { z } from "zod";
 import { COUNTRY_CODE_MESSAGE, hasCountryCode } from "@/lib/phone";
 import { fromIsoDate, isTodayOrLater, weekdayDayMonth } from "@/lib/dates";
 import { db } from "@/lib/db";
-import { adminLogout, requireAdmin } from "@/modules/auth/admin";
+import { adminLogout, reauthenticateAdmin, requireAdmin } from "@/modules/auth/admin";
 import { keepClientToken } from "@/modules/auth/client";
 import { createClient, deliverLink, rotateLink } from "@/modules/clients";
+import { removeClient } from "@/modules/clients/remove";
 import { createProject } from "@/modules/projects";
 import "@/modules/notifications/register";
 
@@ -140,6 +141,34 @@ export async function keepLinkAction(formData: FormData): Promise<void> {
     `/admin/clients/${clientId}/link`,
     result === "kept" ? "Kept. This page can show their link from now on." : "Not kept: that is not their link. Check the address and try again.",
   );
+}
+
+/**
+ * Removing a client for good (ADR 0022). Three things have to be true before
+ * anything happens: the name typed matches theirs, there is a reason, and the
+ * password is the signed-in admin's own. The password is checked last, so a
+ * typo in the name does not spend one of its five tries.
+ */
+export async function removeClientAction(formData: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
+  const client = await db.client.findUnique({ where: { id: clientId }, select: { businessName: true } });
+  if (!client) refreshTo("/admin/clients");
+  const back = `/admin/clients/${clientId}`;
+  const typed = String(formData.get("confirmName") ?? "").trim().toLowerCase();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
+  const password = String(formData.get("password") ?? "");
+  if (typed !== client!.businessName.trim().toLowerCase()) await refreshWith(back, "Not removed: the name you typed does not match theirs.");
+  if (!reason) await refreshWith(back, "Not removed: say why, in a line. It is the one thing that survives.");
+  const auth = await reauthenticateAdmin(admin.id, password);
+  if (auth === "rate_limited") await refreshWith(back, "Not removed: too many wrong passwords. Wait fifteen minutes.");
+  if (auth !== "ok") await refreshWith(back, "Not removed: that is not your password.");
+  const result = await removeClient(clientId, { adminId: admin.id, adminName: admin.name }, reason);
+  if (!result.ok && result.reason === "blocked") {
+    await refreshWith(back, "Not removed: something has been signed, invoiced or reviewed for them. Cancel or close the project instead.");
+  }
+  if (!result.ok) refreshTo("/admin/clients");
+  await refreshWith("/admin/clients", `Removed ${client!.businessName}. Nothing of theirs is left but a line in the log.`);
 }
 
 export async function rotateLinkAction(formData: FormData): Promise<void> {

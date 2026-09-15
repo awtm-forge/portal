@@ -267,6 +267,7 @@ These are constraints, not application code, so a bug in a route cannot get arou
 - `project.phase` is a database enum. Transitions are enforced in `modules/projects/phase.ts` (see ARCHITECTURE.md); the enum stops an unknown value, the module stops an illegal move.
 - `agreement.project_id` is unique: one agreement per project. A new version edits the row before `agreed_at`; after `agreed_at` a trigger-free check in the service refuses writes, and a test proves it.
 - `signoff_event`, `agreement_note`, `review_round`, `invoice`, `testimonial`, `day30`, `intake_version` and `intake_change_request` cannot be deleted through the Prisma client wrapper. `signoff_event`, `agreement_note` and `intake_version` cannot be updated either; a review round can be, once, when the client answers it, and an invoice only on its payment fields.
+- A client can be removed entirely while nothing of theirs is evidence (ADR 0022): no `signoff_event`, `invoice`, `review_round`, `testimonial` or `day30` on any of their projects. The removal takes their projects, agreement drafts, questionnaire with its `intake_version` and `intake_change_request` rows, uploads, sessions, codes and notifications, and the `agreement_note` rows on never-agreed projects, the three guarded tables by name in raw SQL inside the transaction; the guard itself does not bend, and a `client.removed` activity event survives with the business name, the count of projects, who and why. It needs the admin's own password again.
 - `referral` is deliberately absent from both guards. It holds a third party's name and contact and that person never consented to being stored, so admin can delete it (CLAUDE.md 5.1). The deletion writes a `referral.forgotten` activity event, so the fact survives without the details. `tests/append-only.test.ts` asserts both the rule and this exception, and that every model named in the guard exists, so a rename cannot silently disarm it.
 - `review_round.finished_work_url` is NOT NULL, departing from PORTAL-SPEC 4 where `staging_url` is nullable. Rahul, 8 Sep 2026: a review only happens when the work is one hundred percent complete, so there is always somewhere to see it. It is also renamed, because "staging" undersells what it points at.
 - `project.phase` is written by exactly one function, conditionally on its current value, which is what makes it the lock that stops a sign-off happening twice (ADR 0011).
@@ -370,3 +371,11 @@ reveals nothing; anyone holding both holds the links. ADR 0021 states that
 trade and what it is worth. Null on every row minted before the change, and
 unreadable on every row if `SESSION_SECRET` is ever rotated, in which case the
 page falls back to saying the link cannot be shown and nobody is locked out.
+
+## Changed on 15 September 2026: a client can be removed
+
+No schema change. `src/modules/clients/remove.ts` removes a client and
+everything of theirs while nothing of theirs is evidence, in one transaction,
+in dependency order, since nothing cascades. The rule and its reasoning are
+ADR 0022; the rules section above states it beside the guard it sits next to.
+The activity event type `client.removed` is the line that survives.

@@ -613,3 +613,41 @@ it. And `/healthz` carries `clients: {rows, withoutCopy}`, counts only, so how
 many clients are still in that state can be read from outside and watched fall
 to zero. Verified: the link spec and the leak walk end to end at both widths,
 lint and types clean.
+
+## 15 September, a client can be removed, with authorization
+
+Built: a client can be removed for good, only while nothing of theirs is
+evidence: no sign-off, no invoice, no review round, and so nothing downstream
+(Ayush, 15 Sep: "add the details for deleting the client. make sure there
+would be authorization before we do that"). `src/modules/clients/remove.ts`
+checks that once, then again inside the transaction so a sign-off landing in
+between wins, and takes everything else in dependency order, since nothing
+cascades: never-agreed projects and their drafts and events, the questionnaire
+with its versions and change requests, uploads on disk, sessions, codes and
+notifications. The three guarded tables that are a client's own words rather
+than evidence are cleared by name in raw SQL, only there; the model guard is
+untouched and the append-only test now says so. One `client.removed` activity
+event survives: business name, project count, who and why, no contact detail.
+
+Authorization is the admin proving it is them: the business name typed, a
+reason, and their own password entered again, the login's bcrypt compare keyed
+to the admin and limited to five tries in fifteen minutes. The password is
+checked last, so a typo in the name spends nothing. The card sits last in the
+client page's side column, outlined; once anything is evidence it says what
+stands in the way and offers no button. ADR 0022.
+
+Verified: 222 unit tests, six new: the removal takes every row and leaves the
+one line, refuses on a sign-off and touches nothing, the re-authentication
+accepts, refuses and locks, and the guard still refuses the three tables
+through the wrapper. End to end on desktop Chrome and Pixel 7: the removal spec,
+4 green, which walks a wrong password, a wrong name, the removal, the two 404s
+afterwards and the surviving line, plus the blocked card on a client with a
+planted sign-off; and the overlap sweep, 4 green. Two test defects on the way,
+both mine: a JSON column read as text, and a blocked case that trusted evidence
+the fixtures reset between tests. Lint and types clean.
+
+Deferred: none.
+
+Needs Rahul: none. If "authorization" was meant as the other admin approving
+rather than the acting admin's password, that is a pending state, a
+notification and a second action, and worth saying before it is built.

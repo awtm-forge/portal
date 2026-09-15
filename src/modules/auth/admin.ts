@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { requestLogger } from "@/lib/logger";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -45,6 +46,27 @@ export async function adminLogin(email: string, password: string, headers: Heade
   });
   (await cookies()).set(COOKIE, token, cookieOptions(maxAge));
   return { ok: true };
+}
+
+/**
+ * The signed-in admin proving it is them, for the one thing that cannot be
+ * undone at all: removing a client (ADR 0022, Ayush 15 Sep: "make sure there
+ * would be authorization before we do that"). The same bcrypt compare as the
+ * login, keyed to the admin rather than the address, and five wrong tries in
+ * fifteen minutes lock it, per admin, so a stolen session cannot grind at it.
+ */
+export type ReauthResult = "ok" | "rate_limited" | "bad_password";
+
+export async function reauthenticateAdmin(adminId: string, password: string): Promise<ReauthResult> {
+  if (!(await allow(`admin-reauth:${adminId}`, 5, 15 * 60))) return "rate_limited";
+  const user = await db.adminUser.findUnique({ where: { id: adminId }, select: { passwordHash: true } });
+  const hash = user?.passwordHash ?? "$2a$12$CwTycUXWue0Thq9StjUM0uJ8Z0a2N2mA1Qm0F0kY7m3s6Y2mJ0Q0e";
+  const good = await bcrypt.compare(password, hash);
+  if (!user?.passwordHash || !good) {
+    await requestLogger.warn("admin re-authentication failed", { adminId });
+    return "bad_password";
+  }
+  return "ok";
 }
 
 export async function currentAdmin() {

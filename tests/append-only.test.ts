@@ -50,6 +50,15 @@ describe("append-only evidence", () => {
     await expect(db.referral.delete({ where: { id: "no-such-referral" } })).rejects.not.toThrow(AppendOnly);
   });
 
+  it("keeps the guard on a questionnaire's versions and change requests, which only removing the whole client goes around", async () => {
+    // ADR 0022: removing a client clears these by name, in raw SQL, inside
+    // its own transaction and only after checking nothing is evidence. The
+    // model guard itself does not bend for it.
+    await expect(db.intakeVersion.delete({ where: { id: "x" } })).rejects.toThrow(AppendOnly);
+    await expect(db.intakeVersion.deleteMany({ where: { clientId: "x" } })).rejects.toThrow(AppendOnly);
+    await expect(db.intakeChangeRequest.deleteMany({ where: { clientId: "x" } })).rejects.toThrow(AppendOnly);
+  });
+
   it("guards models that actually exist, so a rename cannot disarm them", async () => {
     // The guard's sets are string literals. If a model were renamed they would
     // silently stop protecting anything, which is what happened to ReviewRound

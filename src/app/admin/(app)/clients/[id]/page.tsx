@@ -1,18 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Confirm } from "@/components/ui/Confirm";
 import { Fold } from "@/components/ui/Fold";
 import { bookingLink } from "@/lib/booking";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { withProjects } from "@/modules/clients";
+import { describeBlockers, removalBlockers } from "@/modules/clients/remove";
 import { requestsFor, stateOf } from "@/modules/intake/changes";
 import { intakeProgress } from "@/modules/intake/progress";
 import { versionsFor } from "@/modules/intake/versions";
 import { company } from "@/modules/settings";
 import { PHASE_LABEL } from "@/modules/projects/phase";
 import { questionnaireOpenMessage, waLink } from "@/lib/whatsapp";
-import { updateClientAction } from "../../actions";
+import { removeClientAction, updateClientAction } from "../../actions";
 import { declineChangeAction, lockAgainAction, openChangesAction } from "./intake/changeActions";
 
 /**
@@ -43,6 +45,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   // while settings has no booking link.
   const c = await company();
   const book = c.bookingUrl?.trim() ? bookingLink(c.bookingUrl.trim(), client.contactName, client.contactEmail) : null;
+  // Whether they can be removed at all (ADR 0022): only while nothing of
+  // theirs is evidence. The page says what stands in the way when something does.
+  const holds = describeBlockers(await removalBlockers(client.id));
 
   return (
     <AdminShell active="clients" adminName={admin.name}>
@@ -221,6 +226,49 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               If they ask you for a password, the answer is that there is not one and there never was.
             </p>
           </Fold>
+
+          {/* Last in the column and quiet, because it is the one thing here
+              that cannot be undone at all (ADR 0022, Ayush 15 Sep). It asks
+              for the name typed, a reason, and the admin's own password. */}
+          <div className="a-card">
+            <span className="k">Removing this client</span>
+            {holds.length === 0 ? (
+              <>
+                <p className="help" style={{ lineHeight: 1.65 }}>
+                  Everything of theirs goes: their link, their answers and uploads, and any project that was never agreed. What stays is one line in the log. It cannot be undone, and it needs your password.
+                </p>
+                <div>
+                  <Confirm
+                    trigger="Remove this client"
+                    triggerClass="a-btn ghost"
+                    title={`Remove ${client.businessName}?`}
+                    line="Nothing of theirs is left but a line in the log saying it happened, who did it and why. There is no way back from this."
+                    confirmLabel="Remove them for good"
+                    keepLabel="Keep them"
+                    action={removeClientAction}
+                  >
+                    <input type="hidden" name="clientId" value={client.id} />
+                    <label className="stack" style={{ gap: 6 }}>
+                      <span className="lbl">Their business name, typed</span>
+                      <input className="a-fld" name="confirmName" maxLength={200} autoComplete="off" required />
+                    </label>
+                    <label className="stack" style={{ gap: 6 }}>
+                      <span className="lbl">Why, in a line. It is the one thing that survives.</span>
+                      <input className="a-fld" name="reason" maxLength={300} required />
+                    </label>
+                    <label className="stack" style={{ gap: 6 }}>
+                      <span className="lbl">Your password</span>
+                      <input className="a-fld" type="password" name="password" autoComplete="current-password" required />
+                    </label>
+                  </Confirm>
+                </div>
+              </>
+            ) : (
+              <p className="help" style={{ lineHeight: 1.65 }}>
+                Cannot be removed: {holds.join(", ")}. The record stays for good. Cancel or close the project instead.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </AdminShell>

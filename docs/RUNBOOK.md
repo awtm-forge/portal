@@ -12,9 +12,11 @@ this file needs a terminal except the backup and restore sections.
 Evidence is append-only. A sign-off, an issued invoice and a review round have
 no update path and no delete path, in the API, in the admin or in a migration.
 When something is wrong, the fix is a new row that says so, not an edit that
-pretends it never happened. There is exactly one deletion in the system, and
-it is a referral, because it holds a third party's details and they never
-agreed to be here.
+pretends it never happened. There are two deletions in the system. A referral,
+because it holds a third party's details and they never agreed to be here. And
+a whole client, only while nothing of theirs is evidence yet, because a client
+added by mistake or one who asks to be forgotten before anything was agreed
+should leave no trace (ADR 0022).
 
 ## Actions
 
@@ -110,6 +112,15 @@ and there is no client view with a field for them.
 **Forget a referral.** Project page, Someone they named, Forget them. It asks
 first. The only delete in the system. Removes the row and writes an event
 saying it happened, so the fact survives without the details.
+
+**Remove a client.** Client page, at the foot of the side column, Remove this
+client. Only offered while nothing of theirs is evidence: no sign-off, no
+invoice, no review round. Once any of those exists the card says what stands
+in the way and there is no button; cancel or close the project instead. It
+asks for three things: their business name typed, a reason in a line, and your
+own password again. Five wrong passwords in fifteen minutes lock it for that
+long. Everything of theirs goes, their link included, and one line in the log
+survives with the business name, who did it and why. There is no way back.
 
 **Close a project.** Project page, top right under the header, Close this
 project, while the phase is `delivered`. It asks first. Tidies it away. The

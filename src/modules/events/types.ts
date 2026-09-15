@@ -24,6 +24,7 @@ export type EventType =
   | "delivery.signed_off"
   | "thanks.sent"
   | "referral.forgotten"
+  | "client.removed"
   | "day30.approved"
   | "enquiry.received";
 
