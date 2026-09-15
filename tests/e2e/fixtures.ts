@@ -51,7 +51,9 @@ export async function freshLink(slug: string): Promise<{ token: string; projectI
   // tests name which seed client they mean.
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  await query("UPDATE Client SET accessTokenHash = ? WHERE id = ?", [tokenHash, clientId]);
+  // The hash alone, and no sealed copy: this is the shape of a link minted
+  // before ADR 0021, and clearing any stale copy keeps the link page honest.
+  await query("UPDATE Client SET accessTokenHash = ?, accessTokenSealed = NULL WHERE id = ?", [tokenHash, clientId]);
   await query("DELETE FROM ClientSession WHERE clientId = ?", [clientId]);
   return { token, projectId, clientId };
 }

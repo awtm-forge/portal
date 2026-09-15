@@ -44,9 +44,10 @@ the sign-off person's email, which this does not touch.
 
 ## What it costs
 
-One nullable column and a migration. Links minted before this change were never
-captured and cannot be recovered, so that page keeps saying so for them; a
-rotation is what gives those clients a link the page can show.
+One nullable column and a migration. Links minted before this change were
+never captured, and on 14 September the page told the team to rotate to get one
+it could show, which takes away a working link to solve a display problem.
+Amended the next day, below.
 
 Rotating `SESSION_SECRET` makes every sealed copy unreadable. Nothing breaks
 and nobody is locked out, because the hashes are untouched; the link page falls
@@ -56,3 +57,24 @@ rotates the secret.
 The sealed value is never logged, never put in the flash cookie, which the
 browser can read, and never sent in an email. It is rendered on one page,
 behind an admin session.
+
+## Amended 15 September 2026: old links are not lost to the page
+
+Ayush: the link should be available every time, for every client. Two ways an
+old link becomes one the page can show, and neither rotates anything.
+
+The first is automatic. A client's plain token arrives in every request they
+make with their link, so `clientByToken` keeps a sealed copy the first time it
+sees a client with none. One update, once, and a failure to write it is logged
+and never stands in the way of the visit. Nothing about authentication changes:
+the hash is still what is compared.
+
+The second is the team pasting the link from their sent mail or a WhatsApp
+thread. `keepClientToken` takes whatever was pasted, pulls the token out of it,
+hashes it and compares in constant time with the hash held for that client;
+only a match is kept. A wrong paste, or another client's link, keeps nothing
+and says so.
+
+Rotating stays on the page as the last resort, outlined and under a line that
+says what it costs, for the case it was always for: a link that went somewhere
+it should not have.

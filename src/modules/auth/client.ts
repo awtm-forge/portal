@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { clientBase } from "@/lib/hosts";
 import { hashCode, hashToken, randomToken, safeEqualHex, sixDigitCode } from "@/lib/crypto";
+import { tokenFromPastedLink } from "@/lib/link-token";
 import { requestLogger, safeError } from "@/lib/logger";
 import { sendCode } from "@/lib/mail";
 import { allow, clientIp } from "@/lib/rate-limit";
@@ -52,7 +53,33 @@ export async function clientByToken(token: string) {
   const client = await db.client.findUnique({ where: { accessTokenHash: tokenHash }, include: CLIENT_INCLUDE });
   if (!client) return null;
   if (!safeEqualHex(client.accessTokenHash, tokenHash)) return null;
+  // A link minted before ADR 0021 has no copy the team can read back, and the
+  // plain token has just arrived in this request, so this is the moment to
+  // keep one (15 Sep). Once, and never in the way of the visit itself.
+  if (client.accessTokenSealed === null) await keepSealed(client.id, token);
   return client;
+}
+
+async function keepSealed(clientId: string, token: string): Promise<void> {
+  try {
+    await db.client.update({ where: { id: clientId }, data: { accessTokenSealed: seal(token) } });
+  } catch (error) {
+    await requestLogger.warn("could not keep a copy of a client link", { clientId, error: safeError(error) });
+  }
+}
+
+/**
+ * The team pasting a client's link from sent mail or a WhatsApp thread, so the
+ * app becomes its keeper (15 Sep). Believed only if it hashes to the hash we
+ * hold for that client: a wrong paste, or another client's link, keeps nothing.
+ */
+export async function keepClientToken(clientId: string, pasted: string): Promise<"kept" | "not_theirs"> {
+  const token = tokenFromPastedLink(pasted);
+  if (!token) return "not_theirs";
+  const row = await db.client.findUnique({ where: { id: clientId }, select: { accessTokenHash: true } });
+  if (!row || !safeEqualHex(row.accessTokenHash, hashToken(token))) return "not_theirs";
+  await db.client.update({ where: { id: clientId }, data: { accessTokenSealed: seal(token) } });
+  return "kept";
 }
 
 export type ClientByToken = NonNullable<Awaited<ReturnType<typeof clientByToken>>>;

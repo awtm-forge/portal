@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { closeDb, query } from "./fixtures";
+import { closeDb, freshLink, query, SEED_SLUG } from "./fixtures";
 
 /**
  * The team can send a client their link a second time without taking away the
@@ -7,6 +7,10 @@ import { closeDb, query } from "./fixtures";
  *
  * And adding an admin is a control on the settings page rather than a folded
  * grey line, with the three steps of what happens next beside it.
+ *
+ * A link minted before the sealed copy existed is not lost to that page for
+ * good: it is kept the first time the client opens it, and the team can paste
+ * it from their sent mail to keep it now (Ayush, 15 Sep).
  */
 const ADMIN_EMAIL = "e2e-link@example.invalid";
 const PASSWORD = "a-long-enough-passphrase";
@@ -66,6 +70,48 @@ test("a client's link can be read back and sent again, and it still works", asyn
   await client.close();
 
   await query("DELETE FROM Client WHERE contactEmail = ?", [`sealed${stamp}@example.invalid`]);
+});
+
+test("a link minted before the copy existed is kept the first time the client opens it", async ({ page }) => {
+  // The fixture mints a hash with no copy, the shape of every link from
+  // before 14 September.
+  const { token, clientId } = await freshLink(SEED_SLUG);
+  await signInAdmin(page);
+  await page.goto(`/admin/clients/${clientId}/link`);
+  await expect(page.getByText(/cannot be shown yet/i)).toBeVisible();
+  await expect(page.locator(".a-fld.mono")).toHaveCount(1);
+
+  // The client opens their link. No code, no sign-in: the visit alone is
+  // enough, because the plain token arrives in that request.
+  await page.goto(`/p/${token}`);
+  await expect(page.getByRole("button", { name: /email me a code/i })).toBeVisible();
+
+  await page.goto(`/admin/clients/${clientId}/link`);
+  const shown = (await page.locator(".a-fld.mono").first().innerText()).trim();
+  expect(shown, "the same link the client holds").toMatch(new RegExp(`/p/${token}$`));
+  await expect(page.getByText(/this page can show it again/i)).toBeVisible();
+});
+
+test("the team can paste an old link from their sent mail, and only the right one is kept", async ({ page }) => {
+  const { token, clientId } = await freshLink(SEED_SLUG);
+  await signInAdmin(page);
+  await page.goto(`/admin/clients/${clientId}/link`);
+  await expect(page.getByText(/cannot be shown yet/i)).toBeVisible();
+
+  // Somebody else's link, or a typo: checked against the hash, kept nothing.
+  await page.getByLabel(/their link, pasted/i).fill("https://dashboard.awtmforge.com/p/not_their_token_at_all_but_long_enough_to_pass");
+  await page.getByRole("button", { name: /keep this link/i }).click();
+  await expect(page.getByText(/not kept: that is not their link/i)).toBeVisible();
+  await expect(page.getByText(/cannot be shown yet/i)).toBeVisible();
+
+  // The real one, pasted as it sits in the sent mail, with the query string
+  // the mail client added.
+  await page.getByLabel(/their link, pasted/i).fill(`https://dashboard.awtmforge.com/p/${token}?utm_source=mail `);
+  await page.getByRole("button", { name: /keep this link/i }).click();
+  await expect(page.getByText(/kept\. this page can show their link/i)).toBeVisible();
+  const shown = (await page.locator(".a-fld.mono").first().innerText()).trim();
+  expect(shown).toMatch(new RegExp(`/p/${token}$`));
+  await expect(page.getByRole("button", { name: /keep this link/i })).toHaveCount(0);
 });
 
 test("adding an admin is a control on the page, with the flow beside it", async ({ page }) => {

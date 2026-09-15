@@ -7,6 +7,7 @@ import { COUNTRY_CODE_MESSAGE, hasCountryCode } from "@/lib/phone";
 import { fromIsoDate, isTodayOrLater, weekdayDayMonth } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { adminLogout, requireAdmin } from "@/modules/auth/admin";
+import { keepClientToken } from "@/modules/auth/client";
 import { createClient, deliverLink, rotateLink } from "@/modules/clients";
 import { createProject } from "@/modules/projects";
 import "@/modules/notifications/register";
@@ -123,6 +124,22 @@ async function freshToken(clientId: string): Promise<string> {
   const token = await rotateLink(clientId);
   await setFlashLink(clientId, token);
   return token;
+}
+
+/**
+ * A link minted before ADR 0021 has no copy this page can show. The team has
+ * it in sent mail or a WhatsApp thread; pasted here, it is checked against the
+ * hash and kept, so the page can show it from then on (Ayush, 15 Sep).
+ */
+export async function keepLinkAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const clientId = String(formData.get("clientId") ?? "");
+  if (!(await db.client.findUnique({ where: { id: clientId } }))) refreshTo("/admin/clients");
+  const result = await keepClientToken(clientId, String(formData.get("link") ?? "").slice(0, 600));
+  await refreshWith(
+    `/admin/clients/${clientId}/link`,
+    result === "kept" ? "Kept. This page can show their link from now on." : "Not kept: that is not their link. Check the address and try again.",
+  );
 }
 
 export async function rotateLinkAction(formData: FormData): Promise<void> {

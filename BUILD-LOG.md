@@ -572,3 +572,34 @@ Deferred: none.
 Needs Rahul: none. Connecting Google Calendar to cal.com, which is what puts a
 Meet link on every booking, was started in the browser and set aside at Ayush's
 word; the runbook has the steps.
+
+## 15 September, an old link is never lost to the link page
+
+Built: two ways a link minted before the sealed copy existed becomes one the
+link page can show, and neither rotates anything (Ayush, 15 Sep: "there should
+be the link available everytime for a client so it can be sent anytime").
+The first is automatic: the plain token arrives in every request a client makes
+with their link, so `clientByToken` keeps a sealed copy the first time it sees
+a client with none. One update, once, logged and never blocking if it fails,
+and nothing about authentication changes. The second is a box on the link page
+where the team pastes the link from their sent mail or the WhatsApp thread;
+`keepClientToken` pulls the token out of whatever was pasted, hashes it and
+compares in constant time with the hash we hold, and keeps only a match. The
+card no longer suggests rotating to fix a display problem; rotation is there,
+outlined, under a line that says what it costs. ADR 0021 amended.
+
+The end-to-end fixture that mints a hash for the seed client now clears any
+stale sealed copy too, which is the honest shape of "minted before" and would
+otherwise have shown a stale link on that page in tests.
+
+Verified: 216 unit tests, four of them on the pasted-link parser; the link
+spec and the overlap sweep end to end on desktop Chrome and Pixel 7, 12 tests
+green, two of them new: the copy is kept by the client's visit alone, with no
+code and no sign-in; and a wrong paste keeps nothing while the right one, with
+a mail client's query string and a stray space on it, is shown from then on.
+Lint and types clean.
+
+Deferred: none.
+
+Needs Rahul: none. The clients added before 14 September fix themselves on
+their next visit; for any you need sooner, the runbook says where the link is.

@@ -33,9 +33,9 @@ codes reach, and the client's own answer on the questionnaire is offered
 first. The project goes on the link the client already has. If their link
 never went out, starting the first project sends it.
 
-**The client link.** One per client, for good. Shown once, on the handover
-screen, and never again: only its hash is stored. The screen holds it for
-fifteen minutes and then it is gone. Losing it is not a problem, rotating is.
+**The client link.** One per client, for good. Shown on the handover screen
+and again on the client's link page whenever you need it (ADR 0021). Losing it
+is not a problem, rotating is.
 
 **Rotate the link.** Client, The link and how to send it, Make a new link. It
 asks first. The old link stops working on the next request. Use it when a
@@ -257,9 +257,14 @@ client.
 current link working the moment it runs, so use it when a link has gone
 somewhere it should not have, not when somebody has simply lost theirs.
 
-A client added before 14 September 2026 has no copy we can read back, so that
-page says so. Rotating is the only way to give them a link it can show, and
-that costs them their current one.
+A client added before 14 September 2026 had no copy we could read back, so
+that page says "cannot be shown yet" for them. It fixes itself: the copy is
+kept the first time the client opens their link, and the page shows it from
+then on. If you need it before that, find the link in your sent mail or the
+WhatsApp thread, paste it into the box on that page and press Keep this link.
+It is checked against what we hold first, so a wrong paste keeps nothing. Do
+not rotate to get a link onto the page; that costs the client their current
+one.
 
 ## Adding the other admin
 

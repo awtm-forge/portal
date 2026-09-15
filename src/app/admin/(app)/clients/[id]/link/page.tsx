@@ -9,7 +9,7 @@ import { byId } from "@/modules/clients";
 import { clientUrl } from "@/lib/request-origin";
 import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { revealClientToken } from "@/modules/auth/client";
-import { resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
+import { keepLinkAction, resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
 import { CopyLink } from "../CopyLink";
 
 /**
@@ -19,8 +19,11 @@ import { CopyLink } from "../CopyLink";
  * copied at the time was gone and the only way to send it again was to rotate,
  * which takes away the link the client already has to solve a problem that is
  * ours (Ayush, 14 Sep). A sealed copy of the same token is kept now, so the
- * same link can be read back and sent again (ADR 0021). Links minted before
- * that change were never captured and still cannot be shown.
+ * same link can be read back and sent again (ADR 0021). A link minted before
+ * that change is kept the first time the client opens it, and until then the
+ * team can paste it from their sent mail or WhatsApp and it is kept at once
+ * (Ayush, 15 Sep: the link should be there every time). Rotating is the last
+ * resort here, not the suggestion.
  */
 export default async function SendLinkPage({ params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -60,22 +63,36 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
               </p>
             </div>
           ) : (
-            <div className="a-card">
-              <span className="k">This link cannot be shown</span>
+            <div className="a-card ember">
+              <span className="k ember">This link cannot be shown yet</span>
               <p className="c-sub" style={{ fontSize: 14 }}>
-                It was minted before we kept a copy we could read back, so only its hash exists. The client&apos;s link still works; it just cannot be printed here. Rotate to make one that can be, which stops their current link working at once.
+                It was minted before we kept a copy we could read back, so only its hash exists. {firstName}&apos;s link still works. The copy is kept the next time they open it, and this page shows it from then on. If you have it now, from your sent mail or the WhatsApp message, paste it here and it is kept at once.
               </p>
-              <div>
-                <Confirm
-                  trigger="Make a new link"
-                  triggerClass="a-btn"
-                  title="Make a new link?"
-                  line={`The link ${firstName} has stops working the moment this runs. The new one is shown once, here, and emailed to ${client.contactEmail}. Their signed-in phone stays signed in.`}
-                  confirmLabel="Make the new link"
-                  action={rotateLinkAction}
-                >
-                  <input type="hidden" name="clientId" value={client.id} />
-                </Confirm>
+              <form action={keepLinkAction} className="stack" style={{ gap: 10 }}>
+                <input type="hidden" name="clientId" value={client.id} />
+                <label className="stack" style={{ gap: 6 }}>
+                  <span className="lbl">Their link, pasted</span>
+                  <input className="a-fld mono" name="link" maxLength={600} placeholder="https://dashboard.awtmforge.com/p/..." autoComplete="off" required />
+                </label>
+                <div><button className="a-btn" type="submit">Keep this link</button></div>
+              </form>
+              <p className="help" style={{ lineHeight: 1.65 }}>It is checked against what we hold before it is kept, so a wrong paste, or another client&apos;s link, changes nothing.</p>
+              <div style={{ borderTop: "1px solid var(--rule-soft)", paddingTop: 14 }} className="stack">
+                <p className="help" style={{ lineHeight: 1.65 }}>
+                  Or make a new link, which stops the one {firstName} has working the moment it runs. Use it when a link has gone somewhere it should not have, not to get one onto this page.
+                </p>
+                <div>
+                  <Confirm
+                    trigger="Make a new link"
+                    triggerClass="a-btn ghost"
+                    title="Make a new link?"
+                    line={`The link ${firstName} has stops working the moment this runs. The new one is shown once, here, and emailed to ${client.contactEmail}. Their signed-in phone stays signed in.`}
+                    confirmLabel="Make the new link"
+                    action={rotateLinkAction}
+                  >
+                    <input type="hidden" name="clientId" value={client.id} />
+                  </Confirm>
+                </div>
               </div>
             </div>
           )}
