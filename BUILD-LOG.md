@@ -703,3 +703,17 @@ Deferred: none.
 Needs Rahul: to mark the portal live the day the first real client is in.
 Until then an admin with their password can erase everything, which the card
 says in its first line.
+
+Then the team card: each seat carries its own button, "Reissue their setup
+link" on a seat whose link was never used and "Reset their password" on one
+that can sign in, and the typed form appears only while a seat is free. Ayush
+had typed an address that was not one of the two above the form and met the
+two-seat limit instead of the reissue; the design was asking to be misread.
+The limit message now points at the buttons. Verified: the link spec, grown
+to press the button and see the link appear for that address, and the overlap
+sweep, end to end at both widths; lint and types clean.
+The test found a real fault on the way: a reissue for an address that already
+existed met the two-seat limit wherever the table held more than two rows,
+because the check counted the other rows. Reissuing takes no seat, so an
+address that exists now gets its link again whatever the count, and only a new
+address meets the limit.

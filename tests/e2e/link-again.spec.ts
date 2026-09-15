@@ -118,13 +118,20 @@ test("adding an admin is a control on the page, with the flow beside it", async 
   await signInAdmin(page);
   await page.goto("/admin/settings");
 
-  // Not folded away behind a grey line: the form is on the page.
-  await expect(page.getByRole("textbox", { name: /email/i }).last()).toBeVisible();
-  await expect(page.getByRole("button", { name: /add an admin|reissue a setup link/i })).toBeVisible();
+  // Each seat carries its own button (Ayush, 15 Sep): no retyping an address
+  // that is listed two lines above. This admin can sign in, so its seat offers
+  // a password reset, which is a reissued link.
+  const mine = page.locator(".a-card", { hasText: ADMIN_EMAIL }).locator(".between", { hasText: ADMIN_EMAIL });
+  await expect(mine.getByRole("button", { name: /reset their password/i })).toBeVisible();
 
   // The three steps, so nobody has to guess that we never set a password.
   const steps = page.locator(".a-steps li");
   await expect(steps).toHaveCount(3);
   await expect(steps.nth(2)).toContainText(/choose a password/i);
-  await expect(page.getByText(/never set anyone's password|reissues its setup link/i).first()).toBeVisible();
+  await expect(page.getByText(/never set anyone's password|use the button beside that seat/i).first()).toBeVisible();
+
+  // Pressing it shows the link once, for this address, with no form involved.
+  await mine.getByRole("button", { name: /reset their password/i }).click();
+  await expect(page.getByText(new RegExp(`setup link for ${ADMIN_EMAIL.replace(".", "\\.")}`, "i"))).toBeVisible();
+  await expect(page.locator("code")).toContainText(/\/admin\/setup\//);
 });

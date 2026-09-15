@@ -216,8 +216,12 @@ export async function inviteAdmin(args: { email: string; name: string }): Promis
   if (!email.includes("@") || email.length > 200 || !name || name.length > 120) {
     return { ok: false, reason: "invalid" };
   }
-  const others = await db.adminUser.count({ where: { NOT: { email } } });
-  if (others >= 2) return { ok: false, reason: "limit" };
+  // The limit is on seats, and a reissue takes none: an address that exists
+  // gets its link again whatever the count. Only a new address meets the
+  // limit (15 Sep: the old check counted the other rows, so a reissue was
+  // refused wherever more than two rows existed).
+  const existing = await db.adminUser.findUnique({ where: { email }, select: { id: true } });
+  if (!existing && (await db.adminUser.count()) >= 2) return { ok: false, reason: "limit" };
 
   const token = randomToken();
   await db.adminUser.upsert({

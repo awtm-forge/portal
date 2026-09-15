@@ -17,7 +17,7 @@ export async function inviteAdminAction(_prev: InviteState, formData: FormData):
   const result = await inviteAdmin(values);
   if (!result.ok) {
     return {
-      message: result.reason === "limit" ? "Two accounts is the limit. Refresh one of the existing ones instead." : "Check the email and the name.",
+      message: result.reason === "limit" ? "Two accounts is the limit and both are taken. To reissue a link, use the button beside that seat above." : "Check the email and the name.",
       values,
     };
   }

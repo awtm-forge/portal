@@ -14,6 +14,11 @@ type Existing = { email: string; name: string; hasPassword: boolean };
  * steps written out beside it, because the thing that makes this flow
  * confusing is not the form, it is not knowing that we never set anybody's
  * password.
+ *
+ * And each seat carries its own button (Ayush, 15 Sep). Reissuing a link used
+ * to mean retyping an address already listed two lines above, and a near miss
+ * on the address met the two-seat limit instead of the reissue. The typed form
+ * is only for a seat that is free; a seat that exists is acted on where it is.
  */
 const STEPS = [
   { what: "You make a setup link here", note: "Nothing is emailed and no password is set." },
@@ -33,15 +38,25 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
 
       <div className="stack">
         {admins.map((a) => (
-          <div className="between" key={a.email} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}>
+          <div className="between" key={a.email} style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)", flexWrap: "wrap" }}>
             <span className="stack" style={{ gap: 2 }}>
               <span style={{ fontSize: 14.5 }}>{a.name}</span>
               <span className="mono-sm">{a.email}</span>
             </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <span className="tag" style={{ color: a.hasPassword ? "var(--muted)" : "var(--accent)" }}>
                 {a.hasPassword ? "can sign in" : "link not used yet"}
               </span>
+              {/* The same action as the form, with this seat's details already
+                  in it. A reissued link does not touch the password they have;
+                  it lets them choose a new one when they open it. */}
+              <form action={action}>
+                <input type="hidden" name="email" value={a.email} />
+                <input type="hidden" name="name" value={a.name} />
+                <button className="a-btn ghost" type="submit" disabled={pending} style={{ minHeight: 32, padding: "6px 12px" }}>
+                  {a.hasPassword ? "Reset their password" : "Reissue their setup link"}
+                </button>
+              </form>
               {!a.hasPassword && (
                 <form action={removeAdminAction}>
                   <input type="hidden" name="email" value={a.email} />
@@ -60,16 +75,16 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
             {state.link}
           </code>
           <p className="help" style={{ lineHeight: 1.65 }}>
-            Shown once, works once, lasts 48 hours. Send it to them now: this page cannot show it again, and if it is lost you make another one here, which stops this one working.
+            Shown once, works once, lasts 48 hours. Send it to them now: this page cannot show it again, and if it is lost you make another one from their seat above, which stops this one working.
           </p>
         </div>
       ) : (
         <div className="stack" style={{ gap: 14, paddingTop: 8, borderTop: "1px solid var(--rule-soft)" }}>
           <div className="stack" style={{ gap: 3 }}>
-            <span className="sec-name">{full ? "Reissuing a setup link" : "Adding the other admin"}</span>
+            <span className="sec-name">{full ? "Both seats are taken" : "Adding the other admin"}</span>
             <p className="help" style={{ lineHeight: 1.65 }}>
               {full
-                ? "Two accounts is the limit and both are taken. Entering an address that is already above reissues its setup link, which is also how a forgotten password is reset. To swap somebody out, remove an unused invite first."
+                ? "Two accounts is the limit. To reissue a setup link, or to reset a password, use the button beside that seat above. To swap somebody out, remove an unused seat first."
                 : "Two accounts is the limit, and one seat is free. We never set anyone's password, so this makes a link instead."}
             </p>
           </div>
@@ -92,20 +107,23 @@ export function InviteAdmin({ admins }: { admins: Existing[] }) {
             </p>
           )}
 
-          <form action={action} className="stack" style={{ gap: 10 }}>
-            <div className="grid2">
-              <label className="stack" style={{ gap: 6 }}><span className="lbl">Email</span><input className="a-fld" type="email" name="email" maxLength={200} defaultValue={v?.email} required /></label>
-              <label className="stack" style={{ gap: 6 }}><span className="lbl">Name</span><input className="a-fld" name="name" maxLength={120} defaultValue={v?.name} required /></label>
-            </div>
-            {state.message && <p className="help err">{state.message}</p>}
-            <div>
-              {/* Outlined, not filled: Save settings is this page's one loud
-                  action. The old mistake was a grey text link, not an outline. */}
-              <button className="a-btn ghost" type="submit" disabled={pending}>
-                {pending ? "Making the link" : full ? "Reissue a setup link" : "Add an admin"}
-              </button>
-            </div>
-          </form>
+          {state.message && <p className="help err">{state.message}</p>}
+
+          {!full && (
+            <form action={action} className="stack" style={{ gap: 10 }}>
+              <div className="grid2">
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">Email</span><input className="a-fld" type="email" name="email" maxLength={200} defaultValue={v?.email} required /></label>
+                <label className="stack" style={{ gap: 6 }}><span className="lbl">Name</span><input className="a-fld" name="name" maxLength={120} defaultValue={v?.name} required /></label>
+              </div>
+              <div>
+                {/* Outlined, not filled: Save settings is this page's one loud
+                    action. The old mistake was a grey text link, not an outline. */}
+                <button className="a-btn ghost" type="submit" disabled={pending}>
+                  {pending ? "Making the link" : "Add an admin"}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
     </div>
