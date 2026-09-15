@@ -139,6 +139,13 @@ real client is in. One way: Start clean disappears for good, and from then on
 nothing that is evidence can be removed. `/healthz` reports `live` as true or
 false so it can be checked from outside.
 
+**A client's files.** Client page, the Files card. Anything they send from
+Your files in their portal lands here, with their line about it, and the bell
+tells you. Add files for them from the same card: images and PDFs, ten
+megabytes each; they are told, and the files sit under Your files in their
+menu. Either side can remove a file; it is not evidence. A Word document or a
+spreadsheet is refused by name rather than swallowed.
+
 **Close a project.** Project page, top right under the header, Close this
 project, while the phase is `delivered`. It asks first. Tidies it away. The
 record stays readable at the same link, which does not expire.

@@ -129,18 +129,19 @@ export async function serveClientFile(clientId: string, fileId: string, wantThum
   if (!file || file.clientId !== clientId) return new Response("Not found", { status: 404 });
   if (wantThumb) {
     if (!file.thumbPath) return new Response("Not found", { status: 404 });
-    return bytes(await readStored(file.thumbPath), "image/jpeg", "thumb.jpg");
+    return fileResponse(await readStored(file.thumbPath), "image/jpeg", "thumb.jpg");
   }
-  return bytes(await readStored(file.storedPath), file.mimeType, file.originalName);
+  return fileResponse(await readStored(file.storedPath), file.mimeType, file.originalName);
 }
 
 export async function serveLibraryImage(key: string): Promise<Response> {
   const img = await imageByKey(key);
   if (!img) return new Response("Not found", { status: 404 });
-  return bytes(await readStored(img.storedPath), img.mimeType, `${key}.${img.storedPath.split(".").pop()}`);
+  return fileResponse(await readStored(img.storedPath), img.mimeType, `${key}.${img.storedPath.split(".").pop()}`);
 }
 
-function bytes(data: Buffer, mime: string, name: string): Response {
+/** One shape for every stored file the portal hands back; the documents module uses it too. */
+export function fileResponse(data: Buffer, mime: string, name: string): Response {
   const headers: Record<string, string> = {
     "Content-Type": mime,
     "Content-Length": String(data.length),

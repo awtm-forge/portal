@@ -53,7 +53,8 @@ test("the menu lists the pages that exist, marks the current one, and each link 
   await page.goto(`/p/${token}`);
   let nav = await pageLinks(page);
   // In the menu the page you are on carries a "You are here" note beside it.
-  await expect(nav.getByRole("link")).toHaveText([/^Your project/, "Questionnaire", "Agreement", ...(invoiceCount > 0 ? ["Invoices"] : [])]);
+  // Your files is always last once signed in (ADR 0025).
+  await expect(nav.getByRole("link")).toHaveText([/^Your project/, "Questionnaire", "Agreement", ...(invoiceCount > 0 ? ["Invoices"] : []), "Your files"]);
   await expect(nav.getByRole("link", { name: "Your project" })).toHaveAttribute("aria-current", "page");
   await expect(nav.getByRole("link", { name: "Delivery" })).toHaveCount(0);
 

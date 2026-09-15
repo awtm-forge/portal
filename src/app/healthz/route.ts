@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mailMode, mailVars } from "@/lib/mail";
+import { whatsappMode, whatsappVars } from "@/lib/whatsapp-cloud";
 import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
 import { activatedAdminCount, listAdmins, ownerEmail } from "@/modules/auth/admin";
 import { linkCopyCounts } from "@/modules/clients";
@@ -40,6 +41,9 @@ export async function GET() {
         claimed,
         mail: mailMode(),
         mailVars: mailVars(),
+        // WhatsApp for the team's notices (ADR 0026): on or off, and which of
+        // its values are set, by name. Never a value.
+        whatsapp: { mode: whatsappMode(), vars: whatsappVars() },
         links: { client: hostnameOf(clientBase()), admin: hostnameOf(adminBase()) },
         // owner: whether OWNER_EMAIL names one (ADR 0024), never who.
         admins: { rows: adminRows, activated, owner: ownerEmail() !== null },

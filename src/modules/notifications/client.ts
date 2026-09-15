@@ -21,6 +21,17 @@ export type Notice = { subject: string; title: string; body: string; path: strin
 export function clientNotice(type: EventType, payload: ActivityPayload): Notice | null {
   const week = typeof payload.weekNumber === "number" ? payload.weekNumber : null;
   switch (type) {
+    case "document.added": {
+      const n = typeof payload.count === "number" ? payload.count : 1;
+      const names = typeof payload.names === "string" ? payload.names : "";
+      return {
+        subject: n === 1 ? "A file from awtm forge" : "Files from awtm forge",
+        title: n === 1 ? "We added a file for you" : `We added ${n} files for you`,
+        body: `${names}. It is under Your files, in the menu.`,
+        path: "/files",
+        email: true,
+      };
+    }
     case "agreement.sent":
       return {
         subject: "Your agreement is ready",

@@ -27,6 +27,8 @@ export type EventType =
   | "client.removed"
   | "system.started_clean"
   | "system.live"
+  | "document.uploaded"
+  | "document.added"
   | "day30.approved"
   | "enquiry.received";
 

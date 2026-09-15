@@ -40,6 +40,7 @@ const ORDER = [
   "IntakeChangeRequest",
   "IntakeVersion",
   "IntakeFile",
+  "ClientDocument",
   "Intake",
   "OneTimeCode",
   "ClientSession",

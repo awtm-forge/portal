@@ -2,12 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Confirm } from "@/components/ui/Confirm";
+import { FilePick } from "@/components/ui/FilePick";
 import { Fold } from "@/components/ui/Fold";
+import { IntakeParty } from "@/generated/prisma/enums";
 import { bookingLink } from "@/lib/booking";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { withProjects } from "@/modules/clients";
 import { describeBlockers, removalBlockers } from "@/modules/clients/remove";
+import { humanSize, listDocuments } from "@/modules/documents";
 import { requestsFor, stateOf } from "@/modules/intake/changes";
 import { intakeProgress } from "@/modules/intake/progress";
 import { versionsFor } from "@/modules/intake/versions";
@@ -48,6 +51,8 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   // Whether they can be removed at all (ADR 0022): only while nothing of
   // theirs is evidence. The page says what stands in the way when something does.
   const holds = describeBlockers(await removalBlockers(client.id));
+  // Their files, both directions (ADR 0025).
+  const docs = await listDocuments(client.id);
 
   return (
     <AdminShell active="clients" adminName={admin.name}>
@@ -178,6 +183,51 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
+
+          {/* Files, both directions (ADR 0025, Ayush 16 Sep): what they send
+              from Your files lands here, what is added here lands there and
+              tells them. Images and PDFs, ten megabytes each. */}
+          <div className="a-card">
+            <div className="between">
+              <span className="k">Files</span>
+              <span className="mono-sm">{docs.length === 0 ? "none yet" : `${docs.length} ${docs.length === 1 ? "file" : "files"}`}</span>
+            </div>
+            {docs.length === 0 ? (
+              <p className="c-sub" style={{ fontSize: 14 }}>Anything {firstName} sends from Your files lands here, and anything you add here lands there, with a note to them.</p>
+            ) : (
+              <div className="stack">
+                {docs.map((d) => (
+                  <div key={d.id} className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)", alignItems: "flex-start" }}>
+                    <a href={`/admin/clients/${client.id}/files/${d.id}`} target="_blank" rel="noopener" style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0, textDecoration: "none", color: "inherit" }}>
+                      {d.hasThumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={`/admin/clients/${client.id}/files/${d.id}?thumb`} alt="" width={40} height={40} style={{ objectFit: "cover", borderRadius: 3, flex: "none" }} />
+                      ) : (
+                        <span className="mono-sm" style={{ width: 40, height: 40, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--rule)", borderRadius: 3, flex: "none", fontSize: 10 }}>PDF</span>
+                      )}
+                      <span className="stack" style={{ gap: 2, minWidth: 0 }}>
+                        <span style={{ fontSize: 14.5, overflowWrap: "anywhere" }}>{d.name}</span>
+                        <span className="help">{humanSize(d.sizeBytes)} · {dayMonth(d.createdAt)} · {d.by === IntakeParty.CLIENT ? `from ${firstName}` : "from us"}</span>
+                        {d.note && <span className="help" style={{ color: "var(--ink)" }}>{d.note}</span>}
+                      </span>
+                    </a>
+                    <form method="post" action={`/admin/clients/${client.id}/files/api/remove`} style={{ flex: "none" }}>
+                      <input type="hidden" name="id" value={d.id} />
+                      <button className="link-mono" type="submit" style={{ padding: 0, fontSize: "10.5px", color: "var(--faint)" }}>Remove</button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+            <form method="post" action={`/admin/clients/${client.id}/files/api/upload`} encType="multipart/form-data" className="stack" style={{ gap: 10, borderTop: "1px solid var(--rule-soft)", paddingTop: 14 }}>
+              <FilePick name="file" accept="image/jpeg,image/png,image/webp,image/svg+xml,application/pdf" multiple required label="Choose files" />
+              <label className="stack" style={{ gap: 6 }}>
+                <span className="lbl">A line to {firstName} about them. Optional.</span>
+                <input className="a-fld" name="note" maxLength={300} />
+              </label>
+              <div><button className="a-btn ghost" type="submit">Add files for {firstName}</button></div>
+            </form>
+          </div>
         </div>
 
         <div className="aside">

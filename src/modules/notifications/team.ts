@@ -36,6 +36,12 @@ export function teamNotice(type: EventType, payload: ActivityPayload, projectId:
   switch (type) {
     case "intake.submitted":
       return { subject: `${name}: questionnaire sent`, body: `${name}${business} finished the questionnaire.`, path };
+    case "document.uploaded": {
+      const n = typeof p.count === "number" ? p.count : 1;
+      const names = typeof p.names === "string" ? p.names : "";
+      const note = typeof p.note === "string" && p.note ? `\n\nThey wrote: ${p.note}` : "";
+      return { subject: `${who}: sent ${n} ${n === 1 ? "file" : "files"}`, body: `${who} uploaded ${names}. Open their page to see them.${note}`, path };
+    }
     case "intake.change_asked":
       return {
         subject: `${who}: asked to change the questionnaire`,
@@ -96,6 +102,7 @@ export function noticeFor(a: Activity): TeamNotice | null {
 /** Only the types the team is told about, so the query does not read the whole log. */
 export const TEAM_TYPES: EventType[] = [
   "intake.submitted",
+  "document.uploaded",
   "intake.change_asked",
   "intake.changes_sent",
   "agreement.note",

@@ -92,6 +92,25 @@ model Client {
   intakeVersions IntakeVersion[]
   intakeChanges  IntakeChangeRequest[]
   notifications  ClientNotification[]
+  documents      ClientDocument[]
+}
+
+/// Files a client hands us outside the questionnaire, and files we hand them
+/// (ADR 0025). Not evidence: either side can remove one.
+model ClientDocument {
+  id           String      @id @default(cuid())
+  clientId     String
+  client       Client      @relation(fields: [clientId], references: [id])
+  uploadedBy   IntakeParty
+  originalName String      @db.VarChar(300)
+  mimeType     String
+  sizeBytes    Int
+  storedPath   String
+  thumbPath    String?
+  note         String?     @db.VarChar(300)
+  createdAt    DateTime    @default(now())
+
+  @@index([clientId])
 }
 
 enum TypeOfWork {

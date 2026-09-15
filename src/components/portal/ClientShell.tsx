@@ -11,7 +11,7 @@ import { Toast } from "@/components/ui/Toast";
 import { markClientNoticesSeen } from "./notify-actions";
 import { PortalMenu } from "./PortalMenu";
 
-export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "thanks" | "day30" | "updates" | "book";
+export type ClientPage = "home" | "questionnaire" | "agreement" | "review" | "invoices" | "files" | "thanks" | "day30" | "updates" | "book";
 
 /**
  * Every client page sits in this, so a fix to the frame is a fix to all of
@@ -61,6 +61,9 @@ export async function ClientShell({
         ...(has.agreement ? [{ key: "agreement" as const, label: "Agreement", href: `${home}/agreement` }] : []),
         ...(has.review ? [{ key: "review" as const, label: "Delivery", href: `${home}/review` }] : []),
         ...(has.invoices ? [{ key: "invoices" as const, label: "Invoices", href: `${home}/invoices` }] : []),
+        // Always there once signed in: a place for anything they want us to
+        // have, and for anything we hand them (ADR 0025).
+        { key: "files" as const, label: "Your files", href: `${home}/files` },
       ]
     : [];
   const whatsapp = c.phone.trim() ? `https://wa.me/${phoneDigits(c.phone)}` : null;

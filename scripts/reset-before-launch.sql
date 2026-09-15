@@ -28,6 +28,7 @@ TRUNCATE TABLE ClientNotification;
 TRUNCATE TABLE IntakeChangeRequest;
 TRUNCATE TABLE IntakeVersion;
 TRUNCATE TABLE IntakeFile;
+TRUNCATE TABLE ClientDocument;
 TRUNCATE TABLE Intake;
 TRUNCATE TABLE OneTimeCode;
 TRUNCATE TABLE ClientSession;

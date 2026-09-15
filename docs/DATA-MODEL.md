@@ -389,3 +389,16 @@ in dependency order inside one transaction and starts the invoice numbering
 again; present means the portal is live, the control is gone, and the module
 refuses. Written once and never moved. ADR 0023 has the reasoning; the wipe is
 tried in the unit suite inside a transaction that is rolled back on purpose.
+
+## Changed on 16 September 2026: a client's files, and an admin's access
+
+`ClientDocument` (ADR 0025): a file a client hands us outside the
+questionnaire or one we hand them. `clientId`, `uploadedBy` (client or team),
+`originalName`, `mimeType`, `sizeBytes`, `storedPath`, `thumbPath`, an
+optional `note`, `createdAt`. Stored through the questionnaire's pipeline,
+served only through a route that checks the viewer, not evidence: either side
+can delete one, and removing a client or starting clean takes them too.
+
+`AdminUser.accessRemovedAt` (ADR 0024): set when the owner takes an admin's
+access away. The row stays because uploads and decisions point at it; the
+password, the setup link and every session go.

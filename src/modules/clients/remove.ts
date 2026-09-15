@@ -79,7 +79,7 @@ export async function removeClient(
 ): Promise<RemoveResult> {
   const client = await db.client.findUnique({
     where: { id: clientId },
-    include: { projects: { select: { id: true } }, files: { select: { storedPath: true } } },
+    include: { projects: { select: { id: true } }, files: { select: { storedPath: true } }, documents: { select: { storedPath: true, thumbPath: true } } },
   });
   if (!client) return { ok: false, reason: "not_found" };
   const ids = client.projects.map((p) => p.id);
@@ -108,6 +108,7 @@ export async function removeClient(
       await tx.clientSession.deleteMany({ where: { clientId } });
       await tx.oneTimeCode.deleteMany({ where: { clientId } });
       await tx.intakeFile.deleteMany({ where: { clientId } });
+      await tx.clientDocument.deleteMany({ where: { clientId } });
       // Append-only for a living record; see the note at the top.
       await tx.$executeRaw`DELETE FROM IntakeChangeRequest WHERE clientId = ${clientId}`;
       await tx.$executeRaw`DELETE FROM IntakeVersion WHERE clientId = ${clientId}`;
@@ -122,6 +123,10 @@ export async function removeClient(
   // The uploads on disk, after the rows are gone. Best effort: a file that
   // will not unlink is an orphan on disk, not a client that still exists.
   for (const f of client.files) await removeStored(f.storedPath);
+  for (const d of client.documents) {
+    await removeStored(d.storedPath);
+    if (d.thumbPath) await removeStored(d.thumbPath);
+  }
 
   try {
     await emit({

@@ -789,3 +789,66 @@ notifications, which follow in their own entries.
 
 Needs Rahul: `OWNER_EMAIL` set in hPanel to Ayush's sign-in address, and a
 redeploy, for the owner rule to take effect.
+
+## 16 September, item 1: a client's files
+
+Built: Your files, a page in the client's menu from the moment they sign in
+(ADR 0025). One list, newest first, and one form: images and PDFs, ten
+megabytes each, ten at a time, with a line about them if it helps. The same
+list and form on the team's side, a Files card on the client's page. A
+client's upload tells the team, by the bell, the email and now WhatsApp; a
+team upload tells the client the same way, and points at Your files. Two
+event types so the team's unread count never counts its own uploads. The
+questionnaire's own pipeline does the storing: type by magic bytes, images
+re-encoded with EXIF stripped, SVG sanitised, PDF as is, the client's own
+directory, served only through a route that checks who is asking on either
+side. A file is not evidence, so either side can remove one, and removing a
+client or starting clean takes them too. One table, `ClientDocument`.
+
+The uploads post plain forms to route handlers, because a server action caps
+its body far below ten megabytes. That found a real defect: a redirect built
+from `request.url` in a route handler names the server, `localhost` in a
+production build, not the host the browser is on, so the suite's browser was
+sent from 127.0.0.1 to localhost and its session cookie stayed behind; on the
+live host that would have been a jump to "localhost". `redirectWithFlash` in
+`src/lib/flash.ts` answers with a relative Location and sets the flash cookie
+on the response itself; the four routes use it.
+
+Verified: 235 unit tests, four on the documents module: stored with a
+thumbnail, listed, served to its owner only, refused by name, the team told
+once and the client told once, removed from disk as well as the row. End to
+end on desktop Chrome and Pixel 7: the files spec, 4 green, a client's upload
+seen and opened by the team and refused to a stranger, the team's upload told
+to the client and taken away by them; the navigation spec with Your files
+last in the menu; the leak walk and the overlap sweep. Lint and types clean.
+
+Deferred: Word documents and spreadsheets, which the pipeline refuses by name
+today. Accepting them is a pipeline change, a seam noted in the ADR.
+
+Needs Rahul: none.
+
+## 16 September, item 4: the team's notices on WhatsApp
+
+Built: a third subscriber beside the email and the bell (ADR 0026). Every
+notice the team is told about is sent to the team's own number through the
+WhatsApp Business Cloud API, as one approved template with three parameters:
+what happened, one line about it, and the link. The sentence is the same
+`teamNotice` the bell and the email carry, so the three never disagree.
+Switched on by `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` and
+`TEAM_WHATSAPP_TO` and off without them, the way SMTP is; `/healthz` reports
+the mode and which values are set, by name. A failure logs the status and
+Meta's code and never the request, because the request carries the token. No
+client number is ever sent to.
+
+Verified: four unit tests with the network mocked: off while any value is
+missing and which by name, one template with three one-line parameters to
+the team's number as digits, the failure line, and no request at all while
+not configured. Lint and types clean. The channel itself cannot be proved
+from here: it needs a WhatsApp Business account and Meta's approval of the
+template, which are Ayush's, and DEPLOY.md has the steps and the template's
+exact text.
+
+Deferred: none in code.
+
+Needs Rahul: the WhatsApp Business setup in DEPLOY.md, and the three values
+in hPanel, before a single message goes out.

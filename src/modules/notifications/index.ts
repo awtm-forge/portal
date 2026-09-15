@@ -9,6 +9,7 @@
 import { adminBase } from "@/lib/hosts";
 import { requestLogger, safeError } from "@/lib/logger";
 import { sendPlain, teamNotifyAddress } from "@/lib/mail";
+import { sendTeamWhatsapp, whatsappMode } from "@/lib/whatsapp-cloud";
 import { subscribe, type Activity } from "@/modules/events";
 import { tellClient } from "@/modules/notifications/client";
 import { noticeFor } from "@/modules/notifications/team";
@@ -35,6 +36,24 @@ subscribe(async (activity) => {
   } catch (error) {
     await requestLogger.error("team notification failed", { type: activity.type, error: safeError(error) });
   }
+});
+
+/**
+ * The same notice on WhatsApp, to the team's own number, when the Cloud API
+ * values are set (ADR 0026). The sentence is the bell's and the email's; only
+ * the shape changes, to the three parameters the approved template takes. A
+ * failure is logged with the status and Meta's code, never the request.
+ */
+subscribe(async (activity) => {
+  if (whatsappMode() !== "cloud") return;
+  const notice = noticeFor(activity);
+  if (!notice) return;
+  const result = await sendTeamWhatsapp({
+    what: notice.subject,
+    line: notice.body.split("\n")[0] ?? "",
+    link: `${adminBase()}${notice.path}`,
+  });
+  if (!result.ok) await requestLogger.error("team WhatsApp failed", { type: activity.type, reason: result.reason });
 });
 
 /**

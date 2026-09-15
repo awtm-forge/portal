@@ -86,6 +86,43 @@ past the code screen, so no client can sign in at all. Set the five `SMTP_*`
 variables before the first project link is sent, and run check 6 below with a
 real address before trusting it.
 
+## WhatsApp for the team's notifications
+
+Every notice the team's bell and email carry can also reach the team's own
+WhatsApp (ADR 0026). It needs a WhatsApp Business Cloud API account, which is
+Meta's to grant and yours to set up; the app does the sending once five
+values are in hPanel. Until they are, `/healthz` reports
+`"whatsapp":{"mode":"none"}` and nothing is sent.
+
+1. In Meta Business Suite, add WhatsApp to the business and add a phone number
+   that is not already on the WhatsApp app (a new SIM, or a number migrated
+   off the app). Note its **phone number id** from the WhatsApp Manager.
+2. In Business Settings, make a **system user** with access to the WhatsApp
+   account and generate a **permanent access token** with
+   `whatsapp_business_messaging` and `whatsapp_business_management`.
+3. Submit a **message template**, category Utility, name
+   `awtm_client_activity`, language English, body exactly:
+
+   ```
+   awtm forge: {{1}}. {{2}} Open it: {{3}}
+   ```
+
+   with three sample values when asked, for instance "Kavya Appliances:
+   questionnaire sent", "Kavya Appliances finished the questionnaire." and
+   "https://dashboard.awtmforge.com/admin/clients/abc". Wait for Meta to
+   approve it; that is usually hours, sometimes a day.
+4. In hPanel set `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` and
+   `TEAM_WHATSAPP_TO` (the team's number as digits with the country code, no
+   plus, no spaces). `WHATSAPP_TEMPLATE` and `WHATSAPP_TEMPLATE_LANG` only if
+   you named the template or language differently. Redeploy.
+5. `/healthz` shows `"whatsapp":{"mode":"cloud"}`. Then do something a client
+   would, such as sending a file from Your files on a test client, and the
+   message arrives.
+
+Meta charges per conversation for messages a business starts; in India a
+utility conversation is a fraction of a rupee. The team's number is the only
+recipient; no client number is ever sent to.
+
 ## Naming the owner
 
 `OWNER_EMAIL`, in hPanel's environment variables, is the sign-in address of
