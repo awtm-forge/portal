@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import type { Prisma } from "@/generated/prisma/client";
 import { IntakeParty } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { saveAccess, saveAnswer, submitIntake } from "@/modules/intake/answers";
@@ -31,6 +32,26 @@ async function clearUp() {
   await db.$executeRaw`DELETE FROM Client WHERE businessName = ${BUSINESS}`;
 }
 
+/** One answer of the right shape for every question, so a first sending is not held for a blank. */
+function everyAnswer(document: { sections: { questions: { key: string; type: string; options?: { id: string }[] }[] }[] }, at: string, overrides: Record<string, Prisma.InputJsonValue>): Prisma.InputJsonObject {
+  const out: Record<string, Prisma.InputJsonValue> = {};
+  for (const s of document.sections) {
+    for (const q of s.questions) {
+      const base = { entered_by: "client", at };
+      switch (q.type) {
+        case "short_text": out[q.key] = { ...base, value: "x" }; break;
+        case "long_text": out[q.key] = { ...base, value: "words" }; break;
+        case "link": out[q.key] = { ...base, value: "https://example.com" }; break;
+        case "yes_no": out[q.key] = { ...base, value: true }; break;
+        case "pick_one": out[q.key] = { ...base, value: q.options?.[0]?.id ?? "" }; break;
+        case "pick_many": case "image_choice": out[q.key] = { ...base, value: [q.options?.[0]?.id ?? ""].filter((x) => x !== "") }; break;
+        case "upload": out[q.key] = { ...base, note: "nothing to add" }; break;
+      }
+    }
+  }
+  return { ...out, ...overrides };
+}
+
 async function freshIntake() {
   const document = JSON.parse(readFileSync("prisma/seed/intake-kavya-2026-08-18.json", "utf8"));
   const client = await db.client.create({
@@ -42,11 +63,14 @@ async function freshIntake() {
     data: {
       clientId,
       document,
-      answers: {
+      // ADR 0027: a first sending goes only when nothing is blank, so every
+      // question gets an answer of its type, and the three these tests read
+      // by name are set by hand on top.
+      answers: everyAnswer(document, at, {
         biz_what: { value: "Kettles.", entered_by: "client", at },
         dec_signoff_name: { value: "C", entered_by: "client", at },
         dec_signoff_email: { value: "c@example.test", entered_by: "client", at },
-      },
+      }),
       accessGranted: {},
       hiddenQuestionKeys: [],
       sectionsDone: [],

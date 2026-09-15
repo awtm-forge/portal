@@ -852,3 +852,38 @@ Deferred: none in code.
 
 Needs Rahul: the WhatsApp Business setup in DEPLOY.md, and the three values
 in hPanel, before a single message goes out.
+
+## 16 September, a section closes only when every question is answered
+
+Built: the questionnaire holds each section until every question in it is
+answered (ADR 0027, Ayush: "client should not be able to move forward without
+filling those. if none of the options fits it, they put their remarks and then
+can move"). One rule, `isAnswered` in `modules/intake/answered.ts`: a text
+question is answered by its words; a choice, a picture, a yes or no or an
+upload by a choice, a file, or a line in the client's own words saying why
+none of that fits, kept in the answer's `note`, which yes-or-no questions
+already carried. The page reads it before Next, before Save and carry on,
+before a tap on a later section and before Finish and send, marks each
+missing question where it is and says how many; the server reads it before
+marking a section done and before a client's first sending, and answers with
+the keys, so a page that forgot would still be held. Back is always free; a
+later round of changes and the team's lock-again are not held, because the
+rule is about the questionnaire going, not about editing one that went. The
+"none of these fits" line is one quiet link under a choice, a picture, an
+upload with nothing on it, or a yes-or-no with nothing chosen, and opens into
+a box; the team reads the line beside the answer, marked "In their words".
+
+Verified: 241 unit tests, six new on the rule itself and the changes tests
+made to answer every question before a first sending, which is now what a
+first sending needs; the intake spec end to end at both widths, 6 green,
+including the new walk: carrying on with one blank is refused and the blank
+is marked, Next and a tap on a later section are refused the same way, a
+line where no option fits and words in the blank let it through, and the
+database holds the line; the layout, overhaul and overlap specs, 52 green.
+Lint and types clean.
+
+Deferred: none.
+
+Needs Rahul: none. The sample questionnaire's intro still says "I do not
+know is a real answer to any of these", which stays true: typed where the
+words go, or said in the line.

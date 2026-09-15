@@ -1,9 +1,10 @@
 "use client";
 
+import { isAnswered, NOT_ANSWERED, takesNote, unansweredIn, unansweredInDocument } from "@/modules/intake/answered";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { StickyAction } from "@/components/ui/StickyAction";
 import type { IntakeDocument, Question, Section } from "@/modules/intake/document";
-import type { Answers } from "@/modules/intake/answers";
+import type { AnswerEntry, Answers } from "@/modules/intake/answers";
 import type { IntakeStateClientView } from "@/modules/serializers";
 
 /**
@@ -49,6 +50,9 @@ export function IntakeRenderer(p: RendererProps) {
   const [submitted, setSubmitted] = useState<string | null>(p.submittedAt);
   const [status, setStatus] = useState<SaveStatus>({ kind: "idle" });
   const [message, setMessage] = useState<string | null>(null);
+  // ADR 0027: the keys the open section still needs before anything moves
+  // forward. Cleared as each one is answered.
+  const [missing, setMissing] = useState<Set<string>>(new Set());
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [state, setState] = useState<IntakeStateClientView>(p.state);
   const [justSent, setJustSent] = useState(false);
@@ -62,11 +66,11 @@ export function IntakeRenderer(p: RendererProps) {
   const [signedOut, setSignedOut] = useState(false);
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
-  const post = useCallback(async (action: string, body: unknown): Promise<{ ok: boolean; message?: string; at?: string }> => {
+  const post = useCallback(async (action: string, body: unknown): Promise<{ ok: boolean; message?: string; at?: string; missing?: string[] }> => {
     setStatus({ kind: "saving" });
     try {
       const res = await fetch(`${p.apiBase}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string; at?: string };
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string; at?: string; missing?: string[] };
       // The session ran out under them (F-06): say so, and that nothing typed
       // so far is lost, rather than blaming the connection.
       if (res.status === 401) {
@@ -76,7 +80,7 @@ export function IntakeRenderer(p: RendererProps) {
       }
       if (!res.ok || !data.ok) {
         setStatus({ kind: "error", message: data.message ?? "Could not save. Check the connection." });
-        return { ok: false, message: data.message };
+        return { ok: false, message: data.message, missing: data.missing };
       }
       setStatus({ kind: "saved", at: Date.now() });
       return { ok: true, at: data.at };
@@ -108,11 +112,32 @@ export function IntakeRenderer(p: RendererProps) {
 
   useEffect(() => () => { Object.values(timers.current).forEach(clearTimeout); }, []);
 
+  /**
+   * ADR 0027: the open section must be complete before anything moves
+   * forward. Marks each question still missing, says how many, and scrolls
+   * to the first. Back is always free.
+   */
+  function holdIfIncomplete(index: number): boolean {
+    const keys = unansweredIn(sections[index], answers);
+    if (keys.length === 0) {
+      setMissing(new Set());
+      return false;
+    }
+    setMissing(new Set(keys));
+    setMessage(keys.length === 1 ? "One question here still needs an answer, or a line on why none of the options fits." : `${keys.length} questions here still need an answer, or a line on why none of the options fits.`);
+    requestAnimationFrame(() => document.getElementById(`q-${keys[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+    return true;
+  }
+
   async function saveAndCarryOn() {
     setMessage(null);
     const section = sections[open];
+    if (holdIfIncomplete(open)) return;
     const r = await post("section-done", { section: section.key });
-    if (!r.ok) return;
+    if (!r.ok) {
+      if (r.missing?.length) { setMissing(new Set(r.missing)); setMessage(r.message ?? null); }
+      return;
+    }
     setDone((prev) => new Set(prev).add(section.key));
     if (open < sections.length - 1) {
       setOpen(open + 1);
@@ -133,17 +158,35 @@ export function IntakeRenderer(p: RendererProps) {
   function goTo(index: number) {
     if (index < 0 || index > sections.length - 1 || index === open) return;
     setMessage(null);
+    // Forward only through sections that are complete (ADR 0027); the first
+    // one that is not opens instead, with its gaps marked.
+    if (index > open) {
+      for (let i = open; i < index; i++) {
+        if (unansweredIn(sections[i], answers).length > 0) {
+          if (i !== open) { setOpen(i); requestAnimationFrame(() => holdIfIncomplete(i)); } else holdIfIncomplete(i);
+          return;
+        }
+      }
+    }
+    setMissing(new Set());
     setOpen(index);
     requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   async function finishAndSend() {
     setMessage(null);
-    const missing = requiredMissing(p.doc, answers);
-    if (missing.length) {
-      const idx = sections.findIndex((s) => s.questions.some((q) => missing.includes(q.key)));
+    const need = requiredMissing(p.doc, answers);
+    if (need.length) {
+      const idx = sections.findIndex((s) => s.questions.some((q) => need.includes(q.key)));
       if (idx >= 0) setOpen(idx);
       setMessage("Who says yes, and their email, are the two answers we need before sending.");
+      return;
+    }
+    // ADR 0027: nothing on it is blank when it goes.
+    const holes = unansweredInDocument(p.doc, answers);
+    if (holes.length) {
+      const idx = sections.findIndex((s) => s.questions.some((q) => holes.includes(q.key)));
+      if (idx >= 0) { setOpen(idx); requestAnimationFrame(() => holdIfIncomplete(idx)); }
       return;
     }
     const r = await post("submit", {});
@@ -320,7 +363,7 @@ export function IntakeRenderer(p: RendererProps) {
           <div className="progress"><div style={{ width: `${Math.round((doneCount / Math.max(1, sections.length)) * 100)}%` }} /></div>
           <span className="mono-sm" style={{ flex: "none" }}>{doneCount} of {sections.length}</span>
         </div>
-        <p className="help" style={{ marginTop: 10 }}>{lastSavedText}. Tap any section to jump to it, in any order</p>
+        <p className="help" style={{ marginTop: 10 }}>{lastSavedText}. Every question needs an answer before the next section opens; where none of the options fits, say so in your words.</p>
         {signedOutNote}
       </div>
 
@@ -331,7 +374,7 @@ export function IntakeRenderer(p: RendererProps) {
           const state: "done" | "now" | "later" = isOpen ? "now" : isDone ? "done" : "later";
           return (
             <div key={s.key} ref={isOpen ? sectionRef : undefined} className={`card${isOpen ? " now" : isDone ? "" : " later"}`} style={{ margin: "0", scrollMarginTop: 16 }}>
-              <button type="button" className={`card-h${isOpen ? " open" : ""}`} style={{ width: "100%", background: "none", border: "none", cursor: isOpen ? "default" : "pointer", textAlign: "left", color: "inherit" }} onClick={() => { if (!isOpen) { setOpen(i); setMessage(null); } }}>
+              <button type="button" className={`card-h${isOpen ? " open" : ""}`} style={{ width: "100%", background: "none", border: "none", cursor: isOpen ? "default" : "pointer", textAlign: "left", color: "inherit" }} onClick={() => { if (!isOpen) goTo(i); }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   {state === "done" ? <Tick /> : <span className="mono-sm" style={{ color: isOpen ? "var(--ember)" : "var(--faint)" }}>{i + 1}</span>}
                   <span className={`sec-name${state === "later" ? " dim" : ""}`}>{s.title}</span>
@@ -343,10 +386,11 @@ export function IntakeRenderer(p: RendererProps) {
                   {s.intro && <p className="c-sub" style={{ fontSize: 14 }}>{s.intro}</p>}
                   {s.access_items && <AccessBlock items={s.access_items} access={access} kickoff={p.kickoffDateText} onToggle={(k, v) => { setAccess((a) => ({ ...a, [k]: v })); void post("access", { key: k, granted: v }); }} />}
                   {s.questions.map((q) => (
-                    <div key={q.key} className="stack" style={{ gap: 6 }}>
+                    <div key={q.key} id={`q-${q.key}`} className="stack" style={{ gap: 6, scrollMarginTop: 80 }}>
                       <p className="q">{q.text}</p>
                       {q.help && <p className="help">{q.help}</p>}
                       <Field q={q} answers={answers} files={files} p={p} setLocal={setLocal} saveNow={saveNow} saveDebounced={saveDebounced} setFiles={setFiles} setStatus={setStatus} post={post} />
+                      {missing.has(q.key) && !isAnswered(q, answers[q.key]) && <p className="help err">{NOT_ANSWERED}</p>}
                       {(q.key === "dec_signoff_name" || q.key === "dec_signoff_email") && p.mode === "client" && (
                         <p className="help">Filled in from what you told {p.contactFirstName ? "us" : "us"}. Change it if someone else signs off. The six digit code moves to a new address once we confirm it.</p>
                       )}
@@ -503,12 +547,14 @@ function Field({ q, answers, files, p, setLocal, saveNow, saveDebounced, setFile
               <textarea className="fld" value={note} maxLength={4000} onChange={(e) => { const n = e.target.value; setLocal(q.key, { note: n }); saveDebounced(q.key, { value, note: n }); }} />
             </>
           )}
+          {value === null && <NoneOfThese q={q} a={a} label="It is not that simple" valueForSave={null} setLocal={setLocal} saveDebounced={saveDebounced} />}
         </div>
       );
     }
     case "pick_one": {
       const value = typeof a?.value === "string" ? a.value : "";
       return (
+        <div className="stack" style={{ gap: 8 }}>
         <div className="opts">
           {q.options.map((o) => {
             const on = value === o.id;
@@ -520,11 +566,14 @@ function Field({ q, answers, files, p, setLocal, saveNow, saveDebounced, setFile
             );
           })}
         </div>
+        <NoneOfThese q={q} a={a} label="None of these fits" valueForSave={value || null} setLocal={setLocal} saveDebounced={saveDebounced} />
+        </div>
       );
     }
     case "pick_many": {
       const value = Array.isArray(a?.value) ? (a.value as string[]) : [];
       return (
+        <div className="stack" style={{ gap: 8 }}>
         <div className="opts">
           {q.options.map((o) => {
             const on = value.includes(o.id);
@@ -537,12 +586,15 @@ function Field({ q, answers, files, p, setLocal, saveNow, saveDebounced, setFile
             );
           })}
         </div>
+        <NoneOfThese q={q} a={a} label="None of these fits" valueForSave={value} setLocal={setLocal} saveDebounced={saveDebounced} />
+        </div>
       );
     }
     case "image_choice": {
       const value = Array.isArray(a?.value) ? (a.value as string[]) : [];
       const max = q.max_choices ?? 1;
       return (
+        <div className="stack" style={{ gap: 8 }}>
         <div className="img-grid">
           {q.options.map((o) => {
             const on = value.includes(o.id);
@@ -563,15 +615,40 @@ function Field({ q, answers, files, p, setLocal, saveNow, saveDebounced, setFile
             );
           })}
         </div>
+        <NoneOfThese q={q} a={a} label="None of these fits" valueForSave={value} setLocal={setLocal} saveDebounced={saveDebounced} />
+        </div>
       );
     }
     case "upload": {
       const ids = a?.files ?? [];
       return (
-        <UploadField q={q} ids={ids} files={files} p={p} setFiles={setFiles} setLocal={setLocal} setStatus={setStatus} post={post} />
+        <div className="stack" style={{ gap: 8 }}>
+          <UploadField q={q} ids={ids} files={files} p={p} setFiles={setFiles} setLocal={setLocal} setStatus={setStatus} post={post} />
+          {ids.length === 0 && <NoneOfThese q={q} a={a} label="Nothing to add, or not yet" valueForSave={undefined} setLocal={setLocal} saveDebounced={saveDebounced} />}
+        </div>
       );
     }
   }
+}
+
+/**
+ * The way past a question none of whose options fit (ADR 0027): a line in the
+ * client's own words, saved as the answer's note, which counts as the answer.
+ * Folded to one quiet link until it is wanted; open whenever a line exists.
+ */
+function NoneOfThese({ q, a, label, valueForSave, setLocal, saveDebounced }: { q: Question; a: AnswerEntry | undefined; label: string; valueForSave: unknown; setLocal: FieldProps["setLocal"]; saveDebounced: FieldProps["saveDebounced"] }) {
+  const note = a?.note ?? "";
+  const [openNote, setOpenNote] = useState(note !== "");
+  if (!takesNote(q)) return null;
+  if (!openNote) {
+    return <button type="button" className="backlink" style={{ alignSelf: "flex-start" }} onClick={() => setOpenNote(true)}>{label}</button>;
+  }
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <label className="help" htmlFor={`note-${q.key}`}>{label}. Say it in your words; that counts as your answer.</label>
+      <textarea id={`note-${q.key}`} className="fld" rows={2} value={note} maxLength={4000} onChange={(e) => { const n = e.target.value; setLocal(q.key, { note: n }); saveDebounced(q.key, { value: valueForSave, note: n }); }} />
+    </div>
+  );
 }
 
 /** The two sign-off fields arrive prefilled from the project; write the prefill through once so admin sees it as an answer. */
@@ -659,13 +736,13 @@ function isEmptyAnswer(q: Question, answers: Answers): boolean {
     case "yes_no":
       return a.value === undefined;
     case "pick_one":
-      return !q.options.some((o) => o.id === a.value);
+      return !q.options.some((o) => o.id === a.value) && !a.note;
     case "pick_many": case "image_choice": {
       const ids = Array.isArray(a.value) ? (a.value as string[]) : [];
-      return !q.options.some((o) => ids.includes(o.id));
+      return !q.options.some((o) => ids.includes(o.id)) && !a.note;
     }
     case "upload":
-      return (a.files?.length ?? 0) === 0;
+      return (a.files?.length ?? 0) === 0 && !a.note;
   }
 }
 
@@ -679,16 +756,21 @@ function ReadOnlyValue({ q, answers, files, editable = false }: { q: Question; a
       return typeof a.value === "string" && a.value ? <span style={{ whiteSpace: "pre-wrap" }}>{a.value}</span> : empty;
     case "yes_no":
       return a.value === undefined ? empty : <span>{a.value ? "Yes" : "No"}{a.note ? `. ${a.note}` : ""}</span>;
-    case "pick_one":
-      return <span>{q.options.find((o) => o.id === a.value)?.label ?? empty}</span>;
+    case "pick_one": {
+      const label = q.options.find((o) => o.id === a.value)?.label;
+      if (!label && !a.note) return empty;
+      return <span>{label}{label && a.note ? ". " : ""}{a.note ? `In their words: ${a.note}` : ""}</span>;
+    }
     case "pick_many": case "image_choice": {
       const ids = Array.isArray(a.value) ? (a.value as string[]) : [];
       const labels = q.options.filter((o) => ids.includes(o.id)).map((o) => o.label);
-      return labels.length ? <span>{labels.join(", ")}</span> : empty;
+      if (!labels.length && !a.note) return empty;
+      return <span>{labels.join(", ")}{labels.length && a.note ? ". " : ""}{a.note ? `In their words: ${a.note}` : ""}</span>;
     }
     case "upload": {
       const n = a.files?.length ?? 0;
-      return n ? <span>{n} {n === 1 ? "file" : "files"}: {a.files!.map((id) => files[id]?.name ?? "file").join(", ")}</span> : empty;
+      if (!n && !a.note) return empty;
+      return <span>{n ? `${n} ${n === 1 ? "file" : "files"}: ${a.files!.map((id) => files[id]?.name ?? "file").join(", ")}` : ""}{n && a.note ? ". " : ""}{a.note ? `In their words: ${a.note}` : ""}</span>;
     }
   }
 }

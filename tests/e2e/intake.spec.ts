@@ -13,6 +13,7 @@ let projectId = "";
 let clientId = "";
 let token = "";
 let sectionsDoneBefore = "[]";
+let answersBefore = "{}";
 
 test.beforeEach(async ({ page }) => {
   await resetRateLimits();
@@ -20,8 +21,9 @@ test.beforeEach(async ({ page }) => {
   projectId = link.projectId;
   clientId = link.clientId;
   token = link.token;
-  const rows = await query<{ sectionsDone: unknown }>("SELECT sectionsDone FROM Intake WHERE clientId = ?", [clientId]);
+  const rows = await query<{ sectionsDone: unknown; answers: unknown }>("SELECT sectionsDone, answers FROM Intake WHERE clientId = ?", [clientId]);
   sectionsDoneBefore = JSON.stringify(rows[0]?.sectionsDone ?? []);
+  answersBefore = JSON.stringify(rows[0]?.answers ?? {});
 
   await page.goto(`/p/${token}`);
   await page.getByRole("button", { name: /email me a code/i }).click();
@@ -32,22 +34,46 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.afterEach(async () => {
-  // Carrying on marks a section done; put the seed back as it was written.
-  await query("UPDATE Intake SET sectionsDone = ? WHERE clientId = ?", [sectionsDoneBefore, clientId]);
+  // Carrying on marks a section done, and the gate makes the test answer
+  // what the seed left blank; put the seed back as it was written.
+  await query("UPDATE Intake SET sectionsDone = ?, answers = ? WHERE clientId = ?", [sectionsDoneBefore, answersBefore, clientId]);
 });
 
 test.afterAll(async () => {
   await closeDb();
 });
 
-test("the client can go back a section, and the first section has no back", async ({ page }) => {
+test("a section does not close with a blank in it, and a line in their words counts (ADR 0027)", async ({ page }) => {
   await page.goto(`/p/${token}/intake`);
   await page.getByRole("button", { name: /your business/i }).click();
   await expect(page.locator(".card.now .sec-name")).toHaveText("Your business");
-  await expect(page.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
+
+  // The seed leaves one of the five blank. Carrying on is refused, the blank
+  // is marked, and Next and a tap on a later section are refused the same way.
+  await page.getByRole("button", { name: "Save and carry on" }).click();
+  await expect(page.getByText(/one question here still needs an answer/i)).toBeVisible();
+  await expect(page.locator("#q-biz_customer").getByText(/needs an answer, or a line/i)).toBeVisible();
+  await expect(page.locator(".card.now .sec-name")).toHaveText("Your business");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.locator(".card.now .sec-name")).toHaveText("Your business");
+  await page.getByRole("button", { name: /who decides/i }).click();
+  await expect(page.locator(".card.now .sec-name")).toHaveText("Your business");
+
+  // A choice none of whose options fit: the line is the answer. Clear the
+  // seed's pick first so the line stands alone, then say it in words.
+  await page.locator("#q-biz_volume").getByRole("button", { name: /none of these fits/i }).click();
+  await page.locator("#q-biz_volume").getByRole("textbox").fill("It swings with the season, from a few dozen to a few thousand.");
+  // And the blank one gets its words.
+  await page.locator("#q-biz_customer").getByRole("textbox").fill("Households setting up a first kitchen.");
+  await expect(page.locator("#q-biz_customer").getByText(/needs an answer, or a line/i)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Save and carry on" }).click();
   await expect(page.locator(".card.now .sec-name")).toHaveText("What is going wrong, and what you are running on");
+  // The server held the same rule: the section is marked done, the line is kept.
+  const rows = await query<{ answers: unknown }>("SELECT answers FROM Intake WHERE clientId = ?", [clientId]);
+  const a = (typeof rows[0].answers === "string" ? JSON.parse(rows[0].answers) : rows[0].answers) as Record<string, { note?: string; value?: unknown }>;
+  expect(a.biz_volume.note).toContain("swings with the season");
+  expect(a.biz_customer.value).toBe("Households setting up a first kitchen.");
 
   // Still one loud button on the page: Back is the quiet kind.
   await expect(page.locator(".btn-full:not(.ghost)")).toHaveCount(1);

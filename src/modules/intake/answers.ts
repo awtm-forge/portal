@@ -2,6 +2,7 @@ import { IntakeChangeStatus, IntakeParty, Phase } from "@/generated/prisma/enums
 import { db } from "@/lib/db";
 import { emit } from "@/modules/events";
 import { can, transition } from "@/modules/projects/phase";
+import { unansweredIn, unansweredInDocument } from "@/modules/intake/answered";
 import { parseDocumentLoose, type Question } from "@/modules/intake/document";
 import { SIGNOFF_EMAIL_KEY, SIGNOFF_NAME_KEY } from "@/modules/intake/import";
 import { LOCKED_MESSAGE, openForWriting, snapshotVersion } from "@/modules/intake/versions";
@@ -27,6 +28,14 @@ export function readBoolMap(json: unknown): Record<string, boolean> {
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** A raw answer as { value, note }, whichever way it arrived. */
+function boxed(raw: unknown): { value?: unknown; note?: unknown } {
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as { value?: unknown; note?: unknown }) : { value: raw };
+}
+function noteOf(x: unknown): string | undefined {
+  return typeof x === "string" ? x.trim().slice(0, 4000) : undefined;
+}
 
 /** Returns the cleaned value or a message. Never accepts a shape the type does not have. */
 export function cleanValue(q: Question, raw: unknown): { ok: true; value: AnswerEntry["value"]; note?: string } | { ok: false; message: string } {
@@ -55,25 +64,36 @@ export function cleanValue(q: Question, raw: unknown): { ok: true; value: Answer
       const note = typeof o.note === "string" ? o.note.trim().slice(0, 4000) : undefined;
       return { ok: true, value: o.value === null || o.value === undefined ? undefined : o.value, note };
     }
+    // ADR 0027: a choice, a picture or an upload may come as { value, note },
+    // the note being the client's line on why none of the options fits.
     case "pick_one": {
-      if (raw === "" || raw === null) return { ok: true, value: undefined };
-      if (typeof raw !== "string" || !q.options.some((o) => o.id === raw)) return { ok: false, message: "not one of the options" };
-      return { ok: true, value: raw };
+      const o = boxed(raw);
+      const note = noteOf(o.note);
+      if (o.value === "" || o.value === null || o.value === undefined) return { ok: true, value: undefined, note };
+      if (typeof o.value !== "string" || !q.options.some((x) => x.id === o.value)) return { ok: false, message: "not one of the options" };
+      return { ok: true, value: o.value, note };
     }
     case "pick_many":
     case "image_choice": {
-      if (!Array.isArray(raw) || !raw.every((x) => typeof x === "string")) return { ok: false, message: "a list expected" };
-      const ids = new Set(q.options.map((o) => o.id));
-      const v = [...new Set(raw as string[])].filter((x) => ids.has(x));
+      const o = boxed(raw);
+      const note = noteOf(o.note);
+      const list = o.value === undefined || o.value === null ? [] : o.value;
+      if (!Array.isArray(list) || !list.every((x) => typeof x === "string")) return { ok: false, message: "a list expected" };
+      const ids = new Set(q.options.map((x) => x.id));
+      const v = [...new Set(list as string[])].filter((x) => ids.has(x));
       if (q.type === "image_choice" && v.length > (q.max_choices ?? 1)) return { ok: false, message: `Pick ${q.max_choices ?? 1} at most.` };
-      return { ok: true, value: v };
+      return { ok: true, value: v, note };
     }
-    case "upload":
+    case "upload": {
+      // The files themselves go through the upload route; only the line does here.
+      const o = boxed(raw);
+      if (o.value === undefined && "note" in o) return { ok: true, value: undefined, note: noteOf(o.note) };
       return { ok: false, message: "uploads go through the upload route" };
+    }
   }
 }
 
-export type SaveResult = { ok: true; at: string } | { ok: false; message: string };
+export type SaveResult = { ok: true; at: string } | { ok: false; message: string; missing?: string[] };
 
 /**
  * INTAKE-SPEC 13.1 and 13.7. Row-locked read, merge one key, write. Two
@@ -94,10 +114,14 @@ export async function saveAnswer(intakeId: string, key: string, raw: unknown, en
 
     const answers = readAnswers(row.answers);
     const at = new Date().toISOString();
+    const prev = answers[key];
     const entry: AnswerEntry = { entered_by: enteredBy, at };
     if (cleaned.value !== undefined) entry.value = cleaned.value;
-    if (cleaned.note !== undefined) entry.note = cleaned.note;
-    if (entry.value === undefined && !entry.note) delete answers[key];
+    // A note the save did not carry is kept, and one it carried as "" is
+    // cleared; an upload's files are never touched by a save (ADR 0027).
+    if (cleaned.note !== undefined) { if (cleaned.note) entry.note = cleaned.note; } else if (prev?.note) entry.note = prev.note;
+    if (q.type === "upload" && prev?.files?.length) entry.files = prev.files;
+    if (entry.value === undefined && !entry.note && !entry.files?.length) delete answers[key];
     else answers[key] = entry;
 
     await tx.intake.update({ where: { id: intakeId }, data: { answers, lastSavedAt: new Date() } });
@@ -143,7 +167,19 @@ export async function markSectionDone(intakeId: string, sectionKey: string): Pro
     if (!row) return { ok: false, message: "no questionnaire" };
     if (!(await openForWriting(tx, row))) return { ok: false, message: LOCKED_MESSAGE };
     const doc = parseDocumentLoose(row.document);
-    if (!doc?.sections.some((s) => s.key === sectionKey)) return { ok: false, message: "no such section" };
+    const section = doc?.sections.find((x) => x.key === sectionKey);
+    if (!section) return { ok: false, message: "no such section" };
+    // ADR 0027: a section is done only when every question in it is
+    // answered, or explained in a line. The keys go back so the page can
+    // mark them, in case it forgot to.
+    const missing = unansweredIn(section, readAnswers(row.answers));
+    if (missing.length) {
+      return {
+        ok: false,
+        message: missing.length === 1 ? "One question here still needs an answer, or a line on why none of the options fits." : `${missing.length} questions here still need an answer, or a line on why none of the options fits.`,
+        missing,
+      };
+    }
     const done = new Set(readStringList(row.sectionsDone));
     done.add(sectionKey);
     await tx.intake.update({ where: { id: intakeId }, data: { sectionsDone: [...done], lastSavedAt: new Date() } });
@@ -177,6 +213,13 @@ export async function submitIntake(intakeId: string, by: IntakeParty = IntakePar
     if (missing.length) return { ok: false as const, message: "Who says yes, and their email, are the two answers we need before sending." };
     const doc = parseDocumentLoose(row.document);
     const firstSubmission = row.submittedAt === null;
+    // ADR 0027: nothing on it is blank when it first goes. A later round of
+    // changes edits particular answers and the team's lock-again is theirs,
+    // so neither is held here; the section gate already shaped the first.
+    const holes = firstSubmission && by === IntakeParty.CLIENT && doc ? unansweredInDocument(doc, readAnswers(row.answers)) : [];
+    if (holes.length) {
+      return { ok: false as const, message: "Every question needs an answer, or a line on why none of the options fits, before it can be sent.", missing: holes };
+    }
     const open = firstSubmission
       ? null
       : await tx.intakeChangeRequest.findFirst({ where: { clientId: row.clientId, status: IntakeChangeStatus.OPEN } });

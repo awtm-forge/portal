@@ -43,12 +43,12 @@ export async function handleIntakeAction(request: Request, action: string, actor
     }
     case "section-done": {
       const r = await markSectionDone(intake.id, String(body.section ?? ""));
-      return r.ok ? json({ ok: true, at: r.at }) : fail(r.message);
+      return r.ok ? json({ ok: true, at: r.at }) : json({ ok: false, message: r.message, missing: r.missing ?? [] }, 400);
     }
     case "submit": {
       if (!actor.canSubmit) return fail("Only the client sends the questionnaire.", 403);
       const r = await submitIntake(intake.id, IntakeParty.CLIENT);
-      return r.ok ? json({ ok: true, at: r.at }) : fail(r.message);
+      return r.ok ? json({ ok: true, at: r.at }) : json({ ok: false, message: r.message, missing: r.missing ?? [] }, 400);
     }
     case "ask-change": {
       if (actor.enteredBy !== "client") return fail("Only the client asks to change their answers.", 403);
