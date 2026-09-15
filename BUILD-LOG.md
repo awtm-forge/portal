@@ -658,3 +658,15 @@ was never the fault; at 28 px it matched the bell and the switch beside it. A
 chevron is six units wide in a 24 unit box, so at the bell's size it read as a
 sliver beside a bell that fills its box. Verified: the overlap sweep and the
 overhaul spec end to end at both widths, lint and types clean.
+
+And last for the day: the clients who signed off while testing cannot be
+removed from the admin, which is the evidence rule holding on test data. The
+answer is not a tool that bends it but a clean start before the first real
+client: `scripts/reset-before-launch.check.sql` prints what would go, and
+`scripts/reset-before-launch.sql` erases every client and everything that
+ever happened to them and resets the invoice numbering, keeping admins,
+settings and the image library. `DEPLOY.md` has the step, with the backup
+first and the check on `/healthz` after. Rehearsed on the local database: six
+clients, four projects and 5,288 activity events went, the two admins and the
+seven library pictures stayed, the sequence came back empty, and the seed
+rebuilt the local fixtures afterwards.

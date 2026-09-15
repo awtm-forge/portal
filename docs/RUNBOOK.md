@@ -110,8 +110,9 @@ outside admin.
 and there is no client view with a field for them.
 
 **Forget a referral.** Project page, Someone they named, Forget them. It asks
-first. The only delete in the system. Removes the row and writes an event
-saying it happened, so the fact survives without the details.
+first. One of the two deletes in the system, with removing a whole client
+below. Removes the row and writes an event saying it happened, so the fact
+survives without the details.
 
 **Remove a client.** Client page, at the foot of the side column, Remove this
 client. Only offered while nothing of theirs is evidence: no sign-off, no
@@ -121,6 +122,11 @@ asks for three things: their business name typed, a reason in a line, and your
 own password again. Five wrong passwords in fifteen minutes lock it for that
 long. Everything of theirs goes, their link included, and one line in the log
 survives with the business name, who did it and why. There is no way back.
+
+A test client who signed off cannot be removed this way, and that is the rule
+working, not failing. Before the first real client, `DEPLOY.md` has "Starting
+clean before the first real client", which wipes every client at once and
+resets the invoice numbering; it is for that one moment only.
 
 **Close a project.** Project page, top right under the header, Close this
 project, while the phase is `delivered`. It asks first. Tidies it away. The

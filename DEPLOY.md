@@ -8,12 +8,13 @@ finished: `front-half` was merged long ago and is twenty commits behind, and
 the marketing-site-first deploy it existed for no longer applies (ADR 0012).
 The branch is still on the remote and can be deleted whenever Rahul says so.
 
-What is deployed: steps 1 to 9 of PORTAL-SPEC section 9. A project can be
-created, the client can fill the questionnaire, agree the agreement, receive
-weekly updates, check the delivery, sign it off and see both invoices. Two
-things are not built yet, and neither stops a launch: the day-30 page (step
-10), so a project delivered today reaches its unlock in thirty days and finds
-nothing there, and the needs-attention block on the projects list (step 11).
+What is deployed: every step of PORTAL-SPEC section 9, live at
+`dashboard.awtmforge.com` and rebuilt by Hostinger on each push to `main`. A
+client is added and gets their link, fills the questionnaire, agrees the
+agreement, receives weekly updates, checks the delivery, signs it off, sees
+both invoices, and comes back at day 30. Both portals run on the one hostname
+today; the two-host split in ADR 0013 is supported and switched off.
+`/healthz` reports the running commit, so a deploy is verified by polling it.
 
 ## hPanel settings, once
 
@@ -231,7 +232,34 @@ change once invoices carry it. Leave GSTIN empty until you register: see
 - The app process is stopped by Hostinger when idle and restarted on the next
   request, so the first visit after a quiet spell takes a few seconds. Nothing
   lives in process memory, so this costs latency and nothing else.
-- Day 30 and the needs-attention block are not built. See the top of this file.
+- Every step of PORTAL-SPEC section 9 is built and live; the day-30 page and
+  the needs-attention block landed on 9 and 10 September.
+
+## Starting clean before the first real client
+
+The portal was tried out with test clients, some of whom signed off and were
+invoiced. A sign-off, an issued invoice and a review round have no delete
+path, not even for test data, so those clients cannot be removed from the
+admin, and the test invoices hold real numbers in this year's sequence. The
+answer is one wipe, before the first real client and never after: every client
+and everything that ever happened to them goes, and the invoice numbering
+starts again at 0001. Your admin logins, your settings and the image library
+stay.
+
+1. Take a backup first, with the `mysqldump` line under Backups below.
+2. Run `scripts/reset-before-launch.check.sql` and read the numbers. It only
+   reads. If any client in that count is real, stop here.
+3. Run `scripts/reset-before-launch.sql`. Either copy both files over with
+   `scp` and run `mysql -u USER -p DBNAME < scripts/reset-before-launch.sql`
+   over SSH, or paste the file into the SQL tab of phpMyAdmin in hPanel.
+4. Remove the test uploads directory, `/home/zekst/awtm-uploads/clients`, and
+   leave `/home/zekst/awtm-uploads/library` alone: that is the image library.
+5. Check: `curl -s https://dashboard.awtmforge.com/healthz` shows
+   `"clients":{"rows":0,"withoutCopy":0}`, and the projects list is empty.
+
+The first real invoice is then `AWTM/26-27/0001`. Rehearsed on the local
+database on 15 September 2026: the kept tables came through whole and every
+other count read zero.
 
 ## Backups
 
