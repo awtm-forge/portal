@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, IBM_Plex_Mono, Newsreader } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Mono, Inter, Newsreader } from "next/font/google";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -27,6 +27,17 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+// The paper face for sentences on the print routes, the one the brand's own
+// invoice is set in (15 Sep). Not preloaded: only the two print routes use
+// it, and a preload here would sit ahead of every client page's text.
+const paper = Inter({
+  variable: "--font-paper",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "awtm forge",
   description:
@@ -40,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // element before React loads, so a person who chose light never sees a
     // dark flash. The server cannot know the choice, so the attribute is a
     // deliberate difference rather than a bug (src/lib/theme.ts).
-    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable} ${paper.variable}`}>
       <head>
         {/* One boot script for every zone, in the head so it runs while the
             document is still parsing and nothing paints before the theme is

@@ -27,7 +27,8 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   const c = await company();
 
   return (
-    <div className="c-page" style={{ maxWidth: 720 }}>
+    <main className="paper">
+      <div className="c-page">
       <InvoiceDocument
         invoice={invoiceToPrintView(invoice)}
         company={companyToPrintView(c)}
@@ -39,7 +40,8 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
         projectName={invoice.project.name}
       />
       <PrintButton />
-      <p className="help no-print" style={{ padding: "12px 20px 24px" }}>In the print dialog, choose Save as PDF to keep a copy.</p>
-    </div>
+      <p className="help no-print" style={{ padding: "12px 0 24px" }}>In the print dialog, choose Save as PDF to keep a copy.</p>
+      </div>
+    </main>
   );
 }

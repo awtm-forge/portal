@@ -151,7 +151,9 @@ test("the printable agreement carries the stamp and no navigation", async ({ pag
 
   await page.goto(`/agreement/${token}/print`);
   await expect(page.getByRole("heading", { name: /what we are building/i })).toBeVisible();
-  await expect(page.getByText(/agreed by arjun sundaram/i).first()).toBeVisible();
+  // On paper the head is the document's own, so the stamp is where the
+  // agreement itself says who agreed and when (15 Sep).
+  await expect(page.locator(".doc-sec.stamp")).toContainText(/agreed by arjun sundaram/i);
   await expect(page.getByRole("link", { name: /save it as a pdf/i })).toHaveCount(0);
 });
 

@@ -189,13 +189,15 @@ test("the tax block appears only once a GSTIN exists", async ({ page }) => {
   const invoice = await anIssuedInvoice();
 
   await page.goto(`/invoice/${invoice.id}/print`);
-  await expect(page.getByText(/no tax is charged on this invoice/i)).toBeVisible();
+  // The document's own words (15 Sep): the notes card says who is not
+  // registered and that no GST is charged, and the sums say "Not applicable".
+  await expect(page.getByText(/not registered under GST, so no GST is charged on this invoice/i)).toBeVisible();
   await expect(page.getByText(/GSTIN/)).toHaveCount(0);
 
   await query("UPDATE Company SET gstin = '29ABCDE1234F1Z5' WHERE id = 'company'");
   await page.goto(`/invoice/${invoice.id}/print`);
-  await expect(page.getByText(/GSTIN 29ABCDE1234F1Z5/)).toBeVisible();
-  await expect(page.getByText(/no tax is charged/i)).toHaveCount(0);
+  await expect(page.getByText(/GSTIN 29ABCDE1234F1Z5/).first()).toBeVisible();
+  await expect(page.getByText(/no GST is charged/i)).toHaveCount(0);
 });
 
 test("a client can open their own invoice, and no one else's", async ({ page, context, browser }) => {

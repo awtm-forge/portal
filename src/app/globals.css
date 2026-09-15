@@ -107,30 +107,38 @@
   --z-dialog: 60;
 }
 
-html[data-theme="light"] {
+/* The paper face: the light theme by choice, and always inside .paper, which
+   the print routes wrap themselves in so a document is paper on screen too. */
+html[data-theme="light"],
+.paper {
   /* tokens: light */
-  --ground: #f4f4f6;
-  --surface: #fbfbfc;
-  --surface-raised: #ebebef;
-  --ink: #1a1a1f;
-  --ink-muted: #5a5a66;
-  /* The accent as text and as a 2 px edge. Burnt orange at its dark-mode
-     value is 2.2:1 on paper, so the light theme carries a deeper mix of the
-     same hue rather than a second accent colour. */
-  --accent: #99500d;
-  /* 3.4:1 against the paper, so a filled button has a visible edge without an
-     outline, which WCAG 1.4.11 asks of any control that carries meaning. */
+  /* The paper face, taken from the brand's own invoice on 15 Sep 2026 (the
+     PDF Ayush shared, sampled from its render): warm cream rather than the
+     cool grey this block used to carry, the same ink the dark face uses as
+     its ground, the same orange in the wordmark. Cards sit lighter than the
+     paper, as they do on the document. */
+  --ground: #f3eee6;
+  --surface: #f9f5ee;
+  --surface-raised: #fbf8f3;
+  --ink: #141110;
+  --ink-muted: #4e4741;
+  /* The accent as text: the document's emphasis terracotta, the colour of
+     its total and its "Advance payment" line. 4.5:1 on the paper, measured. */
+  --accent: #a8561a;
+  /* Fills keep a slightly deeper mix so a filled control has a 3:1 edge on
+     the paper, which WCAG 1.4.11 asks of any control that carries meaning.
+     The document's #e08638 is display type and a full stop, never a button. */
   --accent-fill: #c96d1b;
   --accent-fill-hover: #ad5c12;
-  --accent-ink: #1a0e02;
-  --accent-soft: #f7ece1;
-  --surface-float: #ffffff;
-  --hairline: #d9d9e0;
-  --hairline-soft: #e6e6eb;
+  --accent-ink: #141110;
+  --accent-soft: #faf0e6;
+  --surface-float: #fffdf9;
+  --hairline: #dcd3c5;
+  --hairline-soft: #e9e2d7;
   --success: #1b6e36;
   --danger: #b3341c;
-  --off: #a3a3ad;
-  --shadow: 0 6px 20px rgba(20, 20, 30, 0.10);
+  --off: #b5ada2;
+  --shadow: 0 6px 20px rgba(20, 17, 16, 0.10);
   --ember-deep: #7d400a;
 
   color-scheme: light;

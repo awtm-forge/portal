@@ -717,3 +717,33 @@ existed met the two-seat limit wherever the table held more than two rows,
 because the check counted the other rows. Reissuing takes no seat, so an
 address that exists now gets its link again whatever the count, and only a new
 address meets the limit.
+
+## 15 September, the brand's paper face, throughout
+
+Built: Ayush shared the brand's own invoice, a PDF, and asked that the portal
+follow it throughout. Read from the file and sampled from its render, it is
+the same system the portal already uses: its ink is the dark face's ground to
+the digit, its orange is the wordmark's, and its faces, Bricolage Grotesque
+ExtraBold and IBM Plex Mono, are two of the three the portal loads. What was
+out of step was the light theme, a cool grey, and the print routes, set in a
+serif on a layout of their own. So the light tokens are now that paper, warm
+cream with cards lighter than the ground, the accent as text the document's
+terracotta, and every pairing measured in both faces by the contrast test.
+The invoice print route is rebuilt on the document's layout: wordmark and
+title, the number with a dashed underline, the heavy rule, billed to, one line
+for the work with its stage, the sums and the total in terracotta, the cards
+for payment details and notes, the thank-you with an orange stop. The
+agreement print route takes the same head and foot on the same paper, its
+sections restyled in the paper's faces. Both are paper on screen as well as on
+the page: the light tokens apply inside a `.paper` wrapper whatever the theme
+cookie says. Inter joins for sentences on paper, loaded without preload.
+`docs/BRAND.md` records the reading. Asked, Ayush kept dark as the default.
+
+Verified: the contrast test on the new paper, all pairings and the hue rule;
+the invoice, agreement and leak-walk specs and the overlap sweep in both faces
+end to end on desktop Chrome and Pixel 7, 39 green; lint and types clean. Two
+assertions reworded to the document's own words rather than patched.
+
+Deferred: none.
+
+Needs Rahul: none.

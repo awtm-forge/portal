@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { AgreementDocument } from "@/components/portal/AgreementDocument";
+import { Wordmark } from "@/components/portal/InvoiceDocument";
+import { company } from "@/modules/settings";
 import { PrintButton } from "@/components/portal/PrintButton";
 import { db } from "@/lib/db";
 import { clientByToken, currentClientSession } from "@/modules/auth/client";
@@ -34,16 +36,53 @@ export default async function AgreementPrintPage({ params }: { params: Promise<{
 
   const agreement = await db.agreement.findUnique({ where: { projectId: project.id } });
   if (!agreement?.sentAt) notFound();
+  const view = agreementToPrintView(agreement);
+  const c = await company();
+  const contact = [c.email, c.phone].filter((s) => s && s.trim()).join("  /  ");
 
+  // The same head as the invoice, on the same paper (15 Sep): the wordmark,
+  // the title, and what this document is, before the agreement itself.
   return (
-    <div className="c-page" style={{ maxWidth: 720 }}>
-      <AgreementDocument
-        view={agreementToPrintView(agreement)}
-        projectName={project.name}
-        businessName={project.client.businessName}
-      />
-      <PrintButton />
-      <p className="help no-print" style={{ padding: "12px 20px 24px" }}>In the print dialog, choose Save as PDF to keep a copy.</p>
-    </div>
+    <main className="paper">
+      <div className="c-page">
+        <div className="inv">
+          <header className="inv-top">
+            <div className="stack" style={{ gap: 10 }}>
+              <Wordmark name={c.name} />
+              <div>
+                <p className="inv-meta" style={{ whiteSpace: "pre-wrap" }}>{c.address}</p>
+                <p className="inv-meta">{contact}</p>
+              </div>
+            </div>
+            <div>
+              <h1 className="inv-title">Agreement</h1>
+              <dl className="inv-meta-list">
+                <dt>Project</dt>
+                <dd>{project.name}</dd>
+                <dt>For</dt>
+                <dd>{project.client.businessName}</dd>
+                <dt>Version</dt>
+                <dd>{view.version}</dd>
+                {view.isAgreed && (
+                  <>
+                    <dt>Agreed</dt>
+                    <dd>{view.agreedAt}</dd>
+                  </>
+                )}
+              </dl>
+            </div>
+          </header>
+          <hr className="inv-rule" />
+          <AgreementDocument view={view} projectName={project.name} businessName={project.client.businessName} />
+          <footer className="inv-foot">
+            <p className="inv-thanks">Thank you<b>.</b></p>
+            <p className="inv-foot-name">{c.name}</p>
+            <p className="inv-meta">{contact}</p>
+          </footer>
+        </div>
+        <PrintButton />
+        <p className="help no-print" style={{ padding: "12px 0 24px" }}>In the print dialog, choose Save as PDF to keep a copy.</p>
+      </div>
+    </main>
   );
 }

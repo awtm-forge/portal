@@ -1054,3 +1054,86 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   }
   html, body, .c-page, .p-shell, .doc, .card { background: #fff !important; color: #141110; }
 }
+
+/* ----------------------------------------------------------------------
+   Paper: the print routes, on screen and on paper (15 Sep 2026).
+   Taken from the brand's own invoice, the PDF Ayush shared: cream paper,
+   the same ink the dark face uses as its ground, Bricolage ExtraBold for
+   display, Inter for sentences, Plex Mono capitals for labels, one heavy
+   rule under the header, hairlines elsewhere, beige rounded cards, a dashed
+   underline on the number, and a thank-you with an orange full stop.
+   ---------------------------------------------------------------------- */
+.paper {
+  --font-paper-stack: var(--font-paper), "Helvetica Neue", Arial, sans-serif;
+  min-height: 100dvh; background: var(--ground); color: var(--ink);
+  font-family: var(--font-paper-stack); padding: 36px 20px 56px;
+}
+.paper .c-page { background: transparent; max-width: 760px; }
+.paper .help { font-family: var(--font-paper-stack); font-size: 13px; color: var(--ink-muted); }
+.paper .a-btn, .paper .btn-full { font-family: var(--font-mono-stack); }
+
+/* The wordmark is a logotype, which WCAG exempts from contrast, so it keeps
+   the brand orange the document uses rather than the deeper text accent. */
+.wordmark { font-family: var(--font-display-stack); font-weight: 800; font-size: 34px; letter-spacing: -0.03em; color: var(--ink); line-height: 1; margin: 0; }
+.wordmark b { color: #e08638; font-weight: 800; }
+
+.inv { display: flex; flex-direction: column; gap: 24px; }
+.inv-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px 32px; flex-wrap: wrap; }
+.inv-meta { font-size: 13.5px; color: var(--ink-muted); margin: 0; line-height: 1.65; }
+.inv-title { font-family: var(--font-display-stack); font-weight: 800; font-size: 34px; letter-spacing: -0.03em; line-height: 1; margin: 0; text-align: right; }
+.inv-meta-list { display: grid; grid-template-columns: auto auto; gap: 9px 18px; justify-content: end; align-items: baseline; margin: 14px 0 0; }
+.inv-meta-list dt { font-family: var(--font-mono-stack); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-muted); text-align: right; }
+.inv-meta-list dd { margin: 0; font-size: 15px; font-weight: 500; text-align: right; color: var(--ink); }
+.inv-meta-list dd.inv-no { font-family: var(--font-mono-stack); font-weight: 400; color: var(--ink-muted); border-bottom: 1px dashed var(--accent); padding-bottom: 3px; }
+.inv-rule { border: 0; border-top: 3px solid var(--ink); margin: 0; }
+.inv-label { font-family: var(--font-mono-stack); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0; }
+.inv-client { font-family: var(--font-display-stack); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; margin: 10px 0 0; }
+.inv-lines { width: 100%; border-collapse: collapse; }
+.inv-lines th { font-family: var(--font-mono-stack); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; text-align: left; padding: 0 0 10px; border-bottom: 2px solid var(--ink); }
+.inv-lines th.num, .inv-lines td.num { text-align: right; }
+.inv-lines td { padding: 18px 0 20px; vertical-align: top; border-bottom: 1px solid var(--hairline); }
+.inv-item { display: block; font-family: var(--font-display-stack); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
+.inv-stage { display: block; color: var(--accent); font-weight: 600; font-size: 15px; margin-top: 6px; }
+.inv-desc { display: block; color: var(--ink-muted); font-size: 14px; line-height: 1.65; margin-top: 10px; max-width: 58ch; white-space: pre-wrap; }
+.inv-lines td.num { font-family: var(--font-display-stack); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.inv-sums { margin-left: auto; width: min(100%, 440px); display: flex; flex-direction: column; }
+.inv-sums .row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--hairline); font-size: 15px; color: var(--ink-muted); }
+.inv-sums .row span:last-child { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.inv-sums .row.last { border-bottom: 2px solid var(--accent); }
+.inv-total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-top: 22px; }
+.inv-total-amount { font-family: var(--font-display-stack); font-weight: 800; font-size: 40px; letter-spacing: -0.03em; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.inv-words { font-size: 13px; color: var(--ink-muted); text-align: right; margin: 10px 0 0; }
+.inv-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.inv-card { background: var(--surface-raised); border: 1px solid var(--hairline); border-radius: 14px; padding: 22px 24px 24px; break-inside: avoid; }
+.inv-card dl { display: grid; grid-template-columns: auto 1fr; gap: 0 16px; margin: 12px 0 0; }
+.inv-card dt, .inv-card dd { padding: 9px 0; border-bottom: 1px solid var(--hairline-soft); font-size: 14px; margin: 0; }
+.inv-card dt { color: var(--ink-muted); }
+.inv-card dd { text-align: right; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.inv-card p { font-size: 14px; line-height: 1.65; color: var(--ink-muted); margin: 12px 0 0; }
+.inv-card p.strong { color: var(--ink); font-weight: 600; }
+.inv-foot { border-top: 1px solid var(--hairline); padding-top: 28px; margin-top: 8px; }
+.inv-thanks { font-family: var(--font-display-stack); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; margin: 0 0 16px; }
+.inv-thanks b { color: #e08638; }
+.inv-foot-name { font-family: var(--font-display-stack); font-weight: 700; font-size: 15px; margin: 0 0 4px; }
+@media (max-width: 600px) {
+  .inv-cards { grid-template-columns: 1fr; }
+  .inv-title, .inv-meta-list, .inv-meta-list dt, .inv-meta-list dd { text-align: left; justify-content: start; }
+  .inv-total-amount { font-size: 32px; }
+}
+
+/* The agreement on paper: the same head, then its own sections in the paper's faces. */
+.paper .doc { padding: 0; gap: 24px; }
+.paper .doc-sec h2 { font-weight: 800; font-size: 19px; letter-spacing: -0.02em; }
+.paper .doc-sec p, .paper .d-text { font-family: var(--font-paper-stack); font-size: 14.5px; line-height: 1.65; }
+.paper .d-check, .paper .pairs dt { font-family: var(--font-mono-stack); }
+.paper .deliverables li { border-left-color: var(--accent); }
+.paper .doc-sec.stamp { border-color: var(--accent); background: var(--surface-raised); border-radius: 14px; padding: 22px 24px; }
+.paper .doc-head { display: none; }
+.paper .c-title { font-family: var(--font-display-stack); }
+
+@media print {
+  .paper { min-height: 0; padding: 0; background: #fff; }
+  .inv { gap: 18px; }
+  .inv-card { background: #fff; }
+  .inv-foot { break-inside: avoid; }
+}
