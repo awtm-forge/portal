@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ClientShell } from "@/components/portal/ClientShell";
+import { embedSrc } from "@/lib/booking";
 import { company } from "@/modules/settings";
 import { clientScope } from "../scope";
 
@@ -52,35 +53,4 @@ export default async function BookPage({ params }: { params: Promise<{ token: st
       </div>
     </ClientShell>
   );
-}
-
-/**
- * The booking page in embed dress, with the client's own name and email filled
- * in so they do not retype what we already know. Both go to the service they
- * are about to book with, and nothing else about them travels.
- *
- * Null when the setting is not a URL at all, in which case the page shows the
- * way out and no frame, rather than an empty box.
- */
-function embedSrc(booking: string, name: string, email: string): string | null {
-  try {
-    const u = new URL(booking);
-    if (u.protocol !== "https:") return null;
-    // Not embed=true: that mode stays blank until cal.com's own script talks to
-    // it from the parent page, and their script is the thing we are not
-    // loading. The ordinary booking page frames perfectly well on its own.
-    //
-    // theme is advisory, and on a direct page load cal.com ignores it and
-    // follows the device's own light or dark setting: a client on a light
-    // phone gets a white calendar inside this dark page. Checked on 12 Sep
-    // against theme, ui.theme and ui[theme]; none of them move it. The control
-    // that does work is the appearance setting inside cal.com itself.
-    u.searchParams.set("theme", "dark");
-    u.searchParams.set("layout", "month_view");
-    if (name.trim()) u.searchParams.set("name", name.trim());
-    if (email.trim()) u.searchParams.set("email", email.trim());
-    return u.toString();
-  } catch {
-    return null;
-  }
 }

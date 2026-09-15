@@ -38,6 +38,11 @@ export const PAIRS: Pair[] = [
   { name: "metadata on the page", fg: "ink-muted", bg: "ground", min: 4.5 },
   { name: "metadata on a card", fg: "ink-muted", bg: "surface", min: 4.5 },
   { name: "metadata on a raised card", fg: "ink-muted", bg: "surface-raised", min: 4.5 },
+  // The floating surface is the menu and the notification tray. It was not
+  // checked until a control went on it: sign out is a thing a person has to be
+  // able to read, not a caption they can skip (15 Sep).
+  { name: "body on a floating panel", fg: "ink", bg: "surface-float", min: 4.5 },
+  { name: "metadata on a floating panel", fg: "ink-muted", bg: "surface-float", min: 4.5 },
   // The accent as text: links, the action-needed chip, the current stage.
   { name: "accent text on the page", fg: "accent", bg: "ground", min: 4.5 },
   { name: "accent text on a card", fg: "accent", bg: "surface", min: 4.5 },

@@ -107,6 +107,26 @@ export async function currentClientSession(clientId: string) {
   return session;
 }
 
+/**
+ * Signing out of this browser (Ayush, 15 Sep).
+ *
+ * One client's session, not every session in the jar: a person who is signed
+ * in as two clients on one machine signs out of the one they are looking at.
+ * The row goes as well as the cookie, so the session cannot be resumed by
+ * putting the cookie back.
+ *
+ * Their link still works afterwards, and that is the point of the control
+ * rather than a hole in it: on a borrowed phone the next person finds the code
+ * screen, and the code goes to the client's own email, not to that phone.
+ */
+export async function clientLogout(clientId: string): Promise<void> {
+  const jar = await cookies();
+  const name = sessionCookieName(clientId);
+  const raw = jar.get(name)?.value;
+  if (raw) await db.clientSession.deleteMany({ where: { tokenHash: hashToken(raw) } });
+  jar.delete(name);
+}
+
 export function maskEmail(email: string): string {
   const [user, domain] = email.split("@");
   if (!domain) return "the address on file";

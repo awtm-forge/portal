@@ -508,3 +508,38 @@ of states that are the same instant here.
 Needs Rahul: none. The back and forward chevrons added on 13 September were
 removed the same day by this audit; the reason they were added is still true,
 so the wordmark goes home from every page and the menu lists the rest.
+
+## 15 September, signing out, and the booking link
+
+Built: sign out in the client portal, at the foot of the menu, with the line
+that says what it does and does not do. `clientLogout(clientId)` in
+`src/modules/auth/client.ts` deletes the session row and the cookie for one
+client, so a person signed in as two clients on one machine leaves only the one
+they are looking at; the action resolves who is asking from the session rather
+than from the form, the same way the notification actions do. It lands on
+`/p/login`, so a shared machine is not left with their token in its address bar.
+
+"Book a meeting" is gone from the signed-out header. It was asking somebody who
+had not proved who they are to go and book time with us, and taking them off
+the portal at the one moment they were trying to get into it (Ayush, 15 Sep).
+
+The booking rule moved from the page into `src/lib/booking.ts`, and now rewrites
+only a cal.com address. A Google appointment schedule is framed exactly as it
+was pasted, because its address already carries the embed parameter Google gives
+you and cal.com's parameter names mean nothing to it. The settings help says
+where that address comes from and to set the meeting location to Google Meet,
+which is how a booking on either service carries a call link.
+
+Verified: 208 unit tests, 205 end-to-end tests on desktop Chrome and Pixel 7
+(3 skipped by design), lint and types clean. The overlap sweep passes at six
+widths in both themes. Two contrast pairs added for the floating panel, the
+ground the menu and the notification tray sit on, which the script had never
+measured; both pass in both themes. Checked in the browser: the code screen has
+no booking button, the menu's sign out works, and their link asks for a code
+again afterwards.
+
+Deferred: none.
+
+Needs Rahul: none. Google Meet inside cal.com needs a Google Calendar connection
+made by signing in to cal.com, which is Rahul's to do and not something to
+automate from here.

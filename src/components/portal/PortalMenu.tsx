@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { clientLogoutAction } from "./session-actions";
 
 export type MenuLink = { key: string; label: string; href: string; current: boolean };
 
@@ -87,6 +88,15 @@ export function PortalMenu({
           {whatsapp && <a className="pmenu-out" href={whatsapp} target="_blank" rel="noopener">WhatsApp Rahul</a>}
           <a className="pmenu-out" href={`mailto:${email}`}>Email {email}</a>
           <p className="pmenu-note">Any time, about anything on this page.</p>
+
+          {/* Last, and quiet: leaving is not something anybody comes to this
+              menu to do, but on a shared or borrowed phone it has to be here
+              (Ayush, 15 Sep). The line under it is the whole truth about what
+              signing out does, because the link keeps working either way. */}
+          <form action={clientLogoutAction} className="pmenu-out-form">
+            <button className="pmenu-signout" type="submit">Sign out of this device</button>
+          </form>
+          <p className="pmenu-note">Your link still works. Opening it again asks for a code by email.</p>
         </div>
       )}
     </div>

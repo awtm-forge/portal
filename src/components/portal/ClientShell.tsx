@@ -65,19 +65,26 @@ export async function ClientShell({
       ]
     : [];
   const whatsapp = c.phone.trim() ? `https://wa.me/${phoneDigits(c.phone)}` : null;
-  // Always resolvable to something. Signed in, with a booking link set, the
-  // calendar has its own page inside the portal and the client never leaves;
-  // otherwise it is the booking link itself, then a message asking for a time.
+  // Booking is for a client who is signed in, and for nobody else (Ayush,
+  // 15 Sep). It used to sit on the code screen too, where it asked a person
+  // who had not proved who they are to go and book time with us, and took them
+  // off the portal at the one moment they were trying to get into it.
+  //
+  // Signed in, with a booking link set, the calendar has its own page inside
+  // the portal and the client never leaves; otherwise it is the booking link
+  // itself, then a message asking for a time.
   const booking = c.bookingUrl?.trim() ?? "";
   const inPortal = Boolean(home && booking);
-  const book = inPortal
-    ? `${home}/book`
-    : booking
-      ? booking
-      : whatsapp
-        ? `${whatsapp}?text=${encodeURIComponent("Hi, I would like to book a quick meeting.")}`
-        : `mailto:${c.email}?subject=${encodeURIComponent("Booking a meeting")}`;
-  const bookExternal = !inPortal && !book.startsWith("mailto:");
+  const book = !home
+    ? null
+    : inPortal
+      ? `${home}/book`
+      : booking
+        ? booking
+        : whatsapp
+          ? `${whatsapp}?text=${encodeURIComponent("Hi, I would like to book a quick meeting.")}`
+          : `mailto:${c.email}?subject=${encodeURIComponent("Booking a meeting")}`;
+  const bookExternal = book !== null && !inPortal && !book.startsWith("mailto:");
 
   return (
     <div className={`p-shell${wide ? " p-wide" : ""}`}>
@@ -110,9 +117,11 @@ export async function ClientShell({
                 }))}
               />
             )}
-            <a className="p-cta" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>
-              Book a meeting
-            </a>
+            {book && (
+              <a className="p-cta" href={book} {...(bookExternal ? { target: "_blank", rel: "noopener" } : {})}>
+                Book a meeting
+              </a>
+            )}
             {/* Beside the menu, not inside it: dark is the default and this is
                 how a person asks for paper (Ayush, 13 Sep). */}
             <ThemeToggle />

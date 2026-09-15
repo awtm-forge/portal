@@ -501,6 +501,18 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .pmenu-head { margin: 8px 12px 2px; padding-top: 12px; border-top: 1px solid var(--rule-soft); font-family: var(--font-mono-stack); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
 .pmenu-out { font-family: var(--font-mono-stack) !important; font-weight: 400 !important; font-size: 12.5px !important; letter-spacing: 0.02em; }
 .pmenu-note { margin: 2px 12px 6px; font-family: var(--font-mono-stack); font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+/* Sign out. The same row geometry as a page link so the menu keeps one rhythm,
+   in the mono face at the muted grey so it is plainly not one of the places
+   you can go (15 Sep). The rule above it separates leaving from reaching us. */
+.pmenu-out-form { display: flex; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--rule-soft); }
+.pmenu-signout {
+  flex: 1; min-height: 46px; padding: 0 12px; border: 0; border-radius: var(--r-1);
+  background: none; text-align: left; cursor: pointer;
+  font-family: var(--font-mono-stack); font-size: 12.5px; letter-spacing: 0.02em; color: var(--muted);
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.pmenu-signout:hover { background: var(--ground); color: var(--ink); }
+.pmenu-signout:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 /* ----------------------------------------------------------------------
    The client home page, rebuilt 13 Sep.

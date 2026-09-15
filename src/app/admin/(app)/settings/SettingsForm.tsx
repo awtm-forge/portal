@@ -46,7 +46,12 @@ export function SettingsForm({ company }: { company: CompanyView }) {
         <div className="a-card">
           <span className="k">Booking</span>
           <label className="stack" style={{ gap: 6 }}><span className="lbl">The link a client books a sync through</span><input className="a-fld" name="bookingUrl" defaultValue={company.bookingUrl ?? ""} placeholder="https://calendar.app.google/..." /></label>
-          <p className="help">A Google appointment schedule or a Calendly. Leave it empty and the Book a sync button is hidden rather than broken.</p>
+          <p className="help" style={{ lineHeight: 1.65 }}>
+            A cal.com link, a Google appointment schedule or a Calendly. From Google, use the address inside the
+            Inline booking page embed code rather than the plain Copy link, which is the one built to sit in a page.
+            Whichever you use, set its meeting location to Google Meet so every booking carries a call link.
+            Leave this empty and the Book a meeting button is hidden rather than broken.
+          </p>
         </div>
 
         {state.message && <p className="help err">{state.message}</p>}

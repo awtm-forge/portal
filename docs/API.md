@@ -2,7 +2,7 @@
 
 Every route with its zone, who may reach it, what it accepts and which
 acceptance criteria cover it. Written from the code in the step that adds each
-route; last checked against the code on 10 September 2026, after the questionnaire moved to the client.
+route; last checked against the code on 15 September 2026, when signing out and the booking page were added to it.
 
 Zones and their rules are in `ARCHITECTURE.md`. This host is entirely private
 (ADR 0012): every route sends `X-Robots-Tag: noindex, nofollow`,
@@ -30,8 +30,11 @@ hash (ADR 0003). A project that does not exist and a wrong token are both 404.
 
 | Route | Method | Auth | Notes |
 |---|---|---|---|
-| `/p/[token]` | GET | link; a session shows the project | The one page whose content follows `project.phase`. Without a session it is the code screen. While building it carries the current week in full, the week counter, and the Book a sync button when a booking link is set. |
+| `/p/[token]` | GET | link; a session shows the project | The one page whose content follows `project.phase`. Without a session it is the code screen. While building it carries the current week in full and the week counter. |
 | `/p/[token]` (code) | server action | link | Requesting a `login` code, then verifying it. Ten minutes, five attempts, single use, then a thirty-day cookie (criterion 5). |
+| `/p/login` | GET, server action | none | Logging in with the email on file instead of the link (Q18). Sends the same `login` code and lands on `/p/me`. |
+| `/p/[token]/book` | GET | link and session | The booking page framed in an iframe, a separate origin, with `Referrer-Policy: no-referrer` so the token never travels. Redirects home when no booking link is set. Only a cal.com address is rewritten, with cal.com's own parameters and the client's name and email; anything else is framed as it was pasted. |
+| (sign out) | server action | session | Deletes this browser's session row and cookie for one client and redirects to `/p/login`. The link itself is untouched, so opening it again asks for a code. |
 | `/p/[token]/intake` | GET | link and session | The questionnaire, one section at a time. |
 | `/p/[token]/invoices` | GET | link and session | Every invoice on the project, each opening its printable page (Q15). |
 | `/p/[token]/intake/api/[action]` | POST | link and session, same origin | `save`, `access`, `section-done`, `submit`, `upload`, `remove-file`, `ask-change`. The first `submit` moves a waiting project to `agreement_draft`, notifies the team and writes version 1. After that every write but `access` answers 409 until the team opens it; `ask-change` takes one line; `submit` then sends the changes as the next version and locks again (ADR 0016). |

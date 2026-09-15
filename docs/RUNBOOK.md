@@ -1,8 +1,8 @@
 # Runbook
 
 Every admin action, what it does and what it cannot undo, and how to get the
-database back if something eats it. Written 9 September 2026, checked against
-the code the same day.
+database back if something eats it. Written 9 September 2026, last checked
+against the code on 15 September 2026.
 
 Everything here is done signed in at `/admin` on the team hostname. Nothing in
 this file needs a terminal except the backup and restore sections.
@@ -133,6 +133,27 @@ clients reach from the Reach us control on every page and from the footer;
 until it is filled in, only the email is offered. Fill in the bank details before the first
 invoice is printed, or it goes out with no account number on it. The prefix
 refuses to change once invoices carry it.
+
+**The booking URL, and getting a Google Meet link onto every booking.** The
+portal frames whatever you put here on a page of its own, so the client books
+without leaving. It does not create the call link: the booking service does,
+from the location set on the event. Two ways to get one.
+
+With cal.com, connect Google Calendar to your cal.com account first, then set
+the event type's location to Google Meet. Cal.com only offers Meet as a
+location once that calendar connection exists, so the order matters. Paste the
+ordinary booking page address here, the one you would send anyone.
+
+With a Google appointment schedule, open the schedule in Google Calendar, set
+its location to Google Meet, and take the address out of the Inline booking
+page embed code rather than the plain Copy link: the embed address is the one
+built to sit inside a page. Paste that here. On a free personal Google account
+you get one booking page, and no automatic email reminders and no email
+verification against spam bookings, which cal.com does give you.
+
+Either way the invite carries the call link and the client never needs one from
+us. Leave the field empty and the Book a meeting button is hidden rather than
+broken.
 
 **Add the other admin, or reset a password.** Settings, The team, Add the
 other admin. Enter their email and name and it shows a one-time setup link,

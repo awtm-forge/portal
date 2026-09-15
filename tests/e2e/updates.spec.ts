@@ -118,21 +118,52 @@ test("the booking button appears only when a booking link is set", async ({ page
   expect((await page.goto(`/p/${token}/book`))?.url()).toContain(`/p/${token}`);
   await expect(page.getByRole("heading", { name: /pick a time/i })).toHaveCount(0);
 
-  await query("UPDATE Company SET bookingUrl = 'https://calendar.example/awtm' WHERE id = 'company'");
+  await query("UPDATE Company SET bookingUrl = 'https://cal.com/awtm-forge/sync' WHERE id = 'company'");
   await page.goto(`/p/${token}`);
   await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveAttribute("href", `/p/${token}/book`);
 
   await page.getByRole("link", { name: /book a meeting/i }).click();
   await expect(page.getByRole("heading", { name: /pick a time/i })).toBeVisible();
-  // The calendar is framed, themed, and carries the client's own details so
+  // A cal.com page is framed, themed, and carries the client's own details so
   // they do not retype them. The frame is a separate origin on purpose.
   const src = await page.locator(".bookframe iframe").getAttribute("src");
-  expect(src).toContain("https://calendar.example/awtm");
+  expect(src).toContain("https://cal.com/awtm-forge/sync");
   expect(src).toContain("theme=dark");
   expect(src).toContain("email=");
   expect(src).not.toContain("embed=true");
   // And a way out, in case the frame is ever blocked.
-  await expect(page.getByRole("link", { name: /open the calendar in a new tab/i })).toHaveAttribute("href", "https://calendar.example/awtm");
+  await expect(page.getByRole("link", { name: /open the calendar in a new tab/i })).toHaveAttribute("href", "https://cal.com/awtm-forge/sync");
+
+  // Anything that is not cal.com is framed exactly as it was pasted (15 Sep).
+  // A Google appointment schedule carries its own embed parameter in the
+  // address Google gives you, and cal.com's parameters mean nothing to it.
+  const google = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ1test?gv=true";
+  await query("UPDATE Company SET bookingUrl = ? WHERE id = 'company'", [google]);
+  await page.goto(`/p/${token}/book`);
+  expect(await page.locator(".bookframe iframe").getAttribute("src")).toBe(google);
+
+  await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
+});
+
+test("booking is for a client who is signed in, and signing out is in the menu", async ({ page }) => {
+  // Ayush, 15 Sep. The code screen used to carry Book a meeting, which asked
+  // somebody who had not proved who they are to go and book time with us.
+  await query("UPDATE Company SET bookingUrl = 'https://cal.com/awtm-forge/sync' WHERE id = 'company'");
+  await page.goto(`/p/${token}`);
+  await expect(page.getByRole("button", { name: /email me a code/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveCount(0);
+  await expect(page.locator("header .p-cta")).toHaveCount(0);
+
+  // Signed in it is back, and so is the way out of the session.
+  await signInClient(page);
+  await expect(page.getByRole("link", { name: /book a meeting/i })).toBeVisible();
+  await page.getByRole("button", { name: /^menu$/i }).click();
+  await page.getByRole("button", { name: /sign out of this device/i }).click();
+
+  // Landed on the email login, and their own link now asks for a code again.
+  await expect(page).toHaveURL(/\/p\/login$/);
+  await page.goto(`/p/${token}`);
+  await expect(page.getByRole("button", { name: /email me a code/i })).toBeVisible();
 
   await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
 });
