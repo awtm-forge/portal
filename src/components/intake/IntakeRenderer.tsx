@@ -1,6 +1,6 @@
 "use client";
 
-import { isAnswered, NOT_ANSWERED, takesNote, unansweredIn, unansweredInDocument } from "@/modules/intake/answered";
+import { isAnswered, notAnsweredLine, takesNote, unansweredIn, unansweredInDocument } from "@/modules/intake/answered";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { StickyAction } from "@/components/ui/StickyAction";
 import type { IntakeDocument, Question, Section } from "@/modules/intake/document";
@@ -390,7 +390,7 @@ export function IntakeRenderer(p: RendererProps) {
                       <p className="q">{q.text}</p>
                       {q.help && <p className="help">{q.help}</p>}
                       <Field q={q} answers={answers} files={files} p={p} setLocal={setLocal} saveNow={saveNow} saveDebounced={saveDebounced} setFiles={setFiles} setStatus={setStatus} post={post} />
-                      {missing.has(q.key) && !isAnswered(q, answers[q.key]) && <p className="help err">{NOT_ANSWERED}</p>}
+                      {missing.has(q.key) && !isAnswered(q, answers[q.key]) && <p className="help err">{notAnsweredLine(q)}</p>}
                       {(q.key === "dec_signoff_name" || q.key === "dec_signoff_email") && p.mode === "client" && (
                         <p className="help">Filled in from what you told {p.contactFirstName ? "us" : "us"}. Change it if someone else signs off. The six digit code moves to a new address once we confirm it.</p>
                       )}

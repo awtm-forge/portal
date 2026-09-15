@@ -52,7 +52,7 @@ test("a section does not close with a blank in it, and a line in their words cou
   // is marked, and Next and a tap on a later section are refused the same way.
   await page.getByRole("button", { name: "Save and carry on" }).click();
   await expect(page.getByText(/one question here still needs an answer/i)).toBeVisible();
-  await expect(page.locator("#q-biz_customer").getByText(/needs an answer, or a line/i)).toBeVisible();
+  await expect(page.locator("#q-biz_customer").getByText(/needs an answer/i)).toBeVisible();
   await expect(page.locator(".card.now .sec-name")).toHaveText("Your business");
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.locator(".card.now .sec-name")).toHaveText("Your business");
@@ -65,7 +65,7 @@ test("a section does not close with a blank in it, and a line in their words cou
   await page.locator("#q-biz_volume").getByRole("textbox").fill("It swings with the season, from a few dozen to a few thousand.");
   // And the blank one gets its words.
   await page.locator("#q-biz_customer").getByRole("textbox").fill("Households setting up a first kitchen.");
-  await expect(page.locator("#q-biz_customer").getByText(/needs an answer, or a line/i)).toHaveCount(0);
+  await expect(page.locator("#q-biz_customer").getByText(/needs an answer/i)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Save and carry on" }).click();
   await expect(page.locator(".card.now .sec-name")).toHaveText("What is going wrong, and what you are running on");

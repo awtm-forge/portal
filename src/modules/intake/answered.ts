@@ -14,6 +14,12 @@ import type { IntakeDocument, Question, Section } from "@/modules/intake/documen
  * know" is a real answer to any of these, typed where the words go.
  */
 export const NOT_ANSWERED = "Needs an answer, or a line on why none of these fits.";
+export const NOT_ANSWERED_TEXT = "Needs an answer. I do not know is one.";
+
+/** The mark under a question still missing, in words that fit its type. */
+export function notAnsweredLine(q: Question): string {
+  return takesNote(q) ? NOT_ANSWERED : NOT_ANSWERED_TEXT;
+}
 
 export function isAnswered(q: Question, a: AnswerEntry | undefined): boolean {
   if (!a) return false;

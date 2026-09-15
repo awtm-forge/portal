@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAnswered, takesNote, unansweredIn, unansweredInDocument } from "@/modules/intake/answered";
+import { isAnswered, notAnsweredLine, takesNote, unansweredIn, unansweredInDocument } from "@/modules/intake/answered";
 import type { AnswerEntry } from "@/modules/intake/answers";
 import type { IntakeDocument, Question } from "@/modules/intake/document";
 
@@ -66,9 +66,11 @@ describe("what counts as answered", () => {
     expect(unansweredInDocument(doc, { ...answers, o: e({ note: "none" }), u: e({ files: ["f"] }) })).toEqual([]);
   });
 
-  it("knows which types take the line at all", () => {
+  it("knows which types take the line at all, and marks each in words that fit it", () => {
     expect(takesNote(q.text)).toBe(false);
     expect(takesNote(q.one)).toBe(true);
     expect(takesNote(q.up)).toBe(true);
+    expect(notAnsweredLine(q.text)).not.toMatch(/none of these/);
+    expect(notAnsweredLine(q.one)).toMatch(/none of these fits/);
   });
 });
