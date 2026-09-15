@@ -14,6 +14,10 @@ export default async function SettingsPage() {
   // The rehearsal card (ADR 0023): the clean start while nothing is real, and
   // the one-way switch that ends it. Counts so the dialog says what goes.
   const counts = live ? null : await rehearsalCounts();
+  const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+  const tally = counts
+    ? `${n(counts.clients, "client", "clients")}, ${n(counts.projects, "project", "projects")}, ${n(counts.signoffs, "sign-off", "sign-offs")} and ${n(counts.invoices, "invoice", "invoices")}`
+    : "";
   return (
     <AdminShell active="settings" adminName={admin.name}>
       <div className="stack" style={{ gap: 6 }}>
@@ -32,14 +36,14 @@ export default async function SettingsPage() {
         ) : (
           <>
             <p className="help" style={{ lineHeight: 1.65 }}>
-              Until you say the portal is live, everything in it counts as rehearsal: {counts.clients} clients, {counts.projects} projects, {counts.signoffs} sign-offs and {counts.invoices} invoices right now. Start clean erases all of it in one go and starts the invoice numbering again at 0001; your logins, these settings and the image library stay. Mark it live once the first real client is in, and Start clean is gone for good.
+              Until you say the portal is live, everything in it counts as rehearsal: {tally} right now. Start clean erases all of it in one go and starts the invoice numbering again at 0001; your logins, these settings and the image library stay. Mark it live once the first real client is in, and Start clean is gone for good.
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Confirm
                 trigger="Start clean"
                 triggerClass="a-btn ghost"
                 title="Erase every client?"
-                line={`${counts.clients} clients, ${counts.projects} projects, ${counts.signoffs} sign-offs and ${counts.invoices} invoices: all of it goes, and there is no way back. Your logins, these settings and the image library stay.`}
+                line={`${tally}: all of it goes, and there is no way back. Your logins, these settings and the image library stay.`}
                 confirmLabel="Erase every client"
                 keepLabel="Keep everything"
                 action={startCleanAction}
