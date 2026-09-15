@@ -71,5 +71,5 @@ test("the setup link lets the person choose their own password and signs them in
 test("admin routes send a browser to the login screen", async ({ page, context }) => {
   await context.clearCookies();
   await page.goto("/admin/library");
-  await expect(page.getByRole("heading", { name: /two accounts, no sign-up/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /no sign-up here/i })).toBeVisible();
 });

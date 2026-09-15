@@ -887,3 +887,9 @@ Deferred: none.
 Needs Rahul: none. The sample questionnaire's intro still says "I do not
 know is a real answer to any of these", which stays true: typed where the
 words go, or said in the line.
+
+Also on 16 September: the admin login's line under the button, about a
+locked-out admin and the other reissuing a link, is gone (Ayush: "message
+below is not needed"), and its heading no longer says "Two accounts", which
+ADR 0024 made untrue; it says "No sign-up here". The admin, login and overlap
+specs walk the page; lint and types clean.
