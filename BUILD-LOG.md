@@ -670,3 +670,36 @@ first and the check on `/healthz` after. Rehearsed on the local database: six
 clients, four projects and 5,288 activity events went, the two admins and the
 seven library pictures stayed, the sequence came back empty, and the seed
 rebuilt the local fixtures afterwards.
+
+## 15 September, the rehearsal, and the clean start that ends it
+
+Built: the portal is in rehearsal until the team says it is live (ADR 0023).
+Ayush would not run the wipe by hand ("i am not doing all that"), and the
+evidence rule is a rule about real clients, of which a rehearsal has none. So
+the settings page carries a Rehearsal card with two controls, both behind the
+admin's own password. Start clean asks for the phrase "erase every client"
+and a reason, then `src/modules/clients/rehearsal.ts` empties every
+client-shaped table in dependency order inside one transaction, removes the
+client uploads on disk and leaves the image library, restarts the invoice
+numbering, and writes one `system.started_clean` event with the counts, who
+and why. Mark the portal live writes `live_since`, the first key in the
+Setting table, once and for good; after it the card shows the date, Start
+clean is gone, and the module refuses even if asked. `/healthz` reports
+`live`. The two SQL files from earlier stay as the fallback for a day the app
+itself cannot be trusted, and DEPLOY.md says so.
+
+Verified: 225 unit tests, three new: the wipe tried inside a transaction that
+is rolled back on purpose, leaving every client-shaped table empty and every
+kept table whole and the local database untouched; the refusal once live; and
+the uploads helper against a scratch directory, clients gone and library kept.
+End to end on desktop Chrome and Pixel 7, 14 green: the new spec walks the
+wrong password on Start clean, then the switch with the right one, the card
+turning to "Live since", both buttons gone and `live` true on the health
+check; with the link page's four and the overlap sweep on both portals. Lint
+and types clean.
+
+Deferred: none.
+
+Needs Rahul: to mark the portal live the day the first real client is in.
+Until then an admin with their password can erase everything, which the card
+says in its first line.

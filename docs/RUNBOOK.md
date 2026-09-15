@@ -124,9 +124,20 @@ long. Everything of theirs goes, their link included, and one line in the log
 survives with the business name, who did it and why. There is no way back.
 
 A test client who signed off cannot be removed this way, and that is the rule
-working, not failing. Before the first real client, `DEPLOY.md` has "Starting
-clean before the first real client", which wipes every client at once and
-resets the invoice numbering; it is for that one moment only.
+working, not failing. In rehearsal, Start clean below is the answer.
+
+**Start clean, in rehearsal only.** Settings, the Rehearsal card. Until you
+mark the portal live, everything in it counts as rehearsal (ADR 0023). Start
+clean asks for the phrase "erase every client", a reason in a line, and your
+password, then erases every client and everything that ever happened to them,
+the client uploads on disk included, and starts the invoice numbering again at
+0001. Your logins, these settings and the image library stay. One line in the
+log survives with the counts, who and why. Take a backup first.
+
+**Mark the portal live.** The same card, with your password, once the first
+real client is in. One way: Start clean disappears for good, and from then on
+nothing that is evidence can be removed. `/healthz` reports `live` as true or
+false so it can be checked from outside.
 
 **Close a project.** Project page, top right under the header, Close this
 project, while the phase is `delivered`. It asks first. Tidies it away. The

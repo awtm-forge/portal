@@ -5,7 +5,7 @@ import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
 import { activatedAdminCount, listAdmins } from "@/modules/auth/admin";
 import { linkCopyCounts } from "@/modules/clients";
 import { requestLogger, safeError } from "@/lib/logger";
-import { company } from "@/modules/settings";
+import { company, liveSince } from "@/modules/settings";
 
 /**
  * What Hostinger's monitor pings, and the first thing to curl when something
@@ -46,6 +46,9 @@ export async function GET() {
         // "we do not hold this link" card can be counted from outside and
         // watched fall to zero (15 Sep). Counts only.
         clients: await linkCopyCounts(),
+        // Whether the rehearsal is over (ADR 0023). False means Start clean is
+        // still on the settings page.
+        live: (await liveSince()) !== null,
         // Which client-facing settings are filled in, by name, never their
         // values. An empty booking link silently turns Book a meeting into a
         // mailto, and an empty phone takes WhatsApp off every client page;

@@ -25,6 +25,8 @@ export type EventType =
   | "thanks.sent"
   | "referral.forgotten"
   | "client.removed"
+  | "system.started_clean"
+  | "system.live"
   | "day30.approved"
   | "enquiry.received";
 

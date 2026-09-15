@@ -379,3 +379,13 @@ everything of theirs while nothing of theirs is evidence, in one transaction,
 in dependency order, since nothing cascades. The rule and its reasoning are
 ADR 0022; the rules section above states it beside the guard it sits next to.
 The activity event type `client.removed` is the line that survives.
+
+## Changed on 15 September 2026: the rehearsal, and the first setting
+
+No schema change. `Setting` gets its first key, `live_since`, read and written
+only by `src/modules/settings`: absent means the portal is in rehearsal and
+the settings page offers Start clean, which empties every client-shaped table
+in dependency order inside one transaction and starts the invoice numbering
+again; present means the portal is live, the control is gone, and the module
+refuses. Written once and never moved. ADR 0023 has the reasoning; the wipe is
+tried in the unit suite inside a transaction that is rolled back on purpose.

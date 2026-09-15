@@ -66,3 +66,29 @@ export async function company(): Promise<CompanyView> {
 export function chargesGst(c: CompanyView): boolean {
   return c.gstin !== null && c.gstin.trim() !== "";
 }
+
+/**
+ * Whether the portal is live (ADR 0023). Until this is set, everything in the
+ * portal counts as rehearsal and can be wiped in one go from settings; once
+ * set, that control is gone for good and the evidence rules hold. The first
+ * key in the Setting table, read and written only here.
+ */
+const LIVE_KEY = "live_since";
+
+export async function liveSince(reader: Pick<typeof db, "setting"> = db): Promise<Date | null> {
+  const row = await reader.setting.findUnique({ where: { key: LIVE_KEY } });
+  if (!row) return null;
+  const at = new Date(row.value);
+  return Number.isNaN(at.getTime()) ? null : at;
+}
+
+/** One way. A second call changes nothing: the first date stands. */
+export async function setLive(): Promise<Date> {
+  const at = new Date();
+  await db.setting.upsert({
+    where: { key: LIVE_KEY },
+    create: { key: LIVE_KEY, value: at.toISOString(), type: "datetime" },
+    update: {},
+  });
+  return (await liveSince()) ?? at;
+}

@@ -4,7 +4,8 @@ import { refreshWith } from "@/lib/admin-nav";
 import { z } from "zod";
 import { COUNTRY_CODE_MESSAGE, hasCountryCode } from "@/lib/phone";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/modules/auth/admin";
+import { reauthenticateAdmin, requireAdmin } from "@/modules/auth/admin";
+import { goLive, startClean, START_CLEAN_PHRASE } from "@/modules/clients/rehearsal";
 import { COMPANY_ID } from "@/modules/settings";
 
 export type SettingsState = { message?: string; ok?: string };
@@ -82,4 +83,42 @@ export async function saveSettingsAction(_prev: SettingsState, formData: FormDat
     },
   });
   return refreshWith("/admin/settings", "Settings saved.");
+}
+
+/**
+ * The clean start, in rehearsal only (ADR 0023). Three things before anything
+ * happens: the phrase typed, a reason, and the admin's own password, checked
+ * last so a typo in the phrase spends none of its five tries.
+ */
+export async function startCleanAction(formData: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const back = "/admin/settings";
+  const phrase = String(formData.get("phrase") ?? "").trim().toLowerCase();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 300);
+  const password = String(formData.get("password") ?? "");
+  if (phrase !== START_CLEAN_PHRASE) await refreshWith(back, `Not started clean: type "${START_CLEAN_PHRASE}" exactly.`);
+  if (!reason) await refreshWith(back, "Not started clean: say why, in a line. It is the one thing that survives.");
+  const auth = await reauthenticateAdmin(admin.id, password);
+  if (auth === "rate_limited") await refreshWith(back, "Not started clean: too many wrong passwords. Wait fifteen minutes.");
+  if (auth !== "ok") await refreshWith(back, "Not started clean: that is not your password.");
+  const result = await startClean({ adminId: admin.id, adminName: admin.name }, reason);
+  if (!result.ok) {
+    await refreshWith(back, "Not started clean: the portal is live, and nothing that is evidence can be removed now.");
+    return;
+  }
+  await refreshWith(
+    back,
+    `Started clean. ${result.before.clients} clients and everything of theirs are gone, and the next invoice is 0001. Rehearsal continues until you mark the portal live.`,
+  );
+}
+
+/** One way, behind the password. After it, Start clean is gone for good. */
+export async function markLiveAction(formData: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const back = "/admin/settings";
+  const auth = await reauthenticateAdmin(admin.id, String(formData.get("password") ?? ""));
+  if (auth === "rate_limited") await refreshWith(back, "Not marked live: too many wrong passwords. Wait fifteen minutes.");
+  if (auth !== "ok") await refreshWith(back, "Not marked live: that is not your password.");
+  await goLive({ adminId: admin.id, adminName: admin.name });
+  await refreshWith(back, "The portal is live. From now on nothing that is evidence can be removed.");
 }

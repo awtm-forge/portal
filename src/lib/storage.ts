@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, writeFile, unlink } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 
 /**
@@ -48,4 +48,12 @@ export function readStored(storedPath: string): Promise<Buffer> {
 
 export async function removeStored(storedPath: string): Promise<void> {
   await unlink(absolutePath(storedPath)).catch(() => undefined);
+}
+
+/**
+ * Every client upload at once, for the clean start before launch (ADR 0023).
+ * The image library sits beside it under library/ and is not touched.
+ */
+export async function removeClientUploads(): Promise<void> {
+  await rm(path.join(uploadRoot(), "clients"), { recursive: true, force: true });
 }

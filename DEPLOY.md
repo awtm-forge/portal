@@ -239,27 +239,31 @@ change once invoices carry it. Leave GSTIN empty until you register: see
 
 The portal was tried out with test clients, some of whom signed off and were
 invoiced. A sign-off, an issued invoice and a review round have no delete
-path, not even for test data, so those clients cannot be removed from the
-admin, and the test invoices hold real numbers in this year's sequence. The
-answer is one wipe, before the first real client and never after: every client
-and everything that ever happened to them goes, and the invoice numbering
-starts again at 0001. Your admin logins, your settings and the image library
-stay.
+path, so those clients cannot be removed one by one, and the test invoices
+hold real numbers in this year's sequence. Until the team says the portal is
+live, everything in it counts as rehearsal (ADR 0023), and the settings page
+carries two controls for that, both behind your password:
 
 1. Take a backup first, with the `mysqldump` line under Backups below.
-2. Run `scripts/reset-before-launch.check.sql` and read the numbers. It only
-   reads. If any client in that count is real, stop here.
-3. Run `scripts/reset-before-launch.sql`. Either copy both files over with
-   `scp` and run `mysql -u USER -p DBNAME < scripts/reset-before-launch.sql`
-   over SSH, or paste the file into the SQL tab of phpMyAdmin in hPanel.
-4. Remove the test uploads directory, `/home/zekst/awtm-uploads/clients`, and
-   leave `/home/zekst/awtm-uploads/library` alone: that is the image library.
-5. Check: `curl -s https://dashboard.awtmforge.com/healthz` shows
+2. Settings, the Rehearsal card, **Start clean**. Type the phrase it asks for,
+   a reason in a line, and your password. Every client and everything that
+   ever happened to them goes, the client uploads on disk with them, and the
+   invoice numbering starts again at 0001. Your admin logins, your settings and
+   the image library stay.
+3. Check: `curl -s https://dashboard.awtmforge.com/healthz` shows
    `"clients":{"rows":0,"withoutCopy":0}`, and the projects list is empty.
+4. When the first real client is in, the same card, **Mark the portal live**,
+   with your password. One way: Start clean disappears for good and the
+   evidence rules hold in full from then on. `/healthz` then reports
+   `"live":true`.
 
-The first real invoice is then `AWTM/26-27/0001`. Rehearsed on the local
-database on 15 September 2026: the kept tables came through whole and every
-other count read zero.
+The first real invoice is then `AWTM/26-27/0001`.
+
+If the app itself cannot be trusted to do it, `scripts/reset-before-launch.check.sql`
+prints what would go and `scripts/reset-before-launch.sql` does the same wipe
+by hand over SSH or in phpMyAdmin's SQL tab; then remove
+`/home/zekst/awtm-uploads/clients` yourself and leave `library` alone. Both
+were rehearsed on the local database on 15 September 2026.
 
 ## Backups
 
