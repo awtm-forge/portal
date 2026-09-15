@@ -87,13 +87,18 @@ export function HistoryNav() {
   const canBack = behind > 1;
   const canForward = ahead > 0;
 
+  // Drawn at 20 rather than 16 (Ayush, 15 Sep: "bigger"). A chevron is six
+  // units wide in a 24 unit box, so at the bell's size it read as a sliver
+  // beside a bell that fills its box; 20 with a slightly heavier stroke puts
+  // the two on a par to the eye.
+
   return (
     <div className="histnav">
       <button type="button" className="histnav-b" onClick={() => step(-1)} disabled={!canBack} aria-label="Go back">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
       </button>
       <button type="button" className="histnav-b" onClick={() => step(1)} disabled={!canForward} aria-label="Go forward">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
       </button>
     </div>
   );

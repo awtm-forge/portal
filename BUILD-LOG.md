@@ -651,3 +651,10 @@ Deferred: none.
 Needs Rahul: none. If "authorization" was meant as the other admin approving
 rather than the acting admin's password, that is a pending state, a
 notification and a second action, and worth saying before it is built.
+
+Later still: the admin bar's back and forward chevrons are drawn at 20 rather
+than 16, with a slightly heavier stroke (Ayush, 15 Sep: "bigger"). The button
+was never the fault; at 28 px it matched the bell and the switch beside it. A
+chevron is six units wide in a 24 unit box, so at the bell's size it read as a
+sliver beside a bell that fills its box. Verified: the overlap sweep and the
+overhaul spec end to end at both widths, lint and types clean.
