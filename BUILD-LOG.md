@@ -543,3 +543,32 @@ Deferred: none.
 Needs Rahul: none. Google Meet inside cal.com needs a Google Calendar connection
 made by signing in to cal.com, which is Rahul's to do and not something to
 automate from here.
+
+## 15 September, Book a meeting from a client's admin page
+
+Built: a Book a meeting button at the top right of a client's page in the
+admin, in the same title-row slot the project page keeps for ending a project
+(Ayush, 15 Sep: "you have not added the book a meeting for the client", and
+"button should be on the right side"). It opens the calendar in a new tab with
+this client's name and email already on it, so a slot picked on our side puts
+the invite in their inbox. Outlined rather than filled, because the loud action
+on that page belongs to the questionnaire or the project. Hidden while settings
+holds no booking link, rather than there and broken.
+
+The prefill moved out of the client's frame into `bookingLink()` in
+`src/lib/booking.ts`, and `embedSrc()` now builds on it, so the client's
+booking page and the team's button are one rule rather than two copies of it.
+
+Verified: 212 unit tests; the updates spec and the overlap sweep end to end on
+desktop Chrome and Pixel 7, 16 tests, green. The new test checks the button's
+details, that it opens in a new tab, that it is flush with the row's right
+edge at both widths and beside the title on a laptop, and that it is absent
+with no booking link. Its first version measured "right of the title" at phone
+width, where the row wraps and the button takes a line of its own; the rule was
+corrected rather than the layout. Lint and types clean.
+
+Deferred: none.
+
+Needs Rahul: none. Connecting Google Calendar to cal.com, which is what puts a
+Meet link on every booking, was started in the browser and set aside at Ayush's
+word; the runbook has the steps.

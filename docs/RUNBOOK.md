@@ -236,6 +236,16 @@ tar xzf ~/backups/uploads-2026-09-09.tar.gz -C /home/zekst
 is happening, and write the date here when you have. Until then, treat this
 section as untested.
 
+## Booking a meeting with a client
+
+Open the client. **Book a meeting** is at the top right of their page whenever
+settings holds a booking link. It opens the same calendar the client sees, in
+a new tab, with their name and email already filled in, so a slot you pick
+puts the invite in their inbox, with the call link on it if the event's
+location is set to Google Meet. Nothing is written in the portal; the booking
+lives in the calendar. With no booking link in settings the button is not
+there, rather than there and broken.
+
 ## Sending a client their link again
 
 Open the client, then "The link, and how to send it". The link is on that page

@@ -9,6 +9,7 @@ const EMAIL = "e2e-updates@example.invalid";
 const PASSWORD = "a-long-enough-passphrase";
 
 let projectId = "";
+let clientId = "";
 let token = "";
 
 test.afterAll(async () => {
@@ -45,6 +46,7 @@ test.beforeEach(async () => {
   await resetRateLimits();
   const link = await freshLink(SEED_SLUG);
   projectId = link.projectId;
+  clientId = link.clientId;
   token = link.token;
   await query("DELETE FROM `Update` WHERE projectId = ?", [projectId]);
   await query("UPDATE Project SET weekCount = 8 WHERE id = ?", [projectId]);
@@ -166,6 +168,41 @@ test("booking is for a client who is signed in, and signing out is in the menu",
   await expect(page.getByRole("button", { name: /email me a code/i })).toBeVisible();
 
   await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
+});
+
+test("the team can book a meeting with a client from the client's page, top right", async ({ page }) => {
+  // Ayush, 15 Sep: "you have not added the book a meeting for the client",
+  // and "button should be on the right side". The same link the client has,
+  // with their name and email already on it, in the title row's action slot.
+  await query("UPDATE Company SET bookingUrl = 'https://cal.com/awtm-forge/sync' WHERE id = 'company'");
+  await signInAdmin(page);
+  await page.goto(`/admin/clients/${clientId}`);
+
+  const book = page.locator(".a-head-act").getByRole("link", { name: /book a meeting/i });
+  await expect(book).toBeVisible();
+  const href = await book.getAttribute("href");
+  expect(href).toContain("https://cal.com/awtm-forge/sync");
+  expect(href).toContain("name=");
+  expect(href).toContain("email=");
+  await expect(book).toHaveAttribute("target", "_blank");
+
+  // On the right: its right edge is the row's right edge. On a phone the row
+  // wraps and the button takes a line of its own, still against the right,
+  // the same way the project page's own control does; on a laptop it sits
+  // beside the title.
+  const row = await page.locator(".a-head").boundingBox();
+  const title = await page.locator(".a-head .a-title").boundingBox();
+  const button = await book.boundingBox();
+  if (!row || !title || !button) throw new Error("the title row lost one of its two ends");
+  expect(Math.abs(row.x + row.width - (button.x + button.width)), "flush with the right edge").toBeLessThanOrEqual(1);
+  if ((page.viewportSize()?.width ?? 0) >= 760) {
+    expect(button.x, "beside the title, to its right").toBeGreaterThan(title.x + title.width);
+  }
+
+  // No booking link in settings: hidden, not broken.
+  await query("UPDATE Company SET bookingUrl = NULL WHERE id = 'company'");
+  await page.goto(`/admin/clients/${clientId}`);
+  await expect(page.getByRole("link", { name: /book a meeting/i })).toHaveCount(0);
 });
 
 test("marking the kickoff done is the one action that starts the build", async ({ page }) => {

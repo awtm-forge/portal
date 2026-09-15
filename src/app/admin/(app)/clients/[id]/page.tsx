@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Fold } from "@/components/ui/Fold";
+import { bookingLink } from "@/lib/booking";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { withProjects } from "@/modules/clients";
 import { requestsFor, stateOf } from "@/modules/intake/changes";
 import { intakeProgress } from "@/modules/intake/progress";
 import { versionsFor } from "@/modules/intake/versions";
+import { company } from "@/modules/settings";
 import { PHASE_LABEL } from "@/modules/projects/phase";
 import { questionnaireOpenMessage, waLink } from "@/lib/whatsapp";
 import { updateClientAction } from "../../actions";
@@ -35,12 +37,28 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   const [requests, versions] = intake ? await Promise.all([requestsFor(client.id), versionsFor(client.id)]) : [[], []];
   const state = intake ? stateOf(intake, requests) : { kind: "open" as const };
   const firstName = client.contactName.split(" ")[0] ?? client.contactName;
+  // Booking a meeting with this client, from here (Ayush, 15 Sep). The same
+  // link the client has, with their name and email already on it, so a slot
+  // picked on this side puts the invite in their inbox. Hidden, not broken,
+  // while settings has no booking link.
+  const c = await company();
+  const book = c.bookingUrl?.trim() ? bookingLink(c.bookingUrl.trim(), client.contactName, client.contactEmail) : null;
 
   return (
     <AdminShell active="clients" adminName={admin.name}>
-      <div className="stack" style={{ gap: 6 }}>
-        <h1 className="a-title">{client.businessName}</h1>
-        <p className="a-sub">Added {dayMonth(client.createdAt)}{client.location ? ` · ${client.location}` : ""} · {client.contactName}</p>
+      <div className="a-head">
+        <div className="stack" style={{ gap: 6 }}>
+          <h1 className="a-title">{client.businessName}</h1>
+          <p className="a-sub">Added {dayMonth(client.createdAt)}{client.location ? ` · ${client.location}` : ""} · {client.contactName}</p>
+        </div>
+        {/* Top right, the same slot the project page keeps for ending a
+            project: outlined, because the loud action on this page is the
+            questionnaire's or the project's, and this must not argue with it. */}
+        {book && (
+          <div className="a-head-act">
+            <a className="a-btn ghost" href={book} target="_blank" rel="noopener">Book a meeting</a>
+          </div>
+        )}
       </div>
 
       <div className="a-cols">
