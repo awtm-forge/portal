@@ -64,9 +64,9 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
             </div>
           ) : (
             <div className="a-card ember">
-              <span className="k ember">This link cannot be shown yet</span>
+              <span className="k ember">We do not hold this link</span>
               <p className="c-sub" style={{ fontSize: 14 }}>
-                It was minted before we kept a copy we could read back, so only its hash exists. {firstName}&apos;s link still works. The copy is kept the next time they open it, and this page shows it from then on. If you have it now, from your sent mail or the WhatsApp message, paste it here and it is kept at once.
+                Until 14 September a link was stored the way a password is, as a hash, so there is no copy here to print. It is not lost: {firstName} has it, it is in the WhatsApp thread where you sent it{client.linkEmailedAt ? `, and it is in the email to ${client.contactEmail} on ${dayMonth(client.linkEmailedAt)}` : ""}. Paste it here once and this page shows it from then on. Or do nothing: it is kept the moment {firstName} next opens it.
               </p>
               <form action={keepLinkAction} className="stack" style={{ gap: 10 }}>
                 <input type="hidden" name="clientId" value={client.id} />

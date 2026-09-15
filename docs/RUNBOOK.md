@@ -258,7 +258,7 @@ current link working the moment it runs, so use it when a link has gone
 somewhere it should not have, not when somebody has simply lost theirs.
 
 A client added before 14 September 2026 had no copy we could read back, so
-that page says "cannot be shown yet" for them. It fixes itself: the copy is
+that page says "We do not hold this link" for them. It fixes itself: the copy is
 kept the first time the client opens their link, and the page shows it from
 then on. If you need it before that, find the link in your sent mail or the
 WhatsApp thread, paste it into the box on that page and press Keep this link.

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { mailMode, mailVars } from "@/lib/mail";
 import { adminBase, clientBase, hostnameOf } from "@/lib/hosts";
 import { activatedAdminCount, listAdmins } from "@/modules/auth/admin";
+import { linkCopyCounts } from "@/modules/clients";
 import { requestLogger, safeError } from "@/lib/logger";
 import { company } from "@/modules/settings";
 
@@ -41,6 +42,10 @@ export async function GET() {
         mailVars: mailVars(),
         links: { client: hostnameOf(clientBase()), admin: hostnameOf(adminBase()) },
         admins: { rows: adminRows, activated },
+        // How many clients still have no readable copy of their link, so the
+        // "we do not hold this link" card can be counted from outside and
+        // watched fall to zero (15 Sep). Counts only.
+        clients: await linkCopyCounts(),
         // Which client-facing settings are filled in, by name, never their
         // values. An empty booking link silently turns Book a meeting into a
         // mailto, and an empty phone takes WhatsApp off every client page;

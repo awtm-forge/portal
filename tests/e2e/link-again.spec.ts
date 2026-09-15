@@ -78,7 +78,7 @@ test("a link minted before the copy existed is kept the first time the client op
   const { token, clientId } = await freshLink(SEED_SLUG);
   await signInAdmin(page);
   await page.goto(`/admin/clients/${clientId}/link`);
-  await expect(page.getByText(/cannot be shown yet/i)).toBeVisible();
+  await expect(page.getByText(/we do not hold this link/i)).toBeVisible();
   await expect(page.locator(".a-fld.mono")).toHaveCount(1);
 
   // The client opens their link. No code, no sign-in: the visit alone is
@@ -96,13 +96,13 @@ test("the team can paste an old link from their sent mail, and only the right on
   const { token, clientId } = await freshLink(SEED_SLUG);
   await signInAdmin(page);
   await page.goto(`/admin/clients/${clientId}/link`);
-  await expect(page.getByText(/cannot be shown yet/i)).toBeVisible();
+  await expect(page.getByText(/we do not hold this link/i)).toBeVisible();
 
   // Somebody else's link, or a typo: checked against the hash, kept nothing.
   await page.getByLabel(/their link, pasted/i).fill("https://dashboard.awtmforge.com/p/not_their_token_at_all_but_long_enough_to_pass");
   await page.getByRole("button", { name: /keep this link/i }).click();
   await expect(page.getByText(/not kept: that is not their link/i)).toBeVisible();
-  await expect(page.getByText(/cannot be shown yet/i)).toBeVisible();
+  await expect(page.getByText(/we do not hold this link/i)).toBeVisible();
 
   // The real one, pasted as it sits in the sent mail, with the query string
   // the mail client added.

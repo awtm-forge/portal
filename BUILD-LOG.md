@@ -603,3 +603,13 @@ Deferred: none.
 
 Needs Rahul: none. The clients added before 14 September fix themselves on
 their next visit; for any you need sooner, the runbook says where the link is.
+
+Later the same day: the card now says it plainly. "We do not hold this
+link", why (until 14 September a link was stored as a hash, the way a
+password is), where it is (with the client, in the WhatsApp thread where it
+was sent, and in the email to them on the date it went), and the two ways it
+comes to be shown. Ayush's reaction to the first wording was the measure of
+it. And `/healthz` carries `clients: {rows, withoutCopy}`, counts only, so how
+many clients are still in that state can be read from outside and watched fall
+to zero. Verified: the link spec and the leak walk end to end at both widths,
+lint and types clean.

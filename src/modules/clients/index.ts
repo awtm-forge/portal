@@ -145,3 +145,16 @@ export async function navFor(clientId: string): Promise<ClientNav> {
   };
 }
 
+/**
+ * How many clients exist and how many still have no readable copy of their
+ * link, numbers only, for the health endpoint (15 Sep). A client from before
+ * ADR 0021 leaves the second number the first time they open their link, or
+ * when the team pastes it; the number should only ever fall.
+ */
+export async function linkCopyCounts(): Promise<{ rows: number; withoutCopy: number }> {
+  const [rows, withoutCopy] = await Promise.all([
+    db.client.count(),
+    db.client.count({ where: { accessTokenSealed: null } }),
+  ]);
+  return { rows, withoutCopy };
+}
