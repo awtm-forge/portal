@@ -893,3 +893,11 @@ locked-out admin and the other reissuing a link, is gone (Ayush: "message
 below is not needed"), and its heading no longer says "Two accounts", which
 ADR 0024 made untrue; it says "No sign-up here". The admin, login and overlap
 specs walk the page; lint and types clean.
+
+Also on 16 September: the admin's history arrows moved out of the sidebar's
+top row, which Ayush found crowded (four things in a 256 px column), to the
+two corners of the page pane, his idea: Back at the left edge and Forward at
+the right, above the title, each with its name on a laptop and the chevron
+alone under 560 px. The row keeps the wordmark, the bell and the theme. One
+end-to-end check in the overhaul spec, at both widths, holds them there and
+out of the sidebar; the decision log has the row.

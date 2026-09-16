@@ -362,8 +362,9 @@ test("the admin frame fits a phone: a bar, and the nav gets the width of it (F-2
   await page.goto("/admin");
 
   // A bar, not the laptop's sidebar. It takes two lines under 760 px: on one
-  // line the arrows, the wordmark and the theme switch left the nav 85 px of a
-  // 390 px screen, which is one of five items (14 Sep).
+  // line the arrows (then still in the bar), the wordmark and the theme switch
+  // left the nav 85 px of a 390 px screen, which is one of five items (14 Sep).
+  // The arrows moved to the page's corners on 16 Sep; the nav keeps its line.
   const side = await page.locator(".a-side").boundingBox();
   const view = page.viewportSize();
   expect(side?.height ?? 999, "a bar, not a sidebar").toBeLessThan(110);
@@ -382,4 +383,38 @@ test("the way in offers the email login, and the login page asks for the email f
   await expect(page).toHaveURL(/\/p\/login$/);
   await expect(page.getByLabel(/your email/i)).toBeVisible();
   await expect(page.getByRole("button", { name: /email me a code/i })).toBeVisible();
+});
+
+/**
+ * The admin's history arrows sit at the two corners of the page pane, above
+ * its title, and not in the sidebar's top row, where they made four things in
+ * one short line (Ayush, 16 Sep: crowded; his idea was left and right of the
+ * page). On a laptop each carries its name; on a phone the chevron alone.
+ */
+test("the admin's arrows are at the two corners of the page, not in the sidebar's row", async ({ page, isMobile }) => {
+  await signInAdmin(page);
+  await page.goto("/admin/clients");
+  const back = page.getByRole("button", { name: "Go back" });
+  const forward = page.getByRole("button", { name: "Go forward" });
+  await expect(back).toBeVisible();
+  await expect(forward).toBeVisible();
+  await expect(page.locator(".a-side").getByRole("button", { name: /go (back|forward)/i }), "nothing of theirs in the sidebar").toHaveCount(0);
+
+  const main = await page.locator(".a-main").boundingBox();
+  const title = await page.getByRole("heading", { name: "Clients", exact: true }).boundingBox();
+  const b = await back.boundingBox();
+  const f = await forward.boundingBox();
+  expect(main && title && b && f, "the pane, the title and both arrows have a place").toBeTruthy();
+  if (!main || !title || !b || !f) return;
+  expect(b.x, "Back starts at the content's left edge").toBeLessThanOrEqual(title.x + 1);
+  expect(f.x + f.width, "Forward ends at the content's right edge").toBeGreaterThan(main.x + main.width - 40);
+  expect(b.y + b.height, "both above the title").toBeLessThanOrEqual(title.y + 1);
+  expect(f.y + f.height).toBeLessThanOrEqual(title.y + 1);
+  if (isMobile) {
+    expect(b.width, "a chevron alone on a phone").toBeLessThan(40);
+  } else {
+    await expect(back).toContainText("Back");
+    await expect(forward).toContainText("Forward");
+    expect(b.width, "the word shows on a laptop").toBeGreaterThan(50);
+  }
 });

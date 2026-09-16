@@ -24,6 +24,11 @@ import { markTeamNoticesSeen } from "@/components/portal/notify-actions";
  *
  * The counts are read here rather than passed in, so the fourteen pages that
  * render this shell did not each have to learn about notifications.
+ *
+ * The history arrows are the page's, not the sidebar's: Back at the top left
+ * corner of the pane and Forward at the top right, above the title, each with
+ * its name on a laptop (Ayush, 16 Sep). Four things in the sidebar's top row
+ * was one too many.
  */
 export async function AdminShell({
   active,
@@ -44,7 +49,6 @@ export async function AdminShell({
       <NavProgress />
       <aside className="a-side">
         <div className="a-top">
-          <HistoryNav />
           <Link className="a-brand" href="/admin">awtm <b>forge</b></Link>
           <div className="a-top-act">
             {me && (
@@ -74,7 +78,14 @@ export async function AdminShell({
           <form action={logoutAction}><button className="link-mono signout" type="submit">Sign out</button></form>
         </div>
       </aside>
-      <main className="a-main">{children}</main>
+      <main className="a-main">
+        {/* The way back and the way forward, at the two corners of the page,
+            above its title (Ayush, 16 Sep). They sat in the sidebar's top row,
+            which made four things in one short line; his idea was left and
+            right of the page. */}
+        <div className="a-pagenav"><HistoryNav words /></div>
+        {children}
+      </main>
       <Toast />
     </div>
   );

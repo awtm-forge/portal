@@ -80,15 +80,19 @@ textarea.fld { min-height: 88px; resize: vertical; }
 /* How many are new, on the bell. It sat beside the word "Notifications" in
    the nav until 14 Sep, where it read as one more place to go rather than as
    news that had arrived (ADR 0020 amended). */
-/* Four things share this row: the arrows, the wordmark, the bell and the
-   theme. They need 220 px, which is why the sidebar is 256 and not the 212 it
-   was. Wrapping is the fallback, not the plan, so a longer wordmark drops the
-   two controls to their own line rather than squeezing anything. */
+/* Three things share this row: the wordmark, the bell and the theme. The
+   arrows were the fourth until 16 Sep, when they went to the corners of the
+   page pane (Ayush: crowded). The column stays at 256, which it was widened
+   to for the four; the nav and the signed-in block read better with the room.
+   Wrapping is the fallback, not the plan, so a longer wordmark drops the two
+   controls to their own line rather than squeezing anything. */
 .a-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .a-top-act { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: none; }
 .a-side .signed { margin-top: auto; padding: 0 4px; display: flex; flex-direction: column; gap: 3px; }
 .a-side .signout { padding: 0; font-size: 12px; color: var(--faint); text-align: left; }
-.a-main { flex: 1; min-width: 0; padding: 26px 30px; display: flex; flex-direction: column; gap: 22px; }
+/* Less at the top than at the foot: the first thing in the pane is the row of
+   history arrows, which is short and pulls up close to the title. */
+.a-main { flex: 1; min-width: 0; padding: 14px 30px 26px; display: flex; flex-direction: column; gap: 22px; }
 /* The page's title row, with the page-level action at its right. Ending a
    project lives here whatever the phase, so it is in one findable place and
    never competes with the phase's own card (Ayush, 12 Sep). */
@@ -148,7 +152,7 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .a-nav.on { background: transparent; border-bottom-color: var(--ember); }
   .a-side .signed { margin: 0; flex: none; flex-direction: row; align-items: center; gap: 10px; padding: 0; }
   .a-side .signed .k, .a-side .signed .mono-sm { display: none; }
-  .a-main { padding: 18px 16px; gap: 16px; }
+  .a-main { padding: 10px 16px 18px; gap: 16px; }
   .a-cols { flex-direction: column; }
   .a-cols > .aside { width: auto; }
   .grid2, .grid3 { grid-template-columns: 1fr; }
@@ -416,31 +420,43 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .p-ctl-cta:hover { background: var(--accent-fill); color: var(--accent-ink); }
 @keyframes rise { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
-/* Back and forward, inside the page. A client opens their link from WhatsApp,
-   whose in-app browser has little chrome of its own (Ayush, 13 Sep). Quiet,
-   and dim when there is nowhere to go. */
+/* Back and forward, inside the page (Ayush, 13 Sep). The admin's only, since
+   the client header let them go the same day; and since 16 Sep at the two
+   corners of the admin's page pane, not in the sidebar's top row (Ayush:
+   crowded; his idea was left and right of the page). Quiet, and dim when
+   there is nowhere to go. */
 .histnav { display: flex; align-items: center; gap: 2px; flex: none; }
 .histnav-b { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-pill); border: none; background: none; color: var(--muted); cursor: pointer; transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease); }
 .histnav-b:hover:not(:disabled) { color: var(--ember); background: var(--surface-2); }
 /* Dim, but still legibly an arrow: at the rule colour it read as a rendering
    fault rather than as a control with nowhere to go. */
 .histnav-b:disabled { color: var(--off); cursor: default; }
+/* At the corners of the page pane each arrow carries its name, because a lone
+   chevron at the far edge of a wide pane reads as a stray mark; under 560 px
+   the words go and the chevrons stay (the .ctl-txt rule below). The buttons
+   pull out by 8 px so the glyphs sit on the content's own edges, and the row
+   gives back 8 of the pane's gap so the title stays close. */
+.a-pagenav { display: flex; margin: 0 -8px -8px; }
+.a-pagenav .histnav { width: 100%; justify-content: space-between; }
+.a-pagenav .histnav-b { width: auto; height: 28px; gap: 3px; padding: 0 10px 0 6px; font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.04em; }
+.a-pagenav .histnav-b + .histnav-b { padding: 0 6px 0 10px; }
 
 /* The menu: one way between the client's pages at every width. It replaced a
    row of small uppercase tabs that scrolled sideways on a phone and hid
    whichever page did not fit (Ayush, 12 Sep). Full labels, the page you are on
    named in words, and the ways to reach a person in the same place. */
 .pmenu { position: relative; flex: none; }
-/* Five things share a 390px line: the arrows, the wordmark, the bell, the
-   booking control and the menu. Below 560px the last two keep their icons and
-   drop their words, which they still carry as labels for a screen reader. */
+/* Four things share a 390px line in the client's bar: the wordmark, the bell,
+   the booking control and the menu. Below 560px the last two keep their icons
+   and drop their words, which they still carry as labels for a screen reader;
+   the admin's page arrows do the same. */
 @media (max-width: 559px) {
   .ctl-txt { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .p-head-actions .p-ctl { width: 34px; padding: 0; gap: 0; }
   .p-head-in { gap: 10px; padding: 9px 10px; }
   .p-head-nav { gap: 7px; }
   .p-head-actions { gap: 4px; }
-  .histnav-b { width: 30px; height: 30px; }
+  .a-pagenav .histnav-b { width: 30px; height: 30px; padding: 0; gap: 0; }
 }
 /* The notification tray, the same control in both zones (Ayush, 14 Sep). The
    bell opens what happened in place rather than sending anyone to a page, and
@@ -781,9 +797,7 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .how-long { text-align: right; }
 }
 
-/* The bell and the theme switch: one family, in the admin's own vocabulary.
-   The arrows beside them lose two pixels each so as much as possible shares a
-   212 px sidebar without a squeeze. */
+/* The bell and the theme switch: one family, in the admin's own vocabulary. */
 .a-icon {
   position: relative;
   flex: none;
@@ -803,7 +817,6 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .a-icon:hover { color: var(--accent); background: var(--surface-raised); }
 .a-icon:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .a-icon[aria-current="page"] { color: var(--accent); background: var(--surface-raised); }
-.a-top .histnav-b { width: 28px; height: 28px; }
 
 /* The questionnaire completion badge (item 6). */
 .done-mark { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-fill); display: inline-flex; align-items: center; justify-content: center; }
