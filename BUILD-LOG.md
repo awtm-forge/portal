@@ -904,3 +904,8 @@ out of the sidebar; the decision log has the row.
 Then, the same day, the wordmark in that row moved to the centre of the
 column on a laptop (Ayush: "this should be in the center"), the bell and the
 theme staying at its right; on a phone the bar keeps its row.
+And the team's bell followed the arrows to the page: it sits at the top
+right corner beyond Forward (Ayush: "notification should also be at the
+right side"), its tray opening leftwards from there, and the sidebar's row
+keeps the centred wordmark and the theme switch. The overhaul spec's check
+on the arrows now holds the bell there too.

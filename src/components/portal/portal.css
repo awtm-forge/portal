@@ -80,17 +80,17 @@ textarea.fld { min-height: 88px; resize: vertical; }
 /* How many are new, on the bell. It sat beside the word "Notifications" in
    the nav until 14 Sep, where it read as one more place to go rather than as
    news that had arrived (ADR 0020 amended). */
-/* Three things share this row: the wordmark, the bell and the theme. The
-   arrows were the fourth until 16 Sep, when they went to the corners of the
-   page pane (Ayush: crowded). The column stays at 256, which it was widened
-   to for the four; the nav and the signed-in block read better with the room. */
+/* Two things share this row: the wordmark and the theme. The arrows and the
+   bell made it four until 16 Sep, when they went to the corners of the page
+   pane (Ayush: crowded). The column stays at 256, which it was widened to for
+   the four; the nav and the signed-in block read better with the room. */
 .a-top { display: flex; align-items: center; gap: 6px; }
 .a-top-act { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: none; }
-/* On a laptop the wordmark stands in the centre of the column, the bell and
-   the theme at its right (Ayush, 16 Sep). Three columns with the outer two
+/* On a laptop the wordmark stands in the centre of the column, the theme
+   switch at its right (Ayush, 16 Sep). Three columns with the outer two
    equal, so it is centred on the column itself and not on what is left beside
-   the two controls. On a phone the row is one part of a bar shared with the
-   nav and keeps its flex. */
+   the control. On a phone the row is one part of a bar shared with the nav
+   and keeps its flex. */
 @media (min-width: 901px) {
   .a-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; }
   .a-brand { grid-column: 2; text-align: center; }
@@ -441,11 +441,13 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 .histnav-b:disabled { color: var(--off); cursor: default; }
 /* At the corners of the page pane each arrow carries its name, because a lone
    chevron at the far edge of a wide pane reads as a stray mark; under 560 px
-   the words go and the chevrons stay (the .ctl-txt rule below). The buttons
-   pull out by 8 px so the glyphs sit on the content's own edges, and the row
-   gives back 8 of the pane's gap so the title stays close. */
-.a-pagenav { display: flex; margin: 0 -8px -8px; }
-.a-pagenav .histnav { width: 100%; justify-content: space-between; }
+   the words go and the chevrons stay (the .ctl-txt rule below). The team's
+   bell takes the right corner itself, beyond Forward, when there is anything
+   behind it (Ayush, 16 Sep). The buttons pull out by 8 px so the glyphs sit
+   on the content's own edges, and the row gives back 8 of the pane's gap so
+   the title stays close. */
+.a-pagenav { display: flex; align-items: center; gap: 6px; margin: 0 -8px -8px; }
+.a-pagenav .histnav { flex: 1; justify-content: space-between; }
 .a-pagenav .histnav-b { width: auto; height: 28px; gap: 3px; padding: 0 10px 0 6px; font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.04em; }
 .a-pagenav .histnav-b + .histnav-b { padding: 0 6px 0 10px; }
 
@@ -500,9 +502,9 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   transition: background var(--t-fast) var(--ease);
 }
 .notify-all:hover { background: var(--surface-raised); }
-/* The admin's sidebar is narrow, so its tray hangs from the left of the bell
-   rather than the right, where it would run off the screen. */
-.notify:has(.a-icon) .notify-panel { right: auto; left: 0; }
+/* The team's bell is in the page's top right corner (16 Sep), so its tray
+   hangs from the right of the bell like the client's; when it sat in the
+   sidebar it hung from the left, to stay on the screen. */
 
 .pmenu-panel {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-menu);
