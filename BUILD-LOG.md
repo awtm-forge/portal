@@ -909,3 +909,6 @@ right corner beyond Forward (Ayush: "notification should also be at the
 right side"), its tray opening leftwards from there, and the sidebar's row
 keeps the centred wordmark and the theme switch. The overhaul spec's check
 on the arrows now holds the bell there too.
+Then inside Forward rather than beyond it, with 22 px of air (Ayush: "a bit
+odd"): a chevron pointing straight at a bell six pixels away read as one
+control. The check in the overhaul spec now holds the bell inside, with air.

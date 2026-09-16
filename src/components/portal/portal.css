@@ -442,14 +442,20 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 /* At the corners of the page pane each arrow carries its name, because a lone
    chevron at the far edge of a wide pane reads as a stray mark; under 560 px
    the words go and the chevrons stay (the .ctl-txt rule below). The team's
-   bell takes the right corner itself, beyond Forward, when there is anything
-   behind it (Ayush, 16 Sep). The buttons pull out by 8 px so the glyphs sit
-   on the content's own edges, and the row gives back 8 of the pane's gap so
-   the title stays close. */
-.a-pagenav { display: flex; align-items: center; gap: 6px; margin: 0 -8px -8px; }
-.a-pagenav .histnav { flex: 1; justify-content: space-between; }
+   bell sits at the right, inside Forward with 22 px of air, when there is
+   anything behind it (Ayush, 16 Sep). It stood beyond Forward for an hour,
+   six pixels from a chevron pointing straight at it, and the two read as one
+   control; inside, the arrow points off the page as forward should. The pair
+   of buttons is laid straight into this row (display: contents) so the bell
+   can take its place between them. The buttons pull out by 8 px so the
+   glyphs sit on the content's own edges, and the row gives back 8 of the
+   pane's gap so the title stays close. */
+.a-pagenav { display: flex; align-items: center; gap: 22px; margin: 0 -8px -8px; }
+.a-pagenav .histnav { display: contents; }
 .a-pagenav .histnav-b { width: auto; height: 28px; gap: 3px; padding: 0 10px 0 6px; font-family: var(--font-mono-stack); font-size: 12px; letter-spacing: 0.04em; }
-.a-pagenav .histnav-b + .histnav-b { padding: 0 6px 0 10px; }
+.a-pagenav .histnav-b:first-child { margin-right: auto; }
+.a-pagenav .notify { order: 1; }
+.a-pagenav .histnav-b + .histnav-b { order: 2; padding: 0 6px 0 10px; }
 
 /* The menu: one way between the client's pages at every width. It replaced a
    row of small uppercase tabs that scrolled sideways on a phone and hid
@@ -502,9 +508,9 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   transition: background var(--t-fast) var(--ease);
 }
 .notify-all:hover { background: var(--surface-raised); }
-/* The team's bell is in the page's top right corner (16 Sep), so its tray
-   hangs from the right of the bell like the client's; when it sat in the
-   sidebar it hung from the left, to stay on the screen. */
+/* The team's bell is at the page's top right (16 Sep), so its tray hangs
+   from the right of the bell like the client's; when it sat in the sidebar
+   it hung from the left, to stay on the screen. */
 
 .pmenu-panel {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-menu);

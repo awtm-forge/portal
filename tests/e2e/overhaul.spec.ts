@@ -407,12 +407,12 @@ test("the admin's arrows are at the two corners of the page, not in the sidebar'
   expect(main && title && b && f, "the pane, the title and both arrows have a place").toBeTruthy();
   if (!main || !title || !b || !f) return;
   expect(b.x, "Back starts at the content's left edge").toBeLessThanOrEqual(title.x + 1);
-  // The bell, when there is anything behind it, takes the right corner itself
-  // and Forward sits just inside it; otherwise Forward is the corner (16 Sep).
+  expect(f.x + f.width, "Forward ends at the content's right edge").toBeGreaterThan(main.x + main.width - 40);
+  // The bell, when there is anything behind it, sits inside Forward with air
+  // between them, so the chevron points off the page and not at it (16 Sep).
   const bell = page.locator(".a-pagenav").getByRole("button", { name: /notifications/i });
   const n = (await bell.count()) ? await bell.boundingBox() : null;
-  expect(n ? n.x + n.width : f.x + f.width, "the row ends at the content's right edge").toBeGreaterThan(main.x + main.width - 40);
-  if (n) expect(f.x + f.width, "Forward sits just inside the bell").toBeLessThanOrEqual(n.x);
+  if (n) expect(f.x - (n.x + n.width), "the bell sits inside Forward, with air").toBeGreaterThanOrEqual(16);
   expect(b.y + b.height, "both above the title").toBeLessThanOrEqual(title.y + 1);
   expect(f.y + f.height).toBeLessThanOrEqual(title.y + 1);
   // Its tray opens inwards, away from the screen's edge.

@@ -18,15 +18,15 @@ import { markTeamNoticesSeen } from "@/components/portal/notify-actions";
  * Notifications are a bell, not a nav item. They were listed beside Clients,
  * Projects, Image library and Settings, which are places in the app you go to
  * and come back from. News is not a place: it arrives, you read it, it stops
- * being new (Ayush, 14 Sep). The bell sits at the page's top right corner,
- * carries its count, and is not rendered at all when there is nothing behind
- * it, which is the same rule the client's bell follows.
+ * being new (Ayush, 14 Sep). The bell sits at the page's top right, carries
+ * its count, and is not rendered at all when there is nothing behind it,
+ * which is the same rule the client's bell follows.
  *
  * The counts are read here rather than passed in, so the fourteen pages that
  * render this shell did not each have to learn about notifications.
  *
  * The history arrows and the bell are the page's, not the sidebar's: Back at
- * the top left corner of the pane, Forward and then the bell at the top right,
+ * the top left corner of the pane, the bell and then Forward at the top right,
  * above the title, the arrows each with their name on a laptop (Ayush, 16
  * Sep). Four things in the sidebar's top row was two too many; it keeps the
  * wordmark, centred, and the theme switch.
@@ -71,12 +71,12 @@ export async function AdminShell({
       </aside>
       <main className="a-main">
         {/* The way back and the way forward, at the two corners of the page,
-            above its title, and the bell in the right corner beyond Forward
-            (Ayush, 16 Sep). They sat in the sidebar's top row, which made
-            four things in one short line; his idea was left and right of the
-            page, and then the notifications on the right as well. The bell
-            is not rendered at all when there is nothing behind it, so the
-            row is often the two arrows alone. */}
+            above its title, and the bell at the right, inside Forward with
+            air between them (Ayush, 16 Sep). They sat in the sidebar's top
+            row, which made four things in one short line; his idea was left
+            and right of the page, and then the notifications on the right as
+            well. The bell is not rendered at all when there is nothing behind
+            it, so the row is often the two arrows alone. */}
         <div className="a-pagenav">
           <HistoryNav words />
           {me && (

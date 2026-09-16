@@ -67,3 +67,4 @@ One line per step of PORTAL-SPEC §9, dated when the step was reported done. Det
 - 2026-09-16 The admin's Back and Forward arrows sit at the two corners of the page, above its title, with their names on a laptop, rather than in the sidebar's top row, which held four things in one short line (Ayush: crowded; the corners were his idea). The row keeps the wordmark, the bell and the theme.
 - 2026-09-16 The admin's wordmark stands in the centre of the sidebar column on a laptop, with the bell and the theme at its right (Ayush).
 - 2026-09-16 The team's notifications bell sits at the page's top right corner, beyond Forward, rather than in the sidebar's top row (Ayush). The row keeps the wordmark, centred, and the theme switch.
+- 2026-09-16 The bell sits inside Forward with air between them rather than beyond it, where the chevron pointed straight at it (Ayush: "a bit odd").
