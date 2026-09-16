@@ -83,11 +83,19 @@ textarea.fld { min-height: 88px; resize: vertical; }
 /* Three things share this row: the wordmark, the bell and the theme. The
    arrows were the fourth until 16 Sep, when they went to the corners of the
    page pane (Ayush: crowded). The column stays at 256, which it was widened
-   to for the four; the nav and the signed-in block read better with the room.
-   Wrapping is the fallback, not the plan, so a longer wordmark drops the two
-   controls to their own line rather than squeezing anything. */
-.a-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+   to for the four; the nav and the signed-in block read better with the room. */
+.a-top { display: flex; align-items: center; gap: 6px; }
 .a-top-act { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: none; }
+/* On a laptop the wordmark stands in the centre of the column, the bell and
+   the theme at its right (Ayush, 16 Sep). Three columns with the outer two
+   equal, so it is centred on the column itself and not on what is left beside
+   the two controls. On a phone the row is one part of a bar shared with the
+   nav and keeps its flex. */
+@media (min-width: 901px) {
+  .a-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; }
+  .a-brand { grid-column: 2; text-align: center; }
+  .a-top-act { grid-column: 3; justify-self: end; margin-left: 0; }
+}
 .a-side .signed { margin-top: auto; padding: 0 4px; display: flex; flex-direction: column; gap: 3px; }
 .a-side .signout { padding: 0; font-size: 12px; color: var(--faint); text-align: left; }
 /* Less at the top than at the foot: the first thing in the pane is the row of

@@ -901,3 +901,6 @@ the right, above the title, each with its name on a laptop and the chevron
 alone under 560 px. The row keeps the wordmark, the bell and the theme. One
 end-to-end check in the overhaul spec, at both widths, holds them there and
 out of the sidebar; the decision log has the row.
+Then, the same day, the wordmark in that row moved to the centre of the
+column on a laptop (Ayush: "this should be in the center"), the bell and the
+theme staying at its right; on a phone the bar keeps its row.
