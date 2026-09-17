@@ -374,6 +374,18 @@ test("the admin frame fits a phone: a bar, and the nav gets the width of it (F-2
   expect(nav?.height ?? 999, "the nav is a row, not a column").toBeLessThan(50);
   expect(nav?.width ?? 0, "and it gets the whole bar to itself").toBeGreaterThan((view?.width ?? 0) - 2);
 
+  // The theme switch stands at the right with Sign out, not against the
+  // wordmark (17 Sep).
+  const brand = await page.locator(".a-brand").boundingBox();
+  const theme = await page.getByRole("button", { name: /switch to the (light|dark) theme/i }).boundingBox();
+  const out = await page.getByRole("button", { name: /sign out/i }).boundingBox();
+  expect(brand && theme && out).toBeTruthy();
+  if (brand && theme && out) {
+    expect(theme.x, "clear of the wordmark").toBeGreaterThan(brand.x + brand.width + 40);
+    expect(theme.x + theme.width, "beside Sign out").toBeLessThanOrEqual(out.x);
+    expect(out.x - (theme.x + theme.width), "and close to it").toBeLessThan(40);
+  }
+
   await expect(page.getByRole("link", { name: /settings/i })).toBeVisible();
 });
 

@@ -912,3 +912,15 @@ on the arrows now holds the bell there too.
 Then inside Forward rather than beyond it, with 22 px of air (Ayush: "a bit
 odd"): a chevron pointing straight at a bell six pixels away read as one
 control. The check in the overhaul spec now holds the bell inside, with air.
+
+17 September: two small things Ayush picked from a list of what could be
+better. A phone number is shown one way everywhere, by one formatter in
+lib/phone.ts: an Indian mobile as +91, five and five, however it was typed,
+and another country's number as typed with the spacing tidied; the clients
+list, the client and project pages and the two documents read it, and the
+forms keep showing what was typed. Five unit tests. And on a phone the admin
+bar's theme switch stands at the right with Sign out, not against the
+wordmark; the overhaul spec's phone check holds it there.
+The agreement spec still expected "Rs 5,20,000" from before the rupee sign
+of 16 September and had not been run since; it now expects the sign, and
+the overhaul, invoices and agreement specs are green on the build.

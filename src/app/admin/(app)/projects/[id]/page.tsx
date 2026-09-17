@@ -28,6 +28,7 @@ import { company } from "@/modules/settings";
 import { forgetReferralAction } from "./review/actions";
 import { approveTestimonialAction, cancelProjectAction, closeProjectAction, saveFrictionNotesAction } from "./day30/actions";
 import { setExpectedByAction, signoffDecisionAction, updateSignoffAction } from "../../actions";
+import { formatPhone } from "@/lib/phone";
 
 const TYPE_LABEL: Record<string, string> = { STORE: "Store", APP: "App", SAAS: "SaaS", MARKETING: "Marketing", BRAND: "Brand" };
 
@@ -455,7 +456,7 @@ export default async function ProjectAdminPage({ params }: { params: Promise<{ i
           <Fold card title="The client" fact={c.businessName}>
             <div className="stack">
               <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>{c.businessName}</span><span className="mono-sm">{c.location ?? ""}</span></div>
-              <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>{c.contactName}</span><span className="mono-sm">{c.contactPhone}</span></div>
+              <div className="between" style={{ padding: "9px 0", borderBottom: "1px solid var(--rule-soft)" }}><span>{c.contactName}</span><span className="mono-sm">{formatPhone(c.contactPhone)}</span></div>
               <div className="between" style={{ padding: "9px 0" }}><span>{c.contactEmail}</span><span className="help">who we talk to day to day</span></div>
             </div>
             <div><Link className="a-btn ghost" href={`/admin/clients/${c.id}`}>Open the client</Link></div>

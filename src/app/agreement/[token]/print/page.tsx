@@ -9,6 +9,7 @@ import { activeProjectFor } from "@/modules/clients";
 import { currentAdmin } from "@/modules/auth/admin";
 import { agreementToPrintView } from "@/modules/serializers";
 import "@/components/portal/portal.css";
+import { formatPhone } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -38,7 +39,7 @@ export default async function AgreementPrintPage({ params }: { params: Promise<{
   if (!agreement?.sentAt) notFound();
   const view = agreementToPrintView(agreement);
   const c = await company();
-  const contact = [c.email, c.phone].filter((s) => s && s.trim()).join("  /  ");
+  const contact = [c.email, formatPhone(c.phone)].filter((s) => s && s.trim()).join("  /  ");
 
   // The same head as the invoice, on the same paper (15 Sep): the wordmark,
   // the title, and what this document is, before the agreement itself.

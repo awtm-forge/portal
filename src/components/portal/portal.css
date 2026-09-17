@@ -160,6 +160,12 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
   .a-nav.on { background: transparent; border-bottom-color: var(--ember); }
   .a-side .signed { margin: 0; flex: none; flex-direction: row; align-items: center; gap: 10px; padding: 0; }
   .a-side .signed .k, .a-side .signed .mono-sm { display: none; }
+  /* The theme switch stands at the right with Sign out, not against the
+     wordmark (Ayush, 17 Sep). The top row's two halves are laid straight into
+     the bar so the switch can cross the nav to get there. */
+  .a-side .a-top { display: contents; }
+  .a-side .a-top-act { order: 2; margin-left: auto; }
+  .a-side .signed { order: 2; }
   .a-main { padding: 10px 16px 18px; gap: 16px; }
   .a-cols { flex-direction: column; }
   .a-cols > .aside { width: auto; }
@@ -915,7 +921,8 @@ textarea.a-fld { min-height: 120px; resize: vertical; }
 @media (max-width: 759px) {
   .a-side { flex-wrap: wrap; row-gap: 2px; padding-bottom: 0; }
   .a-side .a-navs { order: 3; flex-basis: 100%; margin: 0 -14px; padding: 0 14px; }
-  .a-side .signed { margin-left: auto; }
+  /* The theme switch carries the auto margin now, so Sign out sits beside it. */
+  .a-side .signed { margin-left: 0; }
 }
 
 @media (max-width: 900px) { .a-fold > summary { padding: 14px 16px; } .a-fold .fold-b { padding: 0 16px 16px; } }

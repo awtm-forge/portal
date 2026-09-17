@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { phoneDigits } from "@/lib/format";
-import { hasCountryCode } from "@/lib/phone";
+import { formatPhone, hasCountryCode } from "@/lib/phone";
 
 /**
  * Every WhatsApp link in the product, on the client's pages and on the team's,
@@ -29,5 +29,32 @@ describe("a number we can build a WhatsApp link from", () => {
 
   it("hands wa.me the digits and nothing else", () => {
     expect(phoneDigits("+91 99000 21188")).toBe("919900021188");
+  });
+});
+
+/**
+ * Ayush, 17 Sep: two numbers on the clients list ran as one block of digits
+ * while a third was spaced. One way to show a number, whatever was typed.
+ */
+describe("one way to show a number", () => {
+  it("writes an Indian mobile as +91, five and five, however it was typed", () => {
+    for (const typed of ["+919634117517", "+91 96341 17517", "+91-96341-17517", "91 9634117517", "0091 9634117517", " +91 (96341) 17517 "]) {
+      expect(formatPhone(typed), typed).toBe("+91 96341 17517");
+    }
+  });
+
+  it("groups ten bare digits the same way and invents no country code", () => {
+    expect(formatPhone("9634117517")).toBe("96341 17517");
+  });
+
+  it("leaves another country's number as typed, with the spacing tidied", () => {
+    expect(formatPhone("+971 50 123 4567")).toBe("+971 50 123 4567");
+    expect(formatPhone("+44  20 7946   0958")).toBe("+44 20 7946 0958");
+    expect(formatPhone("+65 9123 4567")).toBe("+65 9123 4567");
+  });
+
+  it("shows nothing for nothing", () => {
+    expect(formatPhone("")).toBe("");
+    expect(formatPhone("   ")).toBe("");
   });
 });

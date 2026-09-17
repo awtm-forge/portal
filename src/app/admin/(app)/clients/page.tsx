@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { dayMonth } from "@/lib/dates";
 import { requireAdmin } from "@/modules/auth/admin";
 import { PHASE_LABEL } from "@/modules/projects/phase";
+import { formatPhone } from "@/lib/phone";
 
 export default async function ClientsPage() {
   const admin = await requireAdmin();
@@ -46,7 +47,7 @@ export default async function ClientsPage() {
                 contact: (
                   <span className="stack" style={{ gap: 2 }}>
                     <span>{c.contactName}</span>
-                    <span className="help">{c.contactPhone}</span>
+                    <span className="help">{formatPhone(c.contactPhone)}</span>
                   </span>
                 ),
                 projects: c.projects.length === 0 ? (

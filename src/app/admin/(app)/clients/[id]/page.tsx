@@ -19,6 +19,7 @@ import { PHASE_LABEL } from "@/modules/projects/phase";
 import { questionnaireOpenMessage, waLink } from "@/lib/whatsapp";
 import { removeClientAction, updateClientAction } from "../../actions";
 import { declineChangeAction, lockAgainAction, openChangesAction } from "./intake/changeActions";
+import { formatPhone } from "@/lib/phone";
 
 /**
  * A client, before and after there is a project (ADR 0015, Q12). The loud
@@ -311,7 +312,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               (Ayush, 15 Sep): it is a fold nobody opens often, and it was
               sitting in the main column below the projects like a page in
               itself. */}
-          <Fold card title="Client details" fact={`${client.contactName} · ${client.contactPhone}`}>
+          <Fold card title="Client details" fact={`${client.contactName} · ${formatPhone(client.contactPhone)}`}>
             <form action={updateClientAction} className="stack" style={{ gap: 14 }}>
               <input type="hidden" name="clientId" value={client.id} />
               <div className="grid2">

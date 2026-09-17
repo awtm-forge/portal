@@ -47,7 +47,7 @@ test("the client reads the agreement, agrees with a fresh code, and the advance 
   // One thing to do: read the agreement.
   await page.getByRole("link", { name: /review agreement/i }).click();
   await expect(page.getByRole("heading", { name: /what you get, and how you check it/i })).toBeVisible();
-  await expect(page.getByText("Rs 5,20,000")).toBeVisible();
+  await expect(page.getByText("₹5,20,000")).toBeVisible();
 
   // Criterion 5: agreeing asks for a fresh code even inside a valid session.
   await page.getByRole("button", { name: /^i agree$/i }).click();

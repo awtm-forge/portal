@@ -1,4 +1,5 @@
 import type { CompanyPrintView, InvoiceClientView } from "@/modules/serializers";
+import { formatPhone } from "@/lib/phone";
 
 /**
  * The invoice, printed (PORTAL-SPEC 6.7 and ADR 0007). It takes client and
@@ -37,7 +38,7 @@ export function InvoiceDocument({
       : invoice.kind === "BALANCE"
         ? "This invoice covers the balance, now that the delivery is signed off. Nothing further is invoiced for this project."
         : "This invoice covers work agreed separately from the project's two invoices.";
-  const contact = [company.email, company.phone].filter((s) => s && s.trim()).join("  /  ");
+  const contact = [company.email, formatPhone(company.phone)].filter((s) => s && s.trim()).join("  /  ");
 
   return (
     <article className="inv">
