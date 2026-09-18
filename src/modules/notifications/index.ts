@@ -8,11 +8,14 @@
  */
 import { adminBase } from "@/lib/hosts";
 import { requestLogger, safeError } from "@/lib/logger";
+import { phoneDigits } from "@/lib/format";
 import { sendPlain, teamNotifyAddress } from "@/lib/mail";
 import { sendTeamWhatsapp, whatsappMode } from "@/lib/whatsapp-cloud";
 import { subscribe, type Activity } from "@/modules/events";
 import { tellClient } from "@/modules/notifications/client";
+import { linkEmail } from "@/modules/notifications/link-email";
 import { noticeFor } from "@/modules/notifications/team";
+import { company } from "@/modules/settings";
 
 /**
  * The team's email. The sentence itself comes from modules/notifications/team,
@@ -66,28 +69,13 @@ export async function sendLinkEmail(args: {
   businessName: string;
   link: string;
 }): Promise<void> {
-  const firstName = args.contactName.trim().split(/\s+/)[0] || args.contactName;
-  const body = [
-    `Hello ${firstName},`,
-    "",
-    "Thank you for talking to us. Here is your page.",
-    "",
-    args.link,
-    "",
-    "Everything we do together will be on it: the questionnaire first, then the agreement you read before anything starts, a written update every week, and your invoices. It is one link, it is yours, and it does not expire. Keep it wherever you keep things.",
-    "",
-    "The first thing on it is a questionnaire. About ten minutes, mostly about what is going wrong in your own words. Do not tidy your answers up for us, the messy version is the useful one, and I do not know is a real answer to any of it. It saves as you type, so you can start it in a queue somewhere and finish it later.",
-    "",
-    "The page will ask for a six digit code the first time you open it on a phone or a laptop. That code comes to this address. There is no password to remember, and there never will be one.",
-    "",
-    "Worth reading twice: we will never ask you for a password, an API key or a one-time code, and neither will anyone who says they are us. There is no box anywhere on your page that wants one.",
-    "",
-    "Anything at all, message me on WhatsApp. You do not need to wait for a call.",
-    "",
-    "Rahul",
-    "awtm forge",
-  ].join("\n");
-  await sendPlain(args.to, `Your awtm forge page, ${args.businessName}`, body);
+  // The words live in link-email.ts, as a letter in the brand's paper and as
+  // the same letter in plain text (Ayush, 18 Sep: "more welcoming"). The
+  // WhatsApp line carries a link when a phone is in Settings.
+  const phone = (await company()).phone.trim();
+  const whatsapp = phone ? `https://wa.me/${phoneDigits(phone)}` : null;
+  const mail = linkEmail({ contactName: args.contactName, businessName: args.businessName, link: args.link, whatsapp });
+  await sendPlain(args.to, mail.subject, mail.text, mail.html);
 }
 
 /** Import for the side effect of registering subscribers. */

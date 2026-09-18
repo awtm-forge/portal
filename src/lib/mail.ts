@@ -108,10 +108,14 @@ export async function sendCode(to: string, code: string, businessName: string, p
   });
 }
 
-/** A plain message from the record. Never carries internal cost: ADR 0009. */
-export async function sendPlain(to: string, subject: string, text: string): Promise<void> {
+/** A plain message from the record. Never carries internal cost: ADR 0009.
+ *  With `html`, the same letter in the brand's paper goes beside the text
+ *  (the welcome, 18 Sep); the text is what the log shows, so a test run
+ *  reads the words and not the markup. */
+export async function sendPlain(to: string, subject: string, text: string, html?: string): Promise<void> {
   if (transportMode() === "log") {
     logMail(to, subject, text);
+    if (html) console.log(`[mail:log] with an html part of ${html.length} characters`);
     return;
   }
   await smtpTransport().sendMail({
@@ -119,6 +123,7 @@ export async function sendPlain(to: string, subject: string, text: string): Prom
     to,
     subject,
     text,
+    ...(html ? { html } : {}),
   });
 }
 

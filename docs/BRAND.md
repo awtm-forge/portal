@@ -77,3 +77,15 @@ the same roles with paper values, and a screen that reads well in one face
 reads well in the other because the pairings are the same. The overlap sweep
 and the contrast test run in both faces, so a screen that breaks either fails
 before it ships.
+
+## The welcome email
+
+The one email that is a letter rather than a notice, the welcome with the
+client's link, goes in the paper: the ground and the surface above, the ink,
+the wordmark with its orange, the terracotta for links and the orange fill
+for the one button. Mail apps do not load fonts, so it uses the system sans
+and mono faces, and every style is written on the element, because that is
+what mail apps render alike. No stylesheet, script or image. The same words
+go as plain text beside it. `src/lib/email-paper.ts` draws it; the words are
+in `src/modules/notifications/link-email.ts`. The one-time code email stays
+plain text on purpose.

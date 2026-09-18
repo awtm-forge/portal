@@ -11,6 +11,7 @@ import { questionnaireReadyMessage, waLink } from "@/lib/whatsapp";
 import { revealClientToken } from "@/modules/auth/client";
 import { keepLinkAction, resendLinkAction, rotateLinkAction, takeFlashLink } from "../../../actions";
 import { CopyLink } from "../CopyLink";
+import { linkEmailSubject } from "@/modules/notifications/link-email";
 
 /**
  * The handover, and the one screen that can show a client their link.
@@ -117,7 +118,7 @@ export default async function SendLinkPage({ params }: { params: Promise<{ id: s
                 <span>To {client.contactEmail}</span><span className="help">the contact address</span>
               </div>
               <div className="between" style={{ padding: "9px 0" }}>
-                <span>Your awtm forge page, {client.businessName}</span>
+                <span>{linkEmailSubject(client.contactName)}</span>
               </div>
             </div>
             {client.linkEmailError ? (

@@ -924,3 +924,15 @@ wordmark; the overhaul spec's phone check holds it there.
 The agreement spec still expected "Rs 5,20,000" from before the rupee sign
 of 16 September and had not been run since; it now expects the sign, and
 the overhaul, invoices and agreement specs are green on the build.
+
+18 September: the welcome email (CLAUDE.md 5.1, the link sent on creating
+a client) rewritten at Ayush's ask, "more welcoming". It is a letter in the
+brand's paper now, lib/email-paper.ts: the wordmark, a heading by first
+name, one button to their page with the address under it to copy, three
+short paragraphs on what happens next, the rule about passwords on a quiet
+line, a WhatsApp link when a phone is in Settings, and Rahul's name. The
+same words go as plain text beside it, and the log mailer prints the text.
+The words are one pure function, notifications/link-email.ts, with six unit
+tests: the link in both forms, the same sentences in both, a name typed as
+markup shown as typed, nothing loaded from anywhere. The code email stays
+plain text on purpose. The link page names the new subject.
