@@ -78,7 +78,8 @@ export function paperEmail(e: PaperEmail): string {
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-radius:8px;background:${FILL};">`,
     `<a href="${escapeHtml(e.button.href)}" style="display:inline-block;padding:14px 22px;font-family:${SANS};font-size:15px;font-weight:700;color:${INK};text-decoration:none;border-radius:8px;">${escapeHtml(e.button.label)}</a>`,
     `</td></tr></table>`,
-    `<p style="margin:14px 0 28px;font-family:${MONO};font-size:12px;line-height:1.6;color:${MUTED};word-break:break-all;">${escapeHtml(e.copyLine)}<br><a href="${escapeHtml(e.button.href)}" style="color:${ACCENT};">${escapeHtml(e.button.href)}</a></p>`,
+    // Only the address may break anywhere; the words before it wrap as words.
+    `<p style="margin:14px 0 28px;font-family:${MONO};font-size:12px;line-height:1.6;color:${MUTED};">${escapeHtml(e.copyLine)}<br><a href="${escapeHtml(e.button.href)}" style="color:${ACCENT};word-break:break-all;">${escapeHtml(e.button.href)}</a></p>`,
     blocks,
     `<p style="margin:24px 0 0;padding-top:18px;border-top:1px solid ${HAIRLINE};font-family:${SANS};font-size:14px;line-height:1.55;color:${MUTED};">${escapeHtml(e.note)}</p>`,
     p(closing, "margin:24px 0 20px;"),
