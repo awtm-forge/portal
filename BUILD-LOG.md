@@ -936,3 +936,17 @@ The words are one pure function, notifications/link-email.ts, with six unit
 tests: the link in both forms, the same sentences in both, a name typed as
 markup shown as typed, nothing loaded from anywhere. The code email stays
 plain text on purpose. The link page names the new subject.
+
+6 October: the public site at awtmforge.com is being built as its own
+static application (site repo, CLAUDE.md section 4), so its enquiry form
+arrives at /api/enquiry cross-origin. The route now reads SITE_ORIGIN:
+a request whose Origin equals it is allowed and answered with
+Access-Control-Allow-Origin and Vary: Origin, OPTIONS answers the
+preflight for that origin only (POST, Content-Type, a day's Max-Age),
+and every other cross-origin request stays refused as before. Same-origin
+posts are unchanged, and so are the rate limit and the schema. Five unit
+tests in tests/enquiry-origin.test.ts: allowed, refused, refused while
+SITE_ORIGIN is unset, same-origin, preflight. SITE_ORIGIN is in
+.env.example and DEPLOY.md by name; until Ayush sets it in hPanel the
+live site's form fails with its fallback line, which is the designed
+failure.

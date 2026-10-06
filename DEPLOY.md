@@ -69,6 +69,7 @@ Set these in hPanel, never in the repo. Every one of them is needed.
 | `SMTP_FROM` | `awtm forge <hello@awtmforge.com>` |
 | `TEAM_NOTIFY_EMAIL` | `hello@awtmforge.com`, the team inbox, so both founders see them. Where team notifications go: intake submitted, agreed, changes requested, delivered, day 30 approved, and every enquiry. One address, not a list. |
 | `TZ` | `Asia/Kolkata`. All dates, the financial year boundary and invoice dates are computed here. |
+| `SITE_ORIGIN` | `https://awtmforge.com`, the public site's origin: scheme and host, no path, no trailing slash. Its enquiry form posts to `/api/enquiry` from there (the site repo's `DEPLOY.md`). Until this is set, the live site's form fails with its fallback line naming hello@awtmforge.com; that is the designed failure, not a bug. Set it and restart the app. |
 | `NODE_ENV` | `production`. Hostinger sets this itself; confirm it, because the seed uses it to keep demo projects out. |
 
 Do not set `MAIL_TRANSPORT`. It exists so the tests can write mail to the log
@@ -269,8 +270,10 @@ change once invoices carry it. Leave GSTIN empty until you register: see
   `src/components/marketing/MarketingSite.tsx` and is not routed (ADR 0012).
   When it returns it gets its own hostname. Its "How we work" section already
   carries the one-agreement copy from `CLAUDE.md` section 8.
-- `/api/enquiry` and the `enquiry` table are still here and still work. They
-  cost nothing while nothing posts to them.
+- `/api/enquiry` and the `enquiry` table receive the public site's form,
+  cross-origin from `SITE_ORIGIN` (6 Oct 2026). The rate limit and the
+  schema are unchanged; the site sends the service it was asked about as the
+  first line of the problem text.
 - The client link is shown once, when created and when rotated, because
   only its hash is stored (PORTAL-SPEC 5.9). The nudge message points at
   the link already sent.
