@@ -21,6 +21,7 @@ describe("the clean start before launch", () => {
     const before = await rehearsalCounts();
     const admins = await db.adminUser.count();
     const library = await db.imageLibrary.count();
+    const company = await db.company.count();
     await expect(
       db.$transaction(
         async (tx) => {
@@ -34,7 +35,7 @@ describe("the clean start before launch", () => {
           expect(await tx.intakeVersion.count()).toBe(0);
           expect(await tx.adminUser.count(), "logins stay").toBe(admins);
           expect(await tx.imageLibrary.count(), "the library stays").toBe(library);
-          expect(await tx.company.count(), "the company row stays").toBe(1);
+          expect(await tx.company.count(), "the company row stays").toBe(company);
           throw new Error("rolled back on purpose");
         },
         { timeout: 60_000 },
