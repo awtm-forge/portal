@@ -5,7 +5,6 @@ import { HistoryNav } from "@/components/ui/HistoryNav";
 import { NavProgress } from "@/components/ui/NavProgress";
 import { NotifyBell } from "@/components/ui/NotifyBell";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { Toast } from "@/components/ui/Toast";
 import { currentAdmin } from "@/modules/auth/admin";
 import { teamBell } from "./team-bell";
 import { markTeamNoticesSeen } from "@/components/portal/notify-actions";
@@ -92,7 +91,6 @@ export async function AdminShell({
         </div>
         {children}
       </main>
-      <Toast />
     </div>
   );
 }

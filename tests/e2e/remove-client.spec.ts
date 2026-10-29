@@ -61,7 +61,7 @@ test("a client nothing has happened to can be removed, with the name, a reason a
   await page.getByLabel(/your password/i).fill("not-the-password");
   await page.getByRole("button", { name: /remove them for good/i }).click();
   await expect(page.getByText(/not removed: that is not your password/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: business })).toBeVisible();
+  await expect(page.getByRole("heading", { name: business, exact: true })).toBeVisible();
 
   // The wrong name, with the right password, removes nothing either.
   await page.getByRole("button", { name: /remove this client/i }).click();

@@ -11,6 +11,12 @@ async function backToSent(projectId: string): Promise<void> {
   await query("DELETE FROM Invoice WHERE projectId = ?", [projectId]);
   await query("DELETE FROM SignoffEvent WHERE projectId = ?", [projectId]);
   await query("DELETE FROM AgreementNote WHERE projectId = ?", [projectId]);
+  // A delivery signed off by an earlier spec leaves a day-30 row that unlocks a
+  // month after the delivery date it was given. Once that month has passed,
+  // the home page puts the check-in ahead of the agreement (homeStateFor),
+  // so the row goes with the rest.
+  await query("DELETE FROM Day30 WHERE projectId = ?", [projectId]);
+  await query("UPDATE Project SET deliveredAt = NULL WHERE id = ?", [projectId]);
   await query(
     "UPDATE Agreement SET agreedAt = NULL, agreedByName = NULL, agreedMethod = NULL, version = 1, sentAt = NOW() WHERE projectId = ?",
     [projectId],
