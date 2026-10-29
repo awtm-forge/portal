@@ -70,6 +70,7 @@ Set these in hPanel, never in the repo. Every one of them is needed.
 | `TEAM_NOTIFY_EMAIL` | `hello@awtmforge.com`, the team inbox, so both founders see them. Where team notifications go: intake submitted, agreed, changes requested, delivered, day 30 approved, and every enquiry. One address, not a list. |
 | `TZ` | `Asia/Kolkata`. All dates, the financial year boundary and invoice dates are computed here. |
 | `SITE_ORIGIN` | `https://awtmforge.com`, the public site's origin: scheme and host, no path, no trailing slash. Its enquiry form posts to `/api/enquiry` from there (the site repo's `DEPLOY.md`). Until this is set, the live site's form fails with its fallback line naming hello@awtmforge.com; that is the designed failure, not a bug. Set it and restart the app. |
+| `OPS_API_KEY` | A long random string (`openssl rand -hex 32`) the ops console sends as `x-ops-key` to read clients, projects, invoices and activity through `/api/ops/...`. Read-only. Leave it empty and those routes do not exist (27 Oct 2026). The same value is `PORTAL_API_KEY` on the ops side. |
 | `NODE_ENV` | `production`. Hostinger sets this itself; confirm it, because the seed uses it to keep demo projects out. |
 
 Do not set `MAIL_TRANSPORT`. It exists so the tests can write mail to the log
