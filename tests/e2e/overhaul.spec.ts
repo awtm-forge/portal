@@ -246,9 +246,9 @@ test("the team's notifications are a bell, counted and cleared by reading", asyn
 
   await signInAdmin(page);
   await page.goto("/admin");
-  // Not a nav item: the four places in the app are the only things listed.
+  // Not a nav item: the five places in the app are the only things listed.
   await expect(page.getByRole("navigation", { name: "Admin" }).getByRole("link")).toHaveText([
-    "Clients", "Projects", "Image library", "Settings",
+    "Today", "Clients", "Projects", "Image library", "Settings",
   ]);
 
   // A bell with a count, which opens what happened rather than a page.

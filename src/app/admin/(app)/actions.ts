@@ -11,6 +11,7 @@ import { keepClientToken } from "@/modules/auth/client";
 import { createClient, deliverLink, rotateLink } from "@/modules/clients";
 import { removeClient } from "@/modules/clients/remove";
 import { createProject } from "@/modules/projects";
+import { addTodo, removeTodo, toggleTodo } from "@/modules/todos";
 import "@/modules/notifications/register";
 
 export async function logoutAction(): Promise<void> {
@@ -292,4 +293,30 @@ export async function updateSignoffAction(formData: FormData): Promise<void> {
     await refreshWith(`/admin/projects/${projectId}`, "Sign-off person saved. Codes go to the new address from now.");
   }
   await refreshWith(`/admin/projects/${projectId}`, "Not saved: a name and a real email are needed.");
+}
+
+/**
+ * The shared Today list. The item form carries where it was sent from, so
+ * adding from a client's page lands back on that page.
+ */
+export async function addTodoAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const text = String(formData.get("text") ?? "").trim().slice(0, 300);
+  const clientId = String(formData.get("clientId") ?? "").trim() || null;
+  const back = clientId ? `/admin/clients/${clientId}` : "/admin/today";
+  if (!text) await refreshWith(back, "Not added: say what it is, in a line.");
+  await addTodo(text, clientId);
+  await refreshWith(back, clientId ? "Added to today." : "Added.");
+}
+
+export async function toggleTodoAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  await toggleTodo(String(formData.get("id") ?? ""));
+  refreshTo("/admin/today");
+}
+
+export async function removeTodoAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  await removeTodo(String(formData.get("id") ?? ""));
+  await refreshWith("/admin/today", "Removed.");
 }

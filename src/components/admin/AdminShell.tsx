@@ -35,7 +35,7 @@ export async function AdminShell({
   adminName,
   children,
 }: {
-  active: "clients" | "projects" | "library" | "settings" | "notifications";
+  active: "today" | "clients" | "projects" | "library" | "settings" | "notifications";
   adminName: string;
   children: React.ReactNode;
 }) {
@@ -57,6 +57,7 @@ export async function AdminShell({
           </div>
         </div>
         <nav className="a-navs" aria-label="Admin">
+          <Link className={`a-nav${active === "today" ? " on" : ""}`} href="/admin/today" aria-current={active === "today" ? "page" : undefined}>Today</Link>
           <Link className={`a-nav${active === "clients" ? " on" : ""}`} href="/admin/clients" aria-current={active === "clients" ? "page" : undefined}>Clients</Link>
           <Link className={`a-nav${active === "projects" ? " on" : ""}`} href="/admin" aria-current={active === "projects" ? "page" : undefined}>Projects</Link>
           <Link className={`a-nav${active === "library" ? " on" : ""}`} href="/admin/library" aria-current={active === "library" ? "page" : undefined}>Image library</Link>

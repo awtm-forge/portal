@@ -390,6 +390,14 @@ again; present means the portal is live, the control is gone, and the module
 refuses. Written once and never moved. ADR 0023 has the reasoning; the wipe is
 tried in the unit suite inside a transaction that is rolled back on purpose.
 
+## Changed on 2 November 2026: the team's Today list
+
+`Todo`: one shared checklist for both admins, no owner. `text`, `day` (the
+Kolkata calendar date it is for, a plain DATE), `doneAt`, an optional
+`clientId` that clears itself when the client goes, `createdAt`. Not evidence:
+ticked and removed freely. An undone item from an earlier day keeps showing
+under "Still open" until it is ticked or removed.
+
 ## Changed on 16 September 2026: a client's files, and an admin's access
 
 `ClientDocument` (ADR 0025): a file a client hands us outside the

@@ -17,7 +17,7 @@ import { versionsFor } from "@/modules/intake/versions";
 import { company } from "@/modules/settings";
 import { PHASE_LABEL } from "@/modules/projects/phase";
 import { questionnaireOpenMessage, waLink } from "@/lib/whatsapp";
-import { removeClientAction, updateClientAction } from "../../actions";
+import { addTodoAction, removeClientAction, updateClientAction } from "../../actions";
 import { declineChangeAction, lockAgainAction, openChangesAction } from "./intake/changeActions";
 import { formatPhone } from "@/lib/phone";
 
@@ -239,6 +239,15 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               {" "}No password exists: the link is the way in, and a code confirms each device.
             </p>
             <div><Link className="a-btn ghost" href={`/admin/clients/${client.id}/link`}>The link, and how to send it</Link></div>
+          </div>
+
+          <div className="a-card">
+            <span className="k">Add to today</span>
+            <form action={addTodoAction} className="stack" style={{ gap: 8 }}>
+              <input type="hidden" name="clientId" value={client.id} />
+              <input className="a-fld" name="text" aria-label="Add to today" placeholder={`Something to do for ${client.businessName}`} maxLength={300} required />
+              <div><button className="a-btn ghost" type="submit">Add to today</button></div>
+            </form>
           </div>
 
           <Fold card title="Who says yes" ember={Boolean(client.proposedSignoffEmail)} open={Boolean(client.proposedSignoffEmail)} fact={client.proposedSignoffName ?? client.contactName}>
