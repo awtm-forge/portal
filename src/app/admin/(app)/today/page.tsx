@@ -17,7 +17,7 @@ export default async function TodayPage() {
   const { stillOpen, todays } = await listTodos();
 
   const row = (t: Item, dated: boolean) => (
-    <li key={t.id} className="between todo" style={{ padding: "8px 0", borderBottom: "1px solid var(--rule)" }}>
+    <li key={t.id} className="between" style={{ padding: "8px 0", borderBottom: "1px solid var(--rule)" }}>
       <form action={toggleTodoAction} style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
         <input type="hidden" name="id" value={t.id} />
         <button type="submit" role="checkbox" aria-checked={t.doneAt !== null} className="link-mono" style={{ textAlign: "left", textDecoration: t.doneAt ? "line-through" : "none", color: t.doneAt ? "var(--faint)" : "var(--ink)", fontFamily: "var(--font-body-stack)", fontSize: 14 }}>
